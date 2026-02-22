@@ -1,0 +1,27 @@
+{
+  "description": "Forge pipeline hooks - quality gates and contextual suggestions",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Quietly check if forge.local.md exists in the current working directory. If it does NOT exist AND the directory has fewer than 10 files total (excluding .git), this appears to be a new or early-stage project. In that case, include a brief one-line mention at the end of your greeting: 'Tip: Run /forge to start the guided development pipeline.' Do NOT mention forge if the project already has forge.local.md or has many files."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/quality-gate.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

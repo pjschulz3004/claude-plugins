@@ -1,0 +1,24 @@
+{
+  "name": "pjschulz-plugins",
+  "description": "Paul's personal Claude Code plugins",
+  "owner": {
+    "name": "Paul Schulz",
+    "email": "paul@jschulz.org"
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "forge",
+      "source": "./forge",
+      "description": "Development pipeline orchestrator. Guides projects from empty folder to production through IGNITE (foundation), SHAPE (execution), TEMPER (hardening), DELIVER (shipping) phases.",
+      "version": "0.1.0",
+      "category": "development",
+      "author": {
+        "name": "Paul Schulz",
+        "email": "paul@jschulz.org"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "forge",
+  "version": "0.1.0",
+  "description": "Development pipeline orchestrator. Guides projects from empty folder to production through disciplined phases: IGNITE (foundation) → SHAPE (execution) → TEMPER (hardening) → DELIVER (shipping).",
+  "author": {
+    "name": "Paul",
+    "email": "paul@jschulz.org"
+  },
+  "license": "MIT",
+  "keywords": ["workflow", "orchestrator", "pipeline", "tdd", "quality"]
+}
