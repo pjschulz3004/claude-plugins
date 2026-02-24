@@ -1,0 +1,28 @@
+{
+  "description": "Scribe plugin hooks: session state display and character state update prompts",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/session-start.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "A file was just written. Check if it appears to be a chapter draft or edited chapter file (matching patterns like '(draft)', '(edited-', '(scenes)', '(beats)' in the filename, or a file in an arcs/ directory). If it IS a chapter-related file, add a brief reminder: 'Consider updating character states in the knowledge base for any changes in this chapter. Use /scribe:kb to update.' If it is NOT a chapter file, say nothing (return empty). Do not block the write.",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

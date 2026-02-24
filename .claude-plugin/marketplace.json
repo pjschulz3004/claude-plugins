@@ -19,6 +19,17 @@
         "name": "Paul Schulz",
         "email": "paul@jschulz.org"
       }
+    },
+    {
+      "name": "scribe",
+      "source": "./scribe",
+      "description": "Collaborative creative writing studio. Full refinement pipeline: planning, drafting, 5-stage editing, continuity checking, and SQLite-backed knowledge base.",
+      "version": "0.1.0",
+      "category": "writing",
+      "author": {
+        "name": "Paul Schulz",
+        "email": "paul@jschulz.org"
+      }
     }
   ]
 }

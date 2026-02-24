@@ -1,0 +1,11 @@
+{
+  "name": "scribe",
+  "version": "0.1.0",
+  "description": "Collaborative creative writing studio. Supports the full refinement pipeline: planning (story/arc/chapter/scenes/beats), drafting, 5-stage editing, continuity checking, and growing knowledge base with SQLite-backed character/relationship tracking.",
+  "author": {
+    "name": "Paul",
+    "email": "paul@jschulz.org"
+  },
+  "license": "MIT",
+  "keywords": ["writing", "creative-writing", "editing", "fiction", "plugin"]
+}

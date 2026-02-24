@@ -1,0 +1,101 @@
+---
+name: edit-scene
+description: "Stage 2 editing: Scene & Beat structure. Checks scene structure, beat analysis, pacing, character voice, dialogue. Produces (edited-2-scene) file."
+---
+
+# Edit Stage 2: Scene & Beat Structure
+
+You are performing the second editing pass. This stage focuses on whether every scene functions dramatically — structure, pacing, beat analysis, and dialogue mechanics. You're NOT polishing prose yet — that's Stage 3.
+
+## Step 1: Identify Target
+
+Find the Stage 1 output:
+- `{paths.arcs}/arc-N-name/X.X Title (edited-1-plot).md`
+- If not found, fall back to the draft
+
+## Step 2: Load Context
+
+Read:
+1. **The Stage 1 output**: Your primary input
+2. **The (beats) file**: To compare planned vs. actual beats
+3. **Character files**: For voice verification
+
+Load references:
+- `${CLAUDE_PLUGIN_ROOT}/references/scene-structure.md` — scene structure, beats, dialogue, MRUs
+- `${CLAUDE_PLUGIN_ROOT}/references/editing-pipeline.md` — Stage 2 checklist
+
+## Step 3: Analyze Scene by Scene
+
+For each scene in the chapter:
+
+### Scene Structure
+- [ ] **Opens with friction**: Tension established in first 2-3 lines?
+- [ ] **Single goal**: Can state what the POV character wants in one sentence?
+- [ ] **Obstacle present**: Something opposes the goal?
+- [ ] **Disaster/complication**: Scene ends worse or more complicated than it started?
+- [ ] **Closes on hinge**: Ends on decision, reversal, or striking image?
+- [ ] **Dramatic question**: One clear question posed and answered (usually "No" or "Yes, but...")?
+
+### Beat Analysis
+- [ ] **Every beat turns something**: Status, knowledge, or plan changes?
+- [ ] **Pacing**: At least one turn per ~300 words? If 500+ words pass without change, flag it
+- [ ] **Causality**: Beats connect via therefore/but, not and-then?
+- [ ] **Beat variety**: Types mixed (not all action or all dialogue)?
+- [ ] **Try-fail cycles**: Attempts are meaningfully different?
+- [ ] **MRU order**: Motivations (external events) precede reactions (internal response)?
+
+### Pacing
+- [ ] **Scenes escalate**: Later scenes have higher tension than earlier ones?
+- [ ] **Tangents proportionate**: Digressions earn their space?
+- [ ] **Dialogue intercutting**: Action beats break up long dialogue runs?
+- [ ] **Scene lengths varied**: Not every scene the same length?
+
+### Character Voice
+- [ ] **POV consistent**: Narration sounds like ONE specific person throughout?
+- [ ] **No impossible knowledge**: POV character doesn't know things they shouldn't?
+- [ ] **Emotional truth**: Reactions feel proportionate and authentic to the character?
+- [ ] **Voice markers present**: Character's verbal tics, vocabulary, thought patterns identifiable?
+
+### Dialogue
+- [ ] **Every line works**: Reveals character, advances plot, creates tension, provides info, or establishes relationship?
+- [ ] **Distinctive voices**: Characters sound different from each other (Radio Test)?
+- [ ] **Subtext present**: Characters don't always say exactly what they mean?
+- [ ] **Power dynamics**: Who controls the conversation? Does it shift?
+- [ ] **Tags minimal**: "said"/"asked" for 90%, action beats over adverbs?
+
+## Step 4: Produce Feedback
+
+Use the feedback format for each issue:
+
+```markdown
+### [SCENE/BEAT/PACING/VOICE/DIALOGUE] Scene N, [Location]
+**Current text**: > [quoted text]
+**Problem**: [structural issue and why it matters]
+**Suggested fix**: > [revised approach]
+**Rationale**: [why this improves the scene dramatically]
+```
+
+Severity:
+- **Critical**: Scene doesn't function (no goal, no hinge, beats don't turn)
+- **Warning**: Scene works but has structural weakness (pacing drag, voice slip)
+- **Note**: Opportunity to strengthen (better hinge, sharper dialogue)
+
+## Step 5: Produce (edited-2-scene) File
+
+Write: `{paths.arcs}/arc-N-name/X.X Title (edited-2-scene).md`
+
+Include edit summary at top:
+
+```markdown
+<!-- Edit Stage 2: Scene & Beat Structure
+Issues found: [N critical, N warning, N note]
+Key changes: [bullet list of structural scene edits]
+Scenes restructured: [which scenes were significantly changed]
+-->
+```
+
+## Step 6: Update State
+
+Present the scene-by-scene analysis to the author. Update `scribe.local.md`: `pipeline_stage: edit-3`
+
+Suggest next step: `/scribe:edit line [X.X]`
