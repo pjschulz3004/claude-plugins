@@ -1,5 +1,5 @@
 ---
-name: ingest
+name: "scribe:ingest"
 description: "Scan project files and populate the SQLite knowledge base. Reads character profiles, arc contexts, chapters, and optionally consults the Worm wiki for missing info."
 argument-hint: "[all|characters|relationships|states|concepts|wiki <name>]"
 allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "AskUserQuestion", "WebFetch", "WebSearch", "Task"]

@@ -1,5 +1,5 @@
 ---
-name: write
+name: "scribe:write"
 description: "Draft prose from a beats file. Loads the appropriate voice guide and prose style rules."
 argument-hint: "[chapter-number]"
 allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "AskUserQuestion", "mcp__kg__kg_search"]

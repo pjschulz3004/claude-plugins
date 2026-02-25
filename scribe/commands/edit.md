@@ -1,5 +1,5 @@
 ---
-name: edit
+name: "scribe:edit"
 description: "Run the editing pipeline. Routes to current editing stage or a specific one: plot, scene, line, ai, hostile."
 argument-hint: "[plot|scene|line|ai|hostile] [chapter-number]"
 allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "AskUserQuestion", "Task", "mcp__kg__kg_search"]

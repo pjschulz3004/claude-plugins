@@ -1,5 +1,5 @@
 ---
-name: voice
+name: "scribe:voice"
 description: "Character voice quick-reference. Look up a character's speech patterns, verbal tics, and dialogue samples."
 argument-hint: "[character-name]"
 allowed-tools: ["Read", "Glob", "Grep"]

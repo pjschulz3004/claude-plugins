@@ -1,5 +1,5 @@
 ---
-name: kb
+name: "scribe:kb"
 description: "Query the knowledge base. Searches knowledge graph, SQLite, and markdown files for characters, facts, relationships, concepts, and continuity issues."
 argument-hint: "<query> | characters | facts | concepts | issues"
 allowed-tools: ["Read", "Glob", "Grep", "Bash", "AskUserQuestion", "mcp__kg__kg_search"]

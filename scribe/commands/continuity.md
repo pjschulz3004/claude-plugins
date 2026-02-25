@@ -1,5 +1,5 @@
 ---
-name: continuity
+name: "scribe:continuity"
 description: "Check story or chapter-level continuity. Uses SQLite database and context files to find contradictions, timeline issues, and unresolved threads."
 argument-hint: "[story|chapter] [target]"
 allowed-tools: ["Read", "Glob", "Grep", "Bash", "AskUserQuestion", "Task", "mcp__kg__kg_search", "mcp__kg__kg_add_episode"]

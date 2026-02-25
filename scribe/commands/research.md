@@ -1,5 +1,5 @@
 ---
-name: research
+name: "scribe:research"
 description: "Research a topic for your story. Searches knowledge graph, SQLite, and markdown first, then web. Saves findings to all three stores."
 argument-hint: "<topic>"
 allowed-tools: ["Read", "Write", "Glob", "Grep", "Bash", "WebFetch", "WebSearch", "AskUserQuestion", "mcp__kg__kg_search", "mcp__kg__kg_add_episode"]

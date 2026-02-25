@@ -1,5 +1,5 @@
 ---
-name: plan
+name: "scribe:plan"
 description: "Plan your story at any level: story, arc, chapter, scenes, or beats. Routes to the appropriate planning workflow."
 argument-hint: "[story|arc|chapter|scenes|beats] [target]"
 allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "AskUserQuestion", "Task", "WebFetch", "WebSearch", "mcp__kg__kg_search", "mcp__kg__kg_add_episode"]
