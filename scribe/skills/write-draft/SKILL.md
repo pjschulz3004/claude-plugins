@@ -28,6 +28,15 @@ If database exists, query character states:
 ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" character-state "[POV character]"
 ```
 
+### Knowledge Graph Lookup
+
+Query the KG for grounding details needed during drafting:
+
+1. For POV character: `kg_search(query="[POV character] voice personality speech patterns", scope="au", limit=5)` and `kg_search(query="[POV character] powers abilities", scope="canon", limit=5)`
+2. For each location in the beats: `kg_search(query="[location] physical description layout", scope="canon", limit=5)`
+3. For key interactions: `kg_search(query="[character A] relationship with [character B]", scope="au", limit=5)`
+4. Flag any canon vs AU inconsistencies briefly. Use KG results to inform concrete sensory details and accurate character interactions.
+
 ## Step 3: Establish Voice
 
 Before drafting, confirm the POV character's voice:

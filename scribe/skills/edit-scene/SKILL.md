@@ -24,6 +24,14 @@ Load references:
 - `${CLAUDE_PLUGIN_ROOT}/references/scene-structure.md` — scene structure, beats, dialogue, MRUs
 - `${CLAUDE_PLUGIN_ROOT}/references/editing-pipeline.md` — Stage 2 checklist
 
+### Knowledge Graph Lookup
+
+Query the KG for voice and relationship verification:
+
+1. For POV character: `kg_search(query="[character] speech patterns voice personality", scope="au", limit=5)` — use to verify voice markers in Step 3
+2. For dialogue scenes: `kg_search(query="[character] relationship with [other character]", scope="au", limit=5)` — verify dialogue reflects established relationship dynamics
+3. For character-specific powers/abilities mentioned: `kg_search(query="[character] powers", scope="canon", limit=3)` — verify accuracy of any power usage described
+
 ## Step 3: Analyze Scene by Scene
 
 For each scene in the chapter:

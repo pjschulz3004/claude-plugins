@@ -52,6 +52,15 @@ If a database exists (`{paths.database}`), query it:
 ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" continuity-issues
 ```
 
+### Knowledge Graph Cross-Check
+
+Query the KG for story-wide consistency:
+
+1. For major character arcs: `kg_search(query="[character] arc trajectory", scope="au", limit=8)` — verify planned trajectories match what's been written
+2. For setup/payoff chains: `kg_search(query="[setup topic] foreshadowing", scope="au", limit=5)` — check if setups have payoffs
+3. For canon grounding: `kg_search(query="[world element]", scope="canon", limit=5)` — verify AU world rules don't accidentally contradict canon without intent
+4. If the user identifies canon vs AU divergences that should be recorded: `kg_add_episode(content="[AU fact]", group="union-au", source="user-input")`
+
 Report issues by severity (critical / warning / note).
 
 ## Step 5: Update Story Overview

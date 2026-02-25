@@ -1,13 +1,18 @@
 ---
 name: ingest
-description: "Scan project files and populate the SQLite knowledge base with characters, relationships, states, and concepts. Re-runnable. Consults Worm wiki when info is unclear."
+description: "Scan project files and populate both the SQLite database and knowledge graph. Extracts characters, relationships, states, concepts, and feeds them into Graphiti for semantic search. Re-runnable."
 ---
 
 # Ingest
 
-You are scanning this project's files to populate the SQLite knowledge base. This is a data extraction task: read files, extract structured information, and insert it into the database using the db-helper.sh upsert commands.
+You are scanning this project's files to populate two knowledge stores:
 
-**Re-runnable**: All character and concept inserts use upsert. Running twice won't duplicate data.
+1. **SQLite** (structured data): Characters, relationships, states, concepts via `db-helper.sh` upsert commands
+2. **Knowledge Graph** (semantic relationships): Entities and relationships via `kg_add_episode` MCP tool, which feeds Graphiti/Neo4j
+
+Both stores are complementary. SQLite gives fast structured queries (who is alive, what arc did X appear in). The graph gives semantic search and relationship traversal (how does X connect to Y, what do we know about Z).
+
+**Re-runnable**: SQLite uses upsert. The graph handles duplicate episodes gracefully (Graphiti deduplicates entities).
 
 ## Setup
 
@@ -46,10 +51,19 @@ For each character file, extract:
 - **notes**: Brief summary of role in story
 
 ### How to Insert
+
+**SQLite:**
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" upsert-character \
   "name" "aliases" "faction" "status" "first_appearance" "cape_name" "power_classification" "notes"
 ```
+
+**Knowledge Graph:** After inserting a batch of characters (5-10 at a time), use `kg_add_episode` to feed a natural-language summary into the graph:
+- **content**: A paragraph describing the characters, their powers, factions, and status. Example: "Taylor Hebert (cape name Consensus) is the leader of the Union, a parahuman labor organization. She is a Master with bug control powers. She first appeared in chapter 1.1."
+- **source**: `"canon-chapter"` for canon characters, `"au-chapter"` for original characters
+- **group**: `"worm-canon"` for canon characters, `"union-au"` for original characters
+
+Batch characters by faction or role to create coherent episodes. Don't make one episode per character.
 
 ### Guidelines
 - Read the CHARACTER-INDEX first for a quick overview, then read individual files for details
@@ -76,10 +90,18 @@ For each relationship:
 - **as_of_chapter**: Specific chapter if known
 
 ### How to Insert
+
+**SQLite:**
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" upsert-relationship \
   "char_a_name" "char_b_name" "type" "description" "as_of_arc" "as_of_chapter"
 ```
+
+**Knowledge Graph:** After extracting relationships for a group of characters, use `kg_add_episode` with a natural-language description of those relationships:
+- **content**: Describe the relationships as prose. Example: "Taylor Hebert and Jack Warren are close allies and co-founders of the Union. Their relationship is built on mutual trust forged during the Winslow organizing campaign. As of Arc 3, Jack serves as Taylor's anchor and emotional counterweight."
+- **source**: `"research"`
+- **group**: `"union-au"` (relationships are AU-specific even if characters are canon)
+- **timestamp**: Use the in-story date for the `as_of_chapter` if known
 
 ### Guidelines
 - Both characters must exist in the DB first (ingest characters before relationships)
@@ -108,10 +130,20 @@ For key chapters (not every chapter — focus on chapters where significant chan
 - **notes**: Key events in this chapter affecting this character
 
 ### How to Insert
+
+**SQLite:**
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" add-state \
   "name" "arc" "chapter" "physical" "emotional" "voice_conf" "location" "injuries" "notes"
 ```
+
+**Knowledge Graph:** For significant state changes (injuries, location shifts, emotional turning points), use `kg_add_episode`:
+- **content**: Describe the state change as prose. Example: "In chapter 2.8, Taylor was injured during the Empire raid on the Union safehouse. She suffered cracked ribs and minor concussion. Emotionally, this was a turning point: her voice confidence shifted from hedging to declarative as she rallied the team."
+- **source**: `"au-chapter"`
+- **group**: `"union-au"`
+- **timestamp**: Use the in-story date for this chapter
+
+Don't feed every minor state into the graph. Focus on changes that affect relationships or plot.
 
 ### Guidelines
 - Focus on the POV character's state at major chapter boundaries
@@ -139,10 +171,17 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" add-state \
 - **source**: Where the info came from
 
 ### How to Insert
+
+**SQLite:**
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" upsert-concept \
   "name" "domain" "thinker" "summary" "used_in_arcs" "story_purpose" "source"
 ```
+
+**Knowledge Graph:** Batch related concepts together and use `kg_add_episode`:
+- **content**: Describe concepts and their story role as prose. Example: "Gramsci's concept of the War of Position describes the slow cultural struggle for ideological hegemony, as opposed to the War of Maneuver (direct confrontation). In Union, Taylor uses this framework to justify the Union's strategy of building community power before directly challenging the Protectorate. This concept appears in Arcs 2 and 3."
+- **source**: `"research"`
+- **group**: `"worm-canon"` for canon-lore concepts, `"union-au"` for AU-specific applications
 
 ---
 
@@ -154,6 +193,8 @@ When the user specifies `wiki <name>`, or when you encounter a character/concept
 2. Extract relevant information (power classification, relationships, status in canon)
 3. Present to the user: "According to the Worm wiki, [info]. Should I add this to the DB?"
 4. Only insert after user confirmation (canon info may differ from the AU)
+
+If confirmed, insert into both SQLite (via db-helper.sh) and the Knowledge Graph (via `kg_add_episode` with `group: "worm-canon"` and `source: "canon-chapter"`).
 
 ### When to Auto-Consult Wiki
 During character or relationship ingestion, if you find a canon character reference but:
@@ -173,5 +214,7 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" stats
 ```
 
 Compare with the before-stats and summarize what was added/updated.
+
+Also report the total number of `kg_add_episode` calls made and the total nodes/edges extracted by Graphiti.
 
 List any characters or relationships you couldn't resolve and suggest next steps.

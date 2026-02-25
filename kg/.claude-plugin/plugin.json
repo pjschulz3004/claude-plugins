@@ -1,0 +1,11 @@
+{
+  "name": "kg",
+  "version": "0.1.0",
+  "description": "Universal Knowledge Graph for Claude Code. Provides semantic search, knowledge ingestion, and per-project scoping via Graphiti + Neo4j. Works with any domain: fiction, RPG, research, therapy, etc.",
+  "author": {
+    "name": "Paul",
+    "email": "paul@jschulz.org"
+  },
+  "license": "MIT",
+  "keywords": ["knowledge-graph", "graphiti", "neo4j", "mcp", "semantic-search"]
+}

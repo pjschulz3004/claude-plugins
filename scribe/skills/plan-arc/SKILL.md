@@ -22,6 +22,17 @@ Read these files:
 
 Do NOT load style guides or prose references — this is structural planning, not prose work.
 
+### Knowledge Graph Lookup
+
+Query the KG for broad character and thematic context:
+
+1. For each major character in the arc: `kg_search(query="[character] full arc trajectory relationships powers", scope="au", limit=8)` and `kg_search(query="[character]", scope="canon", limit=5)` for canon baseline
+2. For thematic elements: `kg_search(query="[theme/concept] in Worm", scope="canon", limit=5)` to understand how canon handles similar themes
+3. For cross-arc threads: `kg_search(query="[plot thread]", scope="au", limit=5)` to track what's been established in the AU
+4. Flag any canon vs AU divergences. If the user identifies a missing AU fact, record it via `kg_add_episode(content="...", group="union-au", source="user-input")`
+
+Use KG results to ground arc planning in established facts and track long-term threads.
+
 ## Step 3: Present Arc State
 
 Summarize:

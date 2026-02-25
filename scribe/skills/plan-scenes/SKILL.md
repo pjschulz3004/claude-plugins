@@ -28,6 +28,16 @@ If database exists, query character states:
 ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" character-state "[character]"
 ```
 
+### Knowledge Graph Lookup
+
+Query the KG for characters, locations, and events relevant to this chapter:
+
+1. For each character appearing: `kg_search(query="[character name] powers abilities relationships current state", scope="canon", limit=5)` and `kg_search(query="[same]", scope="au", limit=5)`
+2. For each location: `kg_search(query="[location name] description layout", scope="canon", limit=5)`
+3. If AU results contradict canon, note the divergence briefly (e.g., "Canon: X is alive; AU: X is dead — using AU"). If the user identifies a missing AU fact, record it via `kg_add_episode(content="...", group="union-au", source="user-input")`
+
+Use KG results to ground scene design in established facts (character capabilities, location details, relationship dynamics).
+
 ## Step 3: Design Scenes
 
 For each scene, define:

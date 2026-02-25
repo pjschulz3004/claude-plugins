@@ -2,7 +2,7 @@
 name: edit
 description: "Run the editing pipeline. Routes to current editing stage or a specific one: plot, scene, line, ai, hostile."
 argument-hint: "[plot|scene|line|ai|hostile] [chapter-number]"
-allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "AskUserQuestion", "Task"]
+allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "AskUserQuestion", "Task", "mcp__kg__kg_search"]
 ---
 
 # /scribe:edit
@@ -55,6 +55,7 @@ Load:
 - Previous chapter (latest version)
 - Character files for characters in this chapter
 - If database exists: query character states and knowledge facts
+- **KG lookup**: For each character in the chapter, query `kg_search(query="[character] state powers relationships", scope="au")`. Also query `kg_search(query="[location/event]", scope="canon")` for canon verification of any referenced locations or events. Flag canon vs AU inconsistencies.
 
 Reference: `${CLAUDE_PLUGIN_ROOT}/references/editing-pipeline.md` (Stage 1 section)
 

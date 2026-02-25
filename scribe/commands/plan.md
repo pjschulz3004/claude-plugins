@@ -2,7 +2,7 @@
 name: plan
 description: "Plan your story at any level: story, arc, chapter, scenes, or beats. Routes to the appropriate planning workflow."
 argument-hint: "[story|arc|chapter|scenes|beats] [target]"
-allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "AskUserQuestion", "Task", "WebFetch", "WebSearch"]
+allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "AskUserQuestion", "Task", "WebFetch", "WebSearch", "mcp__kg__kg_search", "mcp__kg__kg_add_episode"]
 ---
 
 # /scribe:plan
@@ -67,6 +67,21 @@ If no argument given, suggest the next logical step based on `pipeline_stage`:
 - Read: The `(scenes)` file for target chapter
 - Read: Previous chapter's ending (for continuity)
 - Load reference: `${CLAUDE_PLUGIN_ROOT}/references/scene-structure.md` (beat structure section)
+
+### Knowledge Graph Lookup (all levels)
+
+After loading file context, query the Knowledge Graph for relevant facts. Extract character names, locations, and events from the loaded context and run:
+
+1. **Canon lookup**: `kg_search(query="[characters/locations/events from context]", scope="canon", limit=10)`
+2. **AU lookup**: `kg_search(query="[same query]", scope="au", limit=10)`
+
+If AU results contradict canon results, flag the inconsistency to the user before proceeding:
+> "KG note: Canon says [X], but your AU has [Y]. Using AU version. Say 'update KG' if either needs correction."
+
+If the user identifies a KG error or wants to record an AU-specific fact, use:
+`kg_add_episode(content="[corrected fact]", group="union-au", source="user-input")`
+
+Use KG results as grounding context alongside file-based context for the planning work.
 
 ## Step 4: Route to Planning Skill
 

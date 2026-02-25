@@ -24,8 +24,19 @@
       "name": "scribe",
       "source": "./scribe",
       "description": "Collaborative creative writing studio. Full refinement pipeline: planning, drafting, 5-stage editing, continuity checking, and SQLite-backed knowledge base.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "writing",
+      "author": {
+        "name": "Paul Schulz",
+        "email": "paul@jschulz.org"
+      }
+    },
+    {
+      "name": "kg",
+      "source": "./kg",
+      "description": "Universal Knowledge Graph. Semantic search, knowledge ingestion, and per-project scoping via Graphiti + Neo4j.",
+      "version": "0.1.0",
+      "category": "knowledge",
       "author": {
         "name": "Paul Schulz",
         "email": "paul@jschulz.org"

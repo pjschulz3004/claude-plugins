@@ -23,6 +23,16 @@ For the previous chapter, prioritize reading the `(scenes)` or `(beats)` file if
 
 Do NOT load prose style guides — this is structural planning.
 
+### Knowledge Graph Lookup
+
+Query the KG for character trajectories and relevant events:
+
+1. For each major character: `kg_search(query="[character] arc trajectory relationships", scope="au", limit=5)` for current AU state, and `kg_search(query="[character] powers abilities", scope="canon", limit=5)` for canon reference
+2. For plot threads: `kg_search(query="[thread/event topic]", scope="au", limit=5)` to check what's been established
+3. Flag any canon vs AU inconsistencies. If the user identifies a missing AU fact, record it via `kg_add_episode(content="...", group="union-au", source="user-input")`
+
+Use KG results alongside file context to inform chapter planning.
+
 ## Step 3: Present Chapter Context
 
 Summarize:

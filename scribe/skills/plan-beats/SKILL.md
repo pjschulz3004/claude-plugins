@@ -27,6 +27,16 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" character-state "[
 ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" who-knows "[relevant fact]"
 ```
 
+### Knowledge Graph Lookup
+
+Query the KG for detailed character and relationship info needed for beat-level planning:
+
+1. For each character: `kg_search(query="[character] powers abilities fighting style", scope="canon", limit=5)` and `kg_search(query="[character] current state relationships", scope="au", limit=5)`
+2. For knowledge states: `kg_search(query="[character] knows about [topic]", scope="au", limit=5)` — ensures beats don't have characters act on info they don't have
+3. Flag any canon vs AU inconsistencies to the user. If the user identifies a missing AU fact, record it via `kg_add_episode(content="...", group="union-au", source="user-input")`
+
+Use KG facts to ensure beats respect character capabilities and knowledge boundaries.
+
 ## Step 3: Expand Each Scene into Beats
 
 For each scene from the `(scenes)` file, create 4-8 beats:

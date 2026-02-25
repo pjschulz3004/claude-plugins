@@ -33,6 +33,15 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" who-knows "[key fa
 ${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" continuity-issues [arc]
 ```
 
+### Knowledge Graph Verification
+
+Query the KG for continuity verification:
+
+1. For each character: `kg_search(query="[character] current state injuries location knowledge", scope="au", limit=5)` — verify character states in the draft match KG records
+2. For referenced events: `kg_search(query="[event or fact referenced in draft]", scope="canon", limit=5)` — verify canon accuracy
+3. For locations: `kg_search(query="[location] description", scope="canon", limit=3)` — verify physical descriptions match canon
+4. Flag any discrepancies between draft content and KG facts as continuity issues in the scratchpad
+
 ## Step 3: Build Continuity Scratchpad
 
 Before editing, create a mental scratchpad:

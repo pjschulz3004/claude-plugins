@@ -2,7 +2,7 @@
 name: continuity
 description: "Check story or chapter-level continuity. Uses SQLite database and context files to find contradictions, timeline issues, and unresolved threads."
 argument-hint: "[story|chapter] [target]"
-allowed-tools: ["Read", "Glob", "Grep", "Bash", "AskUserQuestion", "Task"]
+allowed-tools: ["Read", "Glob", "Grep", "Bash", "AskUserQuestion", "Task", "mcp__kg__kg_search", "mcp__kg__kg_add_episode"]
 ---
 
 # /scribe:continuity
@@ -27,6 +27,7 @@ Read `scribe.local.md` for paths and current position.
 - Story overview, all arc outlines
 - Character files (status fields)
 - If database exists: query all unresolved continuity_log entries, character states across arcs
+- **KG lookup**: `kg_search(query="major character states and relationships", scope="au", limit=15)` for current AU state, then `kg_search(query="[same]", scope="canon")` for canon reference
 
 ### Chapter-level:
 - Target chapter (latest version)
@@ -34,6 +35,7 @@ Read `scribe.local.md` for paths and current position.
 - Arc context
 - Character files for characters present
 - If database exists: query character states as of previous chapter, relevant knowledge facts
+- **KG lookup**: For each character in the chapter, run `kg_search(query="[character name] current state powers relationships", scope="au")` to verify states match
 
 ## Step 4: Check Continuity
 
@@ -44,7 +46,8 @@ Create a continuity scratchpad and verify:
 - **Relationships**: Current status matches last established state
 - **Knowledge states**: Characters only act on information they actually have
 - **Foreshadowing/payoff**: Setup from earlier chapters tracked, payoffs noted
-- **Canon compliance**: No contradiction with source material (if applicable)
+- **Canon compliance**: Query `kg_search(query="[entity or event in question]", scope="canon")` to verify against Worm canon. Flag any AU deviations that aren't already recorded in the AU scope
+- **AU consistency**: For any flagged issue, check if it's an intentional AU divergence via `kg_search(query="[issue]", scope="au")`. If the user confirms a new AU fact, record it: `kg_add_episode(content="[fact]", group="union-au", source="user-input")`
 
 ## Step 5: Report
 

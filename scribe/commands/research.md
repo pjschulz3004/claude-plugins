@@ -1,8 +1,8 @@
 ---
 name: research
-description: "Research a topic for your story. Searches existing knowledge base first, then web. Saves findings to knowledge base and optionally to SQLite."
+description: "Research a topic for your story. Searches knowledge graph, SQLite, and markdown first, then web. Saves findings to all three stores."
 argument-hint: "<topic>"
-allowed-tools: ["Read", "Write", "Glob", "Grep", "Bash", "WebFetch", "WebSearch", "AskUserQuestion"]
+allowed-tools: ["Read", "Write", "Glob", "Grep", "Bash", "WebFetch", "WebSearch", "AskUserQuestion", "mcp__kg__kg_search", "mcp__kg__kg_add_episode"]
 ---
 
 # /scribe:research
@@ -15,10 +15,15 @@ Read `scribe.local.md` for paths (especially `knowledge_base` and `database`).
 
 ## Step 2: Check Existing Knowledge
 
-Search `{paths.knowledge_base}/` for existing files on this topic using Grep.
-If database exists, query the `concepts` and `knowledge_facts` tables.
+Search all three knowledge stores in parallel:
 
-If good information already exists, present it and ask if the user wants more.
+1. **Knowledge Graph**: Use the `kg_search` MCP tool with the topic as query. Try both `scope: "canon"` and `scope: "au"` if the topic might span both. The graph returns entities, relationships, and facts with temporal tracking.
+
+2. **SQLite**: If database exists, query `concepts`, `knowledge_facts`, and `characters` tables via `db-helper.sh`.
+
+3. **Markdown files**: Search `{paths.knowledge_base}/` using Grep.
+
+Present all results together, noting which store each result came from. If good information already exists, present it and ask if the user wants more.
 
 ## Step 3: Research
 
@@ -56,15 +61,28 @@ Format:
 *Researched: [date]*
 ```
 
-## Step 5: Update Database (if exists)
+## Step 5: Update Knowledge Stores
 
-Ask the user if findings should be added to the database:
-- Character information → `characters` table
-- World facts → `knowledge_facts` table
-- Philosophical/political concepts → `concepts` table
+After saving the markdown file, ingest findings into both structured stores:
 
-Use `db-helper.sh query` to insert records.
+### Knowledge Graph (always do this)
+
+Use the `kg_add_episode` MCP tool to feed the synthesized research into Graphiti. This automatically extracts entities and relationships.
+
+- **content**: The full synthesized research text (summary + key facts + story relevance)
+- **source**: `"research"`
+- **group**: `"worm-canon"` for canon material, `"union-au"` for AU-specific findings
+- **timestamp**: Use in-story date if the research relates to a specific timeline point, otherwise omit
+
+If the research covers both canon and AU material, make two separate `kg_add_episode` calls with appropriate groups.
+
+### SQLite (ask user first)
+
+Ask the user if findings should also be added to the SQLite database:
+- Character information → `characters` table via `db-helper.sh upsert-character`
+- World facts → `knowledge_facts` table via `db-helper.sh add-fact`
+- Philosophical/political concepts → `concepts` table via `db-helper.sh upsert-concept`
 
 ## Step 6: Report
 
-Summarize what was found and where it was saved.
+Summarize what was found and where it was saved. Include counts from the KG ingestion (nodes and edges extracted).
