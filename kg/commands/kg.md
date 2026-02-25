@@ -1,5 +1,5 @@
 ---
-name: "kg"
+name: "kg:help"
 description: "Universal Knowledge Graph operations. Search, add knowledge, ingest files, check status, or set up a new project."
 argument-hint: "<search|add|ingest|status|setup> [args]"
 allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "AskUserQuestion", "mcp__kg__kg_search", "mcp__kg__kg_add_episode", "mcp__kg__kg_status"]

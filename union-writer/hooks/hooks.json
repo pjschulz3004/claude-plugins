@@ -1,0 +1,15 @@
+{
+  "description": "Union Writer output style — collaborative writing partner for DFW-influenced fiction",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/session-start.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -35,8 +35,19 @@
       "name": "kg",
       "source": "./kg",
       "description": "Universal Knowledge Graph. Semantic search, knowledge ingestion, and per-project scoping via Graphiti + Neo4j.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "knowledge",
+      "author": {
+        "name": "Paul Schulz",
+        "email": "paul@jschulz.org"
+      }
+    },
+    {
+      "name": "union-writer",
+      "source": "./union-writer",
+      "description": "Output style: collaborative writing partner for DFW-influenced literary fiction.",
+      "version": "0.1.0",
+      "category": "output-style",
       "author": {
         "name": "Paul Schulz",
         "email": "paul@jschulz.org"
