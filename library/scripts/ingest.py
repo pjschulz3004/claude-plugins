@@ -69,7 +69,7 @@ def ingest_book(book_id: str, library_root: str) -> dict:
             ],
             capture_output=True,
             text=True,
-            timeout=600,
+            timeout=3600,
         )
 
         if result.returncode != 0:
@@ -95,7 +95,7 @@ def ingest_book(book_id: str, library_root: str) -> dict:
         }
 
     except subprocess.TimeoutExpired:
-        mark_failed(manifest, book_id, "Ingestion timed out (600s)")
+        mark_failed(manifest, book_id, "Ingestion timed out (3600s)")
         save_manifest(manifest)
         return {"status": "failed", "book_id": book_id, "error": "timeout"}
     except Exception as e:
