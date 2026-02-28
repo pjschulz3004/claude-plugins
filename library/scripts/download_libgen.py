@@ -25,16 +25,38 @@ from manifest import load_manifest, save_manifest, add_book, mark_downloaded, ma
 ALLOWED_MIRRORS = {"li", "rs", "gs", "lol"}
 
 
-def resolve_download_url(mirror_url: str, md5: str) -> str:
-    """Visit a LibGen mirror page and extract the direct download URL.
+def resolve_download_url(mirror_url: str, md5: str) -> dict:
+    """Visit a LibGen mirror page and extract the direct download URL + metadata.
 
-    The mirror page (e.g. libgen.li/ads.php?md5=...) contains GET links.
-    We extract the one with a 'key' parameter to build the CDN URL.
+    Returns dict with 'url', 'title', 'authors' keys.
     """
     resp = requests.get(mirror_url, timeout=30)
     resp.raise_for_status()
 
     soup = BeautifulSoup(resp.text, "html.parser")
+
+    # Extract metadata from the page
+    title = ""
+    authors = []
+    # Try to find title — typically in an <h1> or first bold/large text
+    h1 = soup.find("h1")
+    if h1:
+        title = h1.get_text(strip=True)
+    if not title:
+        # Fallback: look for title-like elements
+        for tag in soup.find_all(["h2", "h3", "b", "strong"]):
+            text = tag.get_text(strip=True)
+            if len(text) > 10 and "libgen" not in text.lower():
+                title = text
+                break
+    # Try to find authors — often near "Author(s):" label
+    for td in soup.find_all("td"):
+        text = td.get_text(strip=True)
+        if text.startswith("Author(s):"):
+            authors = [a.strip() for a in text[10:].split(",") if a.strip()]
+            break
+
+    # Extract download URL
     a_tags = soup.find_all("a", string=lambda s: s and s.strip().upper() == "GET")
 
     if not a_tags:
@@ -50,7 +72,11 @@ def resolve_download_url(mirror_url: str, md5: str) -> str:
         if key_vals and key_vals[0]:
             parsed = urlparse(mirror_url)
             root_url = f"{parsed.scheme}://{parsed.netloc}"
-            return f"{root_url}/get.php?md5={md5}&key={key_vals[0]}"
+            return {
+                "url": f"{root_url}/get.php?md5={md5}&key={key_vals[0]}",
+                "title": title,
+                "authors": authors,
+            }
 
     raise ValueError(f"Could not extract download key from mirror page: {mirror_url}")
 
@@ -77,7 +103,7 @@ def download_book(
     library_root: str,
     mirror: str = "li",
     mirror_url: str | None = None,
-) -> tuple[Path, int]:
+) -> tuple[Path, int, dict]:
     """Download a book from LibGen by MD5 hash.
 
     Args:
@@ -88,7 +114,7 @@ def download_book(
         mirror_url: Direct mirror URL (skips construction if provided)
 
     Returns:
-        (file_path, size_bytes)
+        (file_path, size_bytes, metadata) where metadata has 'title' and 'authors'
     """
     if mirror not in ALLOWED_MIRRORS:
         raise ValueError(f"Unknown mirror: {mirror!r}")
@@ -111,17 +137,17 @@ def download_book(
     dest = Path(library_root) / "downloads" / f"{md5}.{extension}"
 
     with dns_context(*hosts_to_bypass):
-        download_url = resolve_download_url(mirror_url, md5)
+        result = resolve_download_url(mirror_url, md5)
+        download_url = result["url"]
 
         # The CDN URL might be on the same or different host
         cdn_parsed = urlparse(download_url)
         if cdn_parsed.hostname and cdn_parsed.hostname not in hosts_to_bypass:
-            # Need to add this host too — re-enter context
             pass  # For now, CDN is typically same host
 
         size = download_file(download_url, dest)
 
-    return dest, size
+    return dest, size, {"title": result["title"], "authors": result["authors"]}
 
 
 def download_from_search_result(
@@ -152,13 +178,19 @@ def download_from_search_result(
         }
 
     try:
-        file_path, size = download_book(
+        file_path, size, metadata = download_book(
             md5=result.download_id,
             extension=result.format,
             library_root=library_root,
             mirror=mirror,
             mirror_url=result.download_url,
         )
+
+        # Update entry with scraped metadata if title was placeholder
+        if entry.title == "Unknown" and metadata.get("title"):
+            entry.title = metadata["title"]
+        if entry.authors == ["Unknown"] and metadata.get("authors"):
+            entry.authors = metadata["authors"]
 
         rel_path = str(file_path.relative_to(library_root))
         mark_downloaded(manifest, entry.id, rel_path, size)
