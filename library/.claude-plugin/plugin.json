@@ -1,0 +1,11 @@
+{
+  "name": "library",
+  "version": "0.1.0",
+  "description": "Personal research library pipeline. Search, download, convert, and ingest books into the Knowledge Graph. Supports LibGen, torrents (via Real-Debrid), PDF/EPUB/MOBI conversion to chapter-structured markdown.",
+  "author": {
+    "name": "Paul",
+    "email": "paul@jschulz.org"
+  },
+  "license": "MIT",
+  "keywords": ["library", "books", "research", "libgen", "pdf-conversion", "knowledge-graph"]
+}

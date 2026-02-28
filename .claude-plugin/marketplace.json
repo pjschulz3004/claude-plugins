@@ -52,6 +52,17 @@
         "name": "Paul Schulz",
         "email": "paul@jschulz.org"
       }
+    },
+    {
+      "name": "library",
+      "source": "./library",
+      "description": "Research library pipeline. Search LibGen, download books, convert EPUB/PDF to chapter-structured markdown, and ingest into the Knowledge Graph.",
+      "version": "0.1.0",
+      "category": "knowledge",
+      "author": {
+        "name": "Paul Schulz",
+        "email": "paul@jschulz.org"
+      }
     }
   ]
 }
