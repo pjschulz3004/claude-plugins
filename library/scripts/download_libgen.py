@@ -35,26 +35,20 @@ def resolve_download_url(mirror_url: str, md5: str) -> dict:
 
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    # Extract metadata from the page
+    # Extract metadata — LibGen ads.php puts Title/Author/etc in one <td> with <br/> separators
     title = ""
     authors = []
-    # Try to find title — typically in an <h1> or first bold/large text
-    h1 = soup.find("h1")
-    if h1:
-        title = h1.get_text(strip=True)
-    if not title:
-        # Fallback: look for title-like elements
-        for tag in soup.find_all(["h2", "h3", "b", "strong"]):
-            text = tag.get_text(strip=True)
-            if len(text) > 10 and "libgen" not in text.lower():
-                title = text
-                break
-    # Try to find authors — often near "Author(s):" label
     for td in soup.find_all("td"):
-        text = td.get_text(strip=True)
-        if text.startswith("Author(s):"):
-            authors = [a.strip() for a in text[10:].split(",") if a.strip()]
-            break
+        html = str(td)
+        if "Title:" not in html:
+            continue
+        # Parse br-separated lines within this td
+        for line in td.stripped_strings:
+            if line.startswith("Title:"):
+                title = line[6:].strip()
+            elif line.startswith("Author(s):"):
+                authors = [a.strip() for a in line[10:].split(";") if a.strip()]
+        break
 
     # Extract download URL
     a_tags = soup.find_all("a", string=lambda s: s and s.strip().upper() == "GET")
