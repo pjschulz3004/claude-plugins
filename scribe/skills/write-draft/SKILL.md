@@ -37,6 +37,14 @@ Query the KG for grounding details needed during drafting:
 3. For key interactions: `kg_search(query="[character A] relationship with [character B]", scope="au", limit=5)`
 4. Flag any canon vs AU inconsistencies briefly. Use KG results to inform concrete sensory details and accurate character interactions.
 
+## Step 2b: Chapter Type Routing
+
+Before drafting, classify the chapter's dominant mode:
+- **Battle chapter**: Suggest `/scribe:write battle` when available. If drafting here, load `epic-battle-scene-craft.md` and `battle-craft-reference.md` from research.
+- **Dialogue-heavy chapter**: Load `dialogue-craft.md` and `power-dynamics-dialogue.md` for subtext and status transaction guidance.
+- **Exposition/worldbuilding chapter**: Load `worldbuilding-exposition-craft.md` for incluing techniques.
+- **Mixed**: Identify the dominant mode per scene and apply the relevant craft per scene break.
+
 ## Step 3: Establish Voice
 
 Before drafting, confirm the POV character's voice:
@@ -51,6 +59,13 @@ Present a brief voice summary to the author for confirmation.
 ## Step 4: Draft Prose
 
 Work through the beats file scene by scene. For each scene:
+
+### First-Person Craft
+Before writing each scene, verify:
+- **Information control**: The narrator can only know what they witness or are told. Trace every fact back to its source.
+- **Interiority balance**: Neither interior thought nor exterior action should dominate for more than a page (Janice Hardy rule). Alternate.
+- **Intellectual Narrator Trap**: If the character is analytical (Taylor, Lena), force situations where analysis fails. Feeling must coexist with thinking. If three consecutive paragraphs are analysis, the next must be sensory or emotional.
+- **Voice consistency**: Vocabulary, syntax, and worldview must match the character profile loaded in Step 3. Cross-check against `character-voices.md`.
 
 ### Opening
 - Start with friction (tension in the first 2-3 lines)
@@ -69,8 +84,23 @@ For each beat:
 - End on the planned hinge (decision, reversal, or striking image)
 - Do NOT resolve tension — leave it open
 
+### Prose Rhythm Engine
+- **Spiral+jab**: Long recursive sentence followed by short punch. Never >2 same-type sentences consecutively.
+- **Job-mix rotation**: Cycle through sentence types: Sensory, Observation, Action, Thought, Analogy, Fact, Dialogue, Orientation, Micro-tension. Track which types you've used recently and rotate.
+- **Pacing heartbeat**: Every 120-180 words, insert an Action or Micro-tension beat. Every 300-500 words, ground with a Fact or fresh concrete detail. If 500+ words pass at a single register, force a shift.
+
+### Subtext Discipline
+- **Iceberg principle**: Cut surface narration that explains what action or dialogue already shows.
+- **Show OR tell, never both**: When a character's actions demonstrate their emotion, delete the sentence that names the emotion.
+- **Dialogue subtext**: Characters rarely say exactly what they mean. Write the line they would say, not the one that most efficiently conveys information.
+
+### Concrete:Abstract Engine
+- **2:1 ratio minimum**: Every abstract concept must be earned through prior concrete showing.
+- **Theory solves the moment**: Ideology must solve the present dramatic problem, not lecture about the general case. Tie each abstraction to a physical prop, an immediate decision, or a character's body language.
+- **Test**: If you can delete a theoretical passage and the scene still makes emotional sense, the theory wasn't doing dramatic work.
+
 ### Prose Quality Rules (from reference)
-- Spiral+jab rhythm: long recursive sentence → short punch
+- Spiral+jab rhythm: long recursive sentence followed by short punch
 - Max 1 figurative per paragraph, on turning points
 - Concrete:abstract ratio 2:1+
 - Cut filter words (saw, felt, noticed, realized)
@@ -120,5 +150,17 @@ Update `scribe.local.md`:
 - `voice_confidence: [author's rating]`
 
 Suggest next step: `/scribe:edit plot [X.X]`
+
+## Deep Dive Resource List
+
+When specific drafting problems arise, load the relevant research file from `knowledge-base/research/`:
+- **Flat dialogue**: `dialogue-craft.md`, `power-dynamics-dialogue.md`
+- **Voice drifting**: `first-person-pov-mastery.md`
+- **Pacing dragging**: `tension-mechanics-in-action.md`
+- **Battle scenes**: `epic-battle-scene-craft.md`, `battle-craft-reference.md`
+- **Exposition dumps**: `worldbuilding-exposition-craft.md`
+- **Emotional scenes falling flat**: `emotional-impact-craft.md`
+
+**Note:** This skill loads `prose-rules.md` and `character-voices.md` from the references directory. Both contain updated craft integration.
 
 **Remember:** The draft does NOT need to be polished. It needs to hit the beats, maintain voice, and be structurally sound. Polish comes in editing.

@@ -128,6 +128,54 @@ Differentiate through: vocabulary, sentence structure, rhythm, verbal tics,
 topics they gravitate toward or avoid.
 The Radio Test: Cover tags. Can you tell who's speaking?
 
+## Scene Failure Modes
+
+Five common scene failures and their fixes:
+
+| Failure | Symptom | Fix |
+|---------|---------|-----|
+| **Tourist scene** | Characters observe but don't act. Nothing changes. | Add a goal and obstacle. Force a decision by scene's end |
+| **Tea party scene** | Characters discuss but don't disagree. No conflict. | Give each character a different want. Someone must lose |
+| **Lecture scene** | One character explains while others listen. Exposition dump. | Break info across multiple scenes. Make listeners challenge the speaker |
+| **Yo-yo scene** | Scene oscillates without progressing: up/down/up/down. | Each swing must ratchet higher. Never return to the same baseline |
+| **Postcard scene** | Beautiful setting description, no dramatic function. | The setting must create or intensify the conflict, not decorate it |
+
+## Expanded MRU Ordering
+
+When showing full reaction chains, the order is strict:
+
+1. **Feeling** (involuntary: gut clench, heart rate, flinch)
+2. **Reflex** (immediate physical: dodge, grab, freeze)
+3. **Rational action** (deliberate: reach for weapon, step back, assess)
+4. **Speech** (verbal response: always comes last)
+
+Skip steps freely (not every beat needs all four), but never reorder them. A character who speaks before flinching breaks immersion.
+
+## Emotional Beat Design
+
+Three types of emotional beats, each requiring different craft:
+
+| Type | Definition | Technique |
+|------|-----------|-----------|
+| **Earned** | Emotion built through prior scenes, paid off here | Setup/payoff. The reader feels it because they've invested. Quiet prose at the climax |
+| **Triggered** | Emotion from sudden reversal or revelation | Sharp contrast. The moment before should be calm or routine. Brevity at the strike point |
+| **Ambient** | Underlying mood sustained across a scene | Sensory palette, sentence rhythm, word choice. Never stated directly. The reader absorbs it |
+
+**Distribution target**: Mostly earned (60%+), some triggered (25%), ambient as seasoning (15%). Too many triggered beats = melodrama. Too much ambient = nothing happens.
+
+## Psychic Distance Shifts Within Scenes
+
+Plan distance shifts deliberately:
+
+- **Opening**: Level 2-3 (orient the reader, establish the situation)
+- **Rising action**: Level 3-4 (draw closer as stakes increase)
+- **Crisis/climax**: Level 4-5 (maximum intimacy at the breaking point)
+- **Resolution**: Pull back to Level 2-3 (give the reader breathing room)
+
+**The Emotional Zoom**: When a revelation hits, shift from Level 2 to Level 5 in a single paragraph break. The sudden intimacy mirrors the character's shock.
+
+**The Cool Pullback**: After intense Level 5 interiority, snap to Level 1-2 external description. The distance itself communicates numbness or dissociation.
+
 ## Scene Checklist
 - [ ] Goal: Can state what POV character wants in one sentence
 - [ ] Conflict: Something opposes the goal
@@ -135,7 +183,10 @@ The Radio Test: Cover tags. Can you tell who's speaking?
 - [ ] Friction: Opens with tension in first 2-3 lines
 - [ ] Hinge: Closes on decision, reversal, or striking image
 - [ ] Question: One clear dramatic question
-- [ ] MRU Order: Motivations precede reactions
+- [ ] MRU Order: Motivations precede reactions (feeling > reflex > action > speech)
 - [ ] Pacing: At least one turn per ~300 words
 - [ ] Beats all turn something (status/knowledge/plan)
 - [ ] Causality: "therefore/but" connections between beats
+- [ ] Failure modes: Not a tourist, tea party, lecture, yo-yo, or postcard scene
+- [ ] Emotional beats: Mostly earned, some triggered, ambient as seasoning
+- [ ] Distance shifts: Psychic distance varies through the scene

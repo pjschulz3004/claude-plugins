@@ -119,6 +119,50 @@ Every dialogue line must accomplish at least one:
 
 If a line does none: cut it.
 
+## First-Person Specific Craft
+
+### Temporal Distance
+The gap between the narrating self and the experiencing self. Choose and be consistent:
+- **Immediate**: Narrator tells it as it happens. Present tense or very close past. Raw, unreflective.
+- **Recent past**: Narrator knows how the scene ends but not the arc. Can foreshadow subtly.
+- **Distant retrospective**: Narrator knows everything. Can comment with irony. Risk: why tell it at all?
+
+### Retrospective Irony
+The narrator knows more than their past self did. Use this gap:
+- Dramatic irony: "I thought that was the worst it could get." (Reader knows it wasn't.)
+- Self-commentary: "I told myself I was being strategic. I was being afraid."
+- Warning signals: "I should have noticed the way she paused before answering."
+
+Control the dosage. Too much retrospective commentary breaks immersion in the present action.
+
+### Narrative Reliability
+Every first-person narrator is unreliable. The question is how and about what:
+- **Self-perception gaps**: What the narrator claims about themselves vs. what their actions show
+- **Blind spots**: What they consistently fail to notice (reveals character)
+- **Motivated reasoning**: Where their analysis serves their ego rather than truth
+- **Competence variance**: Smart narrators can still be emotionally stupid
+
+### The Intellectual Narrator Trap
+Smart narrators (like Taylor) risk: turning every scene into analysis, crowding out feeling with theory, making the narrator more interesting than the story. Fix: force situations where analysis fails. Make the body betray the brain. Let other characters be right when the narrator is wrong.
+
+## Multi-POV Balance
+
+### Screen Time Allocation
+- Primary POV gets 60-70% of total wordcount
+- Secondary POVs share the remainder based on arc importance
+- Track cumulative wordcount per POV across arcs to prevent drift
+- Every POV chapter must advance that character's arc (not just provide information)
+
+### The Ensemble Gravity Problem
+Primary POV characters attract narrative attention. Supporting characters drift into orbit.
+Fix: Give every POV character a scene where they're the most interesting person in the room.
+Give every supporting character at least one moment where they know something the protagonist doesn't.
+
+### POV Transition Craft
+- End one POV chapter on a question. Start the next on a different question (not an answer)
+- Voice shift must be immediate: first sentence should sound different
+- Never use POV switches to create cheap cliffhangers without payoff
+
 ## Voice Quick Checks
 - [ ] Each character passes the Radio Test (identifiable without tags)
 - [ ] Vocabulary matches background and education
@@ -128,3 +172,5 @@ If a line does none: cut it.
 - [ ] Narration infused with POV character's perspective
 - [ ] Actions under pressure reveal true character
 - [ ] Consistent core with surface contradictions
+- [ ] First-person: temporal distance consistent, reliability gaps intentional
+- [ ] Multi-POV: voices immediately distinguishable, screen time balanced

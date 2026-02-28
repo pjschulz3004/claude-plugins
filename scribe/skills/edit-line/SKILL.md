@@ -61,6 +61,57 @@ Work through the chapter paragraph by paragraph. Check:
 - [ ] **Interior/exterior balance**: Neither dominates for more than a page?
 - [ ] **Infused subjectivity**: "Objective" descriptions carry POV character's perspective?
 
+### Sentence Architecture Audit
+- [ ] **Spiral+jab verified**: Long recursive sentences are followed by short punches? No more than 2 same-type sentences in a row?
+- [ ] **Paragraph shape variety**: Are shapes mixed (front-loaded, back-loaded, sandwiched, scattered)? Three front-loaded paragraphs in a row reads like a report.
+- [ ] **Cumulative vs. periodic**: Are both present? Cumulative sentences (main clause first, modifiers trailing) and periodic sentences (subordinate material first, main clause withheld) should alternate.
+- [ ] **Sentence type rotation**: Cross-check job-mix at paragraph level. If a paragraph has Observation, Observation, Observation, rewrite the middle one as Action or Sensory.
+
+### Psychic Distance Audit
+Map Gardner's 5 levels through the chapter:
+1. Distant/authorial ("It was winter in Brockton Bay")
+2. Closer ("Taylor walked through the Docks district")
+3. Close third ("The warehouse smelled like rust and salt")
+4. Deep interiority ("God, the smell. Rust and salt and something underneath it")
+5. Stream of consciousness ("Rust salt underneath and she was back in the locker")
+
+- [ ] **No flatline**: Flag any section stuck at a single distance for more than 300 words.
+- [ ] **Crisis moments go deep**: Emotional peaks reach Level 4 or 5.
+- [ ] **Transitions pull back**: Scene transitions and establishing beats use Level 1 or 2.
+- [ ] **No jarring jumps**: Distance shifts by more than 2 levels in a single sentence should be intentional (shock, dissociation), not accidental.
+
+### Dialogue Line Edit
+For every dialogue line in the chapter:
+- [ ] **Advances conflict**: Does this line change the power dynamic, reveal new information, or escalate/de-escalate tension? If it does none of these, cut or rewrite.
+- [ ] **Oblique delivery**: Is the character saying what they mean indirectly? Direct statements are for ultimatums and confessions, not regular conversation.
+- [ ] **Tag audit**: Does each dialogue tag serve a purpose? "Said" is invisible (good). Action beats are better than adverb tags ("she said angrily" → she slammed her palm on the table). Cut tags entirely when speaker is clear from context.
+- [ ] **Speech vs. speechifying**: Read dialogue aloud. If it sounds like an essay paragraph with quotation marks around it, break it up with interruptions, false starts, or action beats.
+
+### Subtext Pass
+- [ ] **Show OR tell audit**: Find every paragraph where the narrator explains what the reader should feel after the scene already showed it. Cut the explanation. If a character slams a door and the narrator says "She was angry," delete "She was angry."
+- [ ] **Redundant interiority**: After each emotional action beat, check: is there an explanatory sentence that restates what the action already communicated? Delete it.
+- [ ] **Trust the scene work**: If the dialogue and action are doing their job, the narrator's commentary is dead weight. Remove it.
+
+### Verb Audit
+- [ ] **Adverb crutches**: Hunt weak verb + adverb combos ("walked quickly" → "strode", "said quietly" → "murmured", "looked carefully" → "studied"). Replace with a single strong verb.
+- [ ] **Filtering verbs**: Scan for: could see, could feel, could hear, noticed that, realized that, found myself, seemed to, appeared to. These put a pane of glass between reader and experience. Cut them and render the experience directly ("I could hear the rain" → "Rain hammered the windows").
+- [ ] **Was/were + -ing**: Flag passive progressive constructions ("was walking", "were talking"). Replace with active verbs unless the ongoing nature is the point.
+
+### Sensory Balance
+- [ ] **Visual-only passages**: Flag any stretch of 200+ words using only sight. Add at least one non-visual sense.
+- [ ] **Smell discipline**: Used max 1x per scene. Never paired with metaphor in the same sentence. Smell is powerful precisely because it's rare.
+- [ ] **Touch/texture present**: At least once per scene, a character physically interacts with their environment (texture of a surface, temperature, weight of an object).
+- [ ] **Sound grounding**: Ambient sound grounds the reader in place. Sudden sound creates alertness. Check that sound details serve one of these two functions.
+
+### Deep Dive Resources
+For persistent line-level issues that resist the standard pass, load from `knowledge-base/research/`:
+- Sentence monotony or rhythm problems: `prose-style-sentence-craft.md`
+- Subtext missing or narrator over-explaining: `subtext-and-implication.md`
+- Voice drift or wrong psychic distance: `first-person-pov-mastery.md`
+- Tension flagging between action beats: `tension-mechanics-in-action.md`
+
+**References loaded for this stage**: `prose-rules.md` (updated), `dialogue-reference.md`
+
 ## Step 4: Produce Feedback
 
 For line-level issues, use a tighter feedback format:

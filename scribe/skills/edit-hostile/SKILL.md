@@ -62,6 +62,41 @@ After the seven-question pass, do a final scan:
 - **Is there at least one moment per scene that surprises even the character?** (An unexpected thought, a reaction they didn't expect, a stray observation)
 - **Does the prose have texture?** (Varied rhythm, unexpected word choices, moments of roughness amid polish)
 
+## Step 4b: Craft Integrity Checks
+
+These checks go beyond AI detection into whether the prose works as fiction. No references loaded. Trust your reading instinct.
+
+### Violence and Aftermath Check
+If the chapter contains violence:
+- [ ] **Specific injuries**: Named, precise wounds (not a catalog of generic damage). One broken finger is more real than "injuries covered her body."
+- [ ] **Persistent consequences**: Are injuries mentioned in later scenes? A broken rib doesn't vanish between paragraphs.
+- [ ] **Aftermath weight**: Does the aftermath get equal or greater page time than the action? If not, the violence is serving spectacle, not story.
+- [ ] **Character or spectacle**: Does each violent moment reveal character (who someone is under pressure) or just look cool? Cut the cool ones that reveal nothing.
+
+### Subtext Density Check
+Sample 5 random dialogue exchanges from the chapter. Score each:
+- **Direct**: Character says exactly what they mean. (Target: <40% of exchanges)
+- **Oblique**: Meaning is below the surface, implied through deflection, redirection, or implication. (Target: >60% of exchanges)
+- If most dialogue is on-the-nose, the conversations feel artificial. Real people deflect, dodge, redirect, and imply. Flag any exchange where both speakers say exactly what they mean for more than 3 consecutive lines.
+
+### Emotional Honesty Check
+- [ ] **Performed vs. felt**: Does any emotional moment feel staged for the reader rather than experienced by the character? If you can sense the author reaching for your heartstrings, the moment is performed.
+- [ ] **Body betrays brain**: For intellectual narrators (especially Taylor), is there at least one moment where a physical reaction contradicts the analytical stance? The throat tightening mid-sentence. The hand that won't stop shaking while the narrator explains why they're fine.
+- [ ] **Vulnerability through resistance**: The most honest moments come when the narrator is trying NOT to feel something. Check that vulnerability emerges despite the character's defenses, not because they drop them conveniently.
+
+### The Restraint Test
+Find the chapter's most emotional moment. Check:
+- [ ] **Quiet prose at peak emotion**: Is the language simple and concrete at the emotional climax? Short sentences. Concrete details. No ornate descriptions.
+- [ ] **Inverse proportion**: The bigger the emotional payload, the simpler the language. If the most emotional paragraph is also the most ornate, it will feel manufactured.
+- [ ] **No emotional vocabulary**: At the peak moment, does the prose avoid naming the emotion? ("Grief", "devastation", "heartbreak" should not appear at the moment they're being felt. The reader should name the emotion, not the narrator.)
+
+### Re-reading Reward Check
+- [ ] **Foreshadowing echo**: Is there at least one detail that gains meaning on re-read? A line that seems casual the first time but reveals new significance when you know how the chapter (or arc) ends.
+- [ ] **Layered dialogue**: Is there at least one exchange where a character says something that means two different things depending on what the reader knows?
+- [ ] **Plant without payoff check**: Conversely, is there a detail that seems planted but never pays off? Either pay it off or make it feel organic (not everything needs to be a Chekhov's gun, but nothing should feel like a forgotten one).
+
+**No additional references loaded for this step.** The hostile reader comes fresh. That is the point.
+
 ## Step 5: Produce (edited-5-hostile) File
 
 Write: `{paths.arcs}/arc-N-name/X.X Title (edited-5-hostile).md`

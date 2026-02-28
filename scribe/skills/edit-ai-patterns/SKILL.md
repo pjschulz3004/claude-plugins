@@ -115,6 +115,28 @@ Scan for the forbidden patterns from the checklist:
 - Forbidden micro-transitions ("For a moment...", "Suddenly...")
 - Forbidden abstractions as subjects ("The realization dawned", "Tension crackled")
 
+### Thought Verb Hunt (Palahniuk Exercise)
+Hunt these thought verbs and replace each with concrete action, dialogue, or observable detail:
+- thinks, knows, understands, realizes, believes, wants, remembers, imagines, desires
+- Instead of "She realized he was lying": show what she sees or hears that makes her conclude he's lying (his hand goes to his collar, his answer comes too fast, his story contradicts what he said ten minutes ago).
+- Instead of "He wanted to leave": show him edging toward the door, giving shorter answers, checking his watch.
+- The rule: if a thought verb is doing the work, the scene isn't. Replace the verb with the scene.
+- **Exception**: Deep POV interior monologue where the character is explicitly processing ("I knew that was wrong, but I didn't care") can keep thought verbs when the character's awareness IS the point.
+**Count**: ___ thought verbs found → ___ replaced with concrete scenes / ___ kept (intentional)
+
+### Abstraction Audit
+Find every abstract noun used as a sentence subject:
+- "The realization...", "The tension...", "The silence...", "A sense of...", "The weight of...", "The knowledge that..."
+- These are AI hallmarks. A character can realize something (verb), but "The realization" cannot act. Replace with the character doing or experiencing the thing.
+- "The silence stretched between them" → Neither of them spoke. She counted the cracks in the ceiling tile.
+- "A sense of dread settled over the room" → Her stomach clenched. The fluorescent light buzzed.
+**Count**: ___ abstract subjects found → ___ rewritten as character action
+
+### Deep Dive Resource
+For chapters with persistent AI texture that resists the standard checklist, load `revision-self-editing-craft.md` from `knowledge-base/research/`. This provides 6 pass-by-pass checklists and 7 distinct editorial philosophies (Browne & King, Palahniuk, King, and others) for deep revision work when the normal categories aren't catching the problem.
+
+**Reference loaded for this stage**: `ai-ism-checklist.md` (existing, unchanged)
+
 ## Step 6: Produce (edited-4-ai) File
 
 Write: `{paths.arcs}/arc-N-name/X.X Title (edited-4-ai).md`

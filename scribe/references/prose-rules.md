@@ -83,11 +83,53 @@ Neutral: "The man had a beard." Infused: "The man had one of those beards that p
 Neither should dominate for more than a page.
 Intercutting: action beat, thought beat, action beat, thought beat.
 
-## Psychic Distance (John Gardner)
-Vary closeness to character's consciousness within scenes:
-- Pull back for establishing shots and transitions
-- Push close for emotional moments and action
-- The more important the moment, the closer you should be
+## Sentence Architecture
+
+### Cumulative vs. Periodic
+- **Cumulative**: Main clause first, then modifiers pile on. Conversational, flowing. Good for: observation, description, stream of consciousness.
+  > "She crossed the room, one hand trailing the shelf edge, fingers collecting dust she'd later wipe on her jeans."
+- **Periodic**: Suspense builds through subordinate clauses, main clause arrives last. Good for: revelations, turning points, building tension.
+  > "After three weeks of silence, after the voicemail she never returned, after the rumor that reached her through two intermediaries, she called."
+
+### Four Paragraph Shapes
+1. **Front-loaded**: Key info first, elaboration follows. Decisive, clear.
+2. **Back-loaded**: Build through details, land the point at the end. Suspenseful.
+3. **Sandwiched**: Open strong, develop middle, close stronger. Emphasis on frame.
+4. **Scattered**: Key info distributed. Conversational, DFW-style. Risk: confusion if overdone.
+
+Vary shapes. Three front-loaded paragraphs in a row reads like a report.
+
+## Voice Compression Ladder
+
+Five levels of prose compression tracking narrator stress:
+
+| Level | State | Prose Style |
+|-------|-------|-------------|
+| 1 | Composed | Full recursive sentences, parenthetical asides, analytical observations, humor |
+| 2 | Alert | Shorter sentences, fewer asides, observations become tactical |
+| 3 | Stressed | Fragments enter, humor disappears, sensory details sharpen |
+| 4 | Crisis | Staccato fragments, single-sense focus, no analysis, pure action/reaction |
+| 5 | Survival | Sub-verbal: body sensations, fragmented perception, syntax breaks down |
+
+Transition between levels through a scene, not all at once. Match compression to emotional/physical intensity. Return to Level 1 slowly after crisis (decompression matters).
+
+## Psychic Distance Spectrum (John Gardner)
+
+Five levels of narrative closeness:
+
+| Level | Distance | Example |
+|-------|----------|---------|
+| 1 | Panoramic | "It was a cold November in Brockton Bay." |
+| 2 | Closer | "Taylor walked through the Docks, hands in her pockets." |
+| 3 | Close | "She could feel the cold through her jacket. The Docks smelled like diesel and salt." |
+| 4 | Very close | "Cold bit through the jacket. Diesel and salt. The kind of cold that made you wonder why anyone stayed." |
+| 5 | Interior | "Why did anyone stay? The cold, the diesel, the slow rot of a city that had given up on itself." |
+
+**Key principles:**
+- Shift distance within scenes for variety (don't stay at one level)
+- Crisis moments demand Level 4-5. Transitions can use Level 1-2
+- Jarring jumps (1→5 or 5→1) create intentional shock. Use deliberately
+- The more emotional weight a moment carries, the closer the distance
 
 ## Concrete:Abstract Ratio
 Target: 2+ concrete nouns/props per abstract term on each page.

@@ -72,10 +72,41 @@ Before editing, create a mental scratchpad:
 - [ ] **Supporting characters functional**: Each serves a purpose beyond furniture
 - [ ] **Relationship progression**: Key relationships shift meaningfully
 
+### Character Arc Verification (Deep)
+For each character appearing in the chapter:
+- [ ] **Lie/Truth journey**: Does this chapter advance or complicate their core misconception? If the character is static, justify why.
+- [ ] **Ghost/Wound check**: Are their decisions traceable to their backstory wound? If not, either the decision or the wound needs work.
+- [ ] **Earned regression**: If a character regresses, is the regression caused by specific pressure in this scene? Arbitrary regression is a plotting failure.
+- [ ] **State change**: Compare each character's emotional/relational state at entry and exit. If identical, the character may be furniture.
+
+### Foreshadowing Audit
+- [ ] **Echoes due**: Check earlier chapters for unfulfilled plants that should resonate here. Cross-reference the arc outline's foreshadowing notes.
+- [ ] **New plants logged**: Any new foreshadowing element must have a planned payoff chapter. Note it in the continuity scratchpad.
+- [ ] **Retroactive meaning**: Can any existing detail (object, line, image) gain new significance given what happens in this chapter?
+- [ ] **Deus ex machina check**: Does any resolution rely on an unestablished capability, ally, or knowledge? If so, the setup must be added earlier.
+
 ### Thematic Integrity
 - [ ] **Core themes present**: The chapter's events connect to story themes
 - [ ] **Ideology grounded**: Any political/philosophical content emerges from dramatic situation, not lecture
 - [ ] **Show don't preach**: Theme expressed through action and choice, not narration
+
+### Thematic Consistency (Deep)
+- [ ] **Theme under test**: Does the chapter's plot test the central theme through dramatic conflict, or merely illustrate it?
+- [ ] **Le Guin Test**: Could an intelligent character argue the opposite position convincingly within this chapter? If the theme has no credible opposition, it is being lectured, not explored.
+- [ ] **Ideology through conflict**: Political/philosophical content must emerge from characters pursuing incompatible goals. If ideology appears in monologue, move it into dialogue or decision.
+
+### First-Person Information Audit
+- [ ] **Source tracing**: For each piece of information the narrator shares, identify the source (witnessed, told by whom, deduced from what evidence).
+- [ ] **Omniscient slips**: Flag any moment the narrator knows what happens in a room they're not in, reads emotions they couldn't detect, or possesses knowledge without explanation.
+- [ ] **Convenient eavesdropping**: If the narrator overhears critical information, verify the physical setup makes it plausible.
+- [ ] **Emotional reads**: Does the narrator read other characters' internal states beyond what their interpersonal skill would allow? Taylor is perceptive but not a telepath.
+
+### Structural Position Check
+Identify where this chapter sits in the arc's structure:
+- **Act 1 chapters** (first quarter): Must establish situation, complicate it, and raise specific questions. Should NOT resolve major tensions.
+- **Act 2 chapters** (middle half): Must escalate stakes, test the protagonist, and deliver a midpoint shift. Pressure increases each chapter.
+- **Act 3 chapters** (final quarter): Must deliver crisis, climax, and resolution or new question for the next arc.
+- [ ] Verify the chapter fulfills its structural obligation. A climax chapter that reads like setup, or a setup chapter that resolves too much, needs restructuring.
 
 ## Step 5: Produce Feedback
 
@@ -117,5 +148,7 @@ Present the issue summary to the author. Ask if they want to:
 - Revert specific changes
 
 Update `scribe.local.md`: `pipeline_stage: edit-2`
+
+**Note:** This skill loads `character-craft-reference.md` and `story-craft-reference.md` from the references directory for arc, foreshadowing, and thematic verification.
 
 Suggest next step: `/scribe:edit scene [X.X]`

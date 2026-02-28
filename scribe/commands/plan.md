@@ -1,7 +1,7 @@
 ---
 name: "scribe:plan"
 description: "Plan your story at any level: story, arc, chapter, scenes, or beats. Routes to the appropriate planning workflow."
-argument-hint: "[story|arc|chapter|scenes|beats] [target]"
+argument-hint: "[story|arc|chapter|scenes|beats|battle|campaign|character-arc|operation] [target]"
 allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "AskUserQuestion", "Task", "WebFetch", "WebSearch", "mcp__kg__kg_search", "mcp__kg__kg_add_episode"]
 ---
 
@@ -31,6 +31,10 @@ The user's argument determines the planning level. Parse it as: `[level] [target
 | `chapter` | `3.5` | Plan a specific chapter within current arc |
 | `scenes` | `3.5` | Break a chapter into scenes |
 | `beats` | `3.5` | Expand scenes into beats |
+| `battle` | `3.12` | Plan a battle/action chapter |
+| `campaign` | `Arc 5` or `Empire War` | Plan a multi-chapter conflict arc |
+| `character-arc` | `Taylor` or `Anchor` | Deep character arc planning |
+| `operation` | `3.7` | Plan a heist/raid/operation chapter |
 
 If no argument given, suggest the next logical step based on `pipeline_stage`:
 - `plan-story` → suggest `story`
@@ -91,6 +95,10 @@ Invoke the appropriate skill using the Skill tool:
 - `chapter` → `scribe:plan-chapter`
 - `scenes` → `scribe:plan-scenes`
 - `beats` → `scribe:plan-beats`
+- `battle` → `scribe:plan-battle`
+- `campaign` → `scribe:plan-campaign`
+- `character-arc` → `scribe:plan-character-arc`
+- `operation` → `scribe:plan-operation`
 
 If the skill doesn't exist yet, perform the planning directly using the loaded context and the scene-structure reference.
 

@@ -24,6 +24,8 @@ Parse the user's argument as: `[stage] [chapter-number]`
 | `line` | Stage 3: Line Edit | `edit-3` |
 | `ai` | Stage 4: AI-Pattern Elimination | `edit-4` |
 | `hostile` | Stage 5: Hostile Reader Pass | `edit-5` |
+| `dialogue` | Optional: Dialogue Quality Pass | (optional) |
+| `tension` | Optional: Pacing & Tension Audit | (optional) |
 | (none) | Resume from `pipeline_stage` | (current) |
 
 If no stage argument, read `pipeline_stage` from `scribe.local.md` and route to that stage.
@@ -96,6 +98,8 @@ Route to the appropriate skill:
 - `edit-3` → `scribe:edit-line`
 - `edit-4` → `scribe:edit-ai-patterns`
 - `edit-5` → `scribe:edit-hostile`
+- `dialogue` → `scribe:edit-dialogue`
+- `tension` → `scribe:edit-tension`
 
 If the skill doesn't exist yet, perform the edit directly using the loaded context and the editing-pipeline reference.
 

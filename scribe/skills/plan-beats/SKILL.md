@@ -18,8 +18,9 @@ Read these files:
 2. **Previous chapter ending**: The last scene/beats of the prior chapter (for continuity)
 3. **Character files**: For characters in these scenes (voice, personality, current state)
 
-Load reference:
+Load references:
 - `${CLAUDE_PLUGIN_ROOT}/references/scene-structure.md` — especially the Beat Structure and MRU sections
+- `${CLAUDE_PLUGIN_ROOT}/references/tension-reference.md` — for micro-tension and escalation patterns
 
 If database exists, query for character states and relevant knowledge facts:
 ```bash
@@ -65,6 +66,78 @@ For each beat, tag the outcome:
 - **No, And...**: Goal failed, things get worse
 - **Yes!**: Clean victory (rare — save for arc climaxes)
 - **No.**: Flat failure (always add "And..." to make it productive)
+
+## Step 3b: Craft Integration
+
+### MRU Sequencing
+
+For each beat, verify the motivation-reaction chain follows the correct order:
+
+1. **Motivation** (external stimulus): something happens in the world
+2. **Feeling** (involuntary internal response): gut reaction, emotion, physical sensation
+3. **Reflex** (involuntary external response): flinch, gasp, step back
+4. **Rational action/speech** (voluntary response): deliberate choice, dialogue
+
+Not every beat needs all four steps. Quick beats can skip to step 4. Emotional beats can linger on step 2. But never reorder them: a character cannot speak rationally before they have felt the impact. Feeling before action. Always.
+
+### Micro-Tension Injection
+
+For every beat (including quiet ones), identify the **competing emotions**. Maass's principle: tension comes from internal conflict, not external events.
+
+For each beat, answer: **What two feelings compete here?**
+
+| Beat | Feeling A | Feeling B | Source of Conflict |
+|------|-----------|-----------|-------------------|
+| 1    | relief    | suspicion | they're safe but something feels wrong |
+| 2    | anger     | guilt     | she wants to lash out but knows she caused it |
+| ...  | ...       | ...       | ... |
+
+If you cannot name two competing feelings, the beat has no tension. Either add internal conflict or flag the beat as setup-only (and keep it short).
+
+### Yes-But/No-And Engine
+
+Label each beat's outcome explicitly and verify escalation across the scene:
+
+- Early beats: establish the goal, first "No, but" or "Yes, but"
+- Middle beats: complications stack ("No, and" raises the floor)
+- Late beats: the decisive turn (clean "Yes" or devastating "No, and")
+
+Map the beat chain as a sequence: `No,but > Yes,but > No,and > No,and > Yes!`
+Check that the sequence escalates. If three beats in a row have the same outcome type, restructure.
+
+### Dialogue Beat Design
+
+For every beat that contains conversation, define three layers:
+
+1. **Surface**: What they literally say (the text on the page)
+2. **Subtext**: What they actually mean (the real communication happening underneath)
+3. **Power dynamic**: Who controls the conversation at this beat, and does control shift?
+
+Every dialogue beat should shift the power balance at least slightly. If character A is dominant for three consecutive dialogue beats, plan a moment where B pushes back, redirects, or goes silent (silence is a power move).
+
+### Sensory Rotation
+
+Assign a dominant sense to each beat. Track the pattern to avoid defaulting to visual:
+
+| Beat | Dominant Sense | Detail |
+|------|---------------|--------|
+| 1    | Sound         | hum of fluorescent lights |
+| 2    | Touch         | cold metal chair |
+| 3    | Visual        | Lena's expression |
+| 4    | Proprioception| weight of exhaustion in her legs |
+| ...  | ...           | ... |
+
+Rules: No smell paired with metaphor. If the last two beats were visual, force the next one to be touch, sound, or proprioception. Taste is rare (save for visceral moments: blood, bile, adrenaline copper).
+
+### Time Dilation Planning
+
+Mark each beat's temporal treatment:
+
+- **Expanded** (3-5x word budget): Crisis moments, emotional turning points, first contact with something new, moments of decision
+- **Normal** (1x): Standard scene beats, dialogue exchanges, action sequences
+- **Compressed** (0.3-0.5x): Routine setup, transitions, familiar actions, time passage
+
+A scene with all beats at the same dilation level feels flat. The rhythm should compress-compress-EXPAND-compress-EXPAND. The reader feels the important moments because the prose slows down around them.
 
 ## Step 4: Verify Beat Sequence
 

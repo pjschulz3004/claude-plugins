@@ -36,6 +36,12 @@ Query the KG for voice and relationship verification:
 
 For each scene in the chapter:
 
+### Scene Value Change Audit
+Before checking structure, identify the core value being turned in each scene:
+- [ ] **Value at entry**: Name the value and its charge (e.g., trust: positive, safety: negative).
+- [ ] **Value at exit**: The charge must be different from entry. If the value hasn't changed, the scene may not earn its place.
+- [ ] **The value change IS the scene's reason for existing.** If you can't name it, the scene lacks dramatic function.
+
 ### Scene Structure
 - [ ] **Opens with friction**: Tension established in first 2-3 lines?
 - [ ] **Single goal**: Can state what the POV character wants in one sentence?
@@ -43,6 +49,12 @@ For each scene in the chapter:
 - [ ] **Disaster/complication**: Scene ends worse or more complicated than it started?
 - [ ] **Closes on hinge**: Ends on decision, reversal, or striking image?
 - [ ] **Dramatic question**: One clear question posed and answered (usually "No" or "Yes, but...")?
+
+### Scene-Sequel Pattern Check
+- [ ] **Action scenes**: Verify Goal/Conflict/Disaster structure. The Disaster propels forward.
+- [ ] **Sequel scenes**: Verify Reaction/Dilemma/Decision structure. The Decision becomes the next scene's Goal.
+- [ ] **Pacing ratio**: 2:1 scene:sequel for high-energy chapters, 1:1 for character-driven chapters. Adjust per chapter type.
+- [ ] **Missing sequels**: If an action scene is followed immediately by another action scene, flag the missing emotional processing.
 
 ### Beat Analysis
 - [ ] **Every beat turns something**: Status, knowledge, or plan changes?
@@ -70,6 +82,36 @@ For each scene in the chapter:
 - [ ] **Subtext present**: Characters don't always say exactly what they mean?
 - [ ] **Power dynamics**: Who controls the conversation? Does it shift?
 - [ ] **Tags minimal**: "said"/"asked" for 90%, action beats over adverbs?
+
+### Emotional Beat Audit
+Map the emotional trajectory through the chapter:
+- [ ] **Earned beats** (60%+): Emotion that the prior scene work justifies. The reader feels it because the groundwork was laid.
+- [ ] **Triggered beats** (25% max): Emotion from sudden events (reveals, violence, loss). Effective but must not dominate.
+- [ ] **Ambient beats** (15% max): Mood, atmosphere, background emotion. Seasoning, not the meal.
+- [ ] **Sentimentality check**: Flag any emotional moment that hasn't been earned through prior scene work.
+- [ ] **Quietest prose rule**: The most emotional moment in the chapter should use the simplest, most restrained language.
+
+### Ensemble Check
+For scenes with 3+ characters:
+- [ ] **Scene-specific purpose**: Does each character present have a dramatic function in THIS scene (not just "they'd be there")?
+- [ ] **No furniture**: If a character is present but does nothing, either give them a conflicting want or remove them.
+- [ ] **Competing wants**: Every character present should want something that conflicts with what someone else wants. If everyone agrees, the scene lacks tension.
+- [ ] **Distinct reactions**: In group moments, do at least 2-3 characters react differently to the same stimulus?
+
+### Chapter Type Variants
+
+**Battle chapters** (additional checks):
+- [ ] Spatial logic consistency (can characters physically get from A to B as described?)
+- [ ] Power interaction accuracy (does usage match established rules?)
+- [ ] Pacing oscillation (never >500 words at a single register)
+- [ ] Aftermath weight (equal to or greater than action weight)
+- Consider launching `battle-reviewer` agent if available.
+
+**Dialogue-heavy chapters** (additional checks):
+- [ ] Subtext density (>60% of dialogue should be oblique, not on-the-nose)
+- [ ] Power dynamic shifts (who controls conversation changes at least once per scene)
+- [ ] Voice differentiation (Radio Test: cover the tags, can you still identify each speaker?)
+- Consider launching `dialogue-auditor` agent if available.
 
 ## Step 4: Produce Feedback
 
@@ -105,5 +147,7 @@ Scenes restructured: [which scenes were significantly changed]
 ## Step 6: Update State
 
 Present the scene-by-scene analysis to the author. Update `scribe.local.md`: `pipeline_stage: edit-3`
+
+**Note:** This skill loads `scene-structure.md` from the references directory (updated with craft integration). For battle chapters, conditionally load `battle-craft-reference.md`. For dialogue-heavy chapters, conditionally load `dialogue-reference.md`.
 
 Suggest next step: `/scribe:edit line [X.X]`

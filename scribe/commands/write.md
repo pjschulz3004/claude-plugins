@@ -15,10 +15,12 @@ Read the project's `scribe.local.md`. Extract current state and paths.
 
 If `pipeline_stage` is not `plan-beats` or later, warn the user that beats should be completed before drafting. Ask if they want to continue anyway.
 
-## Step 2: Identify the Target Chapter
+## Step 2: Identify the Target Chapter and Type
 
 If the user provided a chapter number argument, use that.
 Otherwise, use `current_chapter` from `scribe.local.md`.
+
+If the user specified `battle` as a subcommand (e.g., `/scribe:write battle 3.12`), route to `scribe:write-battle` instead of the standard drafting workflow. Battle chapters need specialized voice compression, time dilation, and spatial anchoring craft.
 
 ## Step 3: Find the Beats File
 

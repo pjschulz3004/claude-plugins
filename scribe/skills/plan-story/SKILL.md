@@ -38,6 +38,70 @@ Ask the author what they want to work on. Common story-level tasks:
 
 Use `AskUserQuestion` for choices when multiple approaches exist.
 
+## Step 3.5: Craft Integration
+
+Load `story-craft-reference.md` and `character-craft-reference.md` from `{paths.references}` before working through these sections. Apply each section that is relevant to the current discussion.
+
+### Structural Framework Selection
+
+Present the framework comparison and guide the author to a selection based on story type:
+
+| Framework | Best For | Core Unit |
+|-----------|----------|-----------|
+| 3-Act | Simple narratives | Setup/Confrontation/Resolution |
+| 5-Act | Tragedies, dramas | Exposition through catastrophe |
+| Save the Cat (15 beats) | Commercial fiction | Theme Stated at 5%, All Is Lost at 75% |
+| Story Circle (Harmon) | Character transformation | You/Need/Go/Search/Find/Take/Return/Change |
+| Hero's Journey | Mythic, epic scope | Ordinary World through Return |
+| Truby (22 steps) | Complex moral arguments | Weakness/Need through New Equilibrium |
+| Kishōtenketsu | Twist-driven, literary | Introduction/Development/Twist/Reconciliation |
+| Fichtean Curve | Thriller, action | Crisis stacking from page one |
+| In Medias Res + Retrospect | Mystery, nonlinear | Present crisis revealing past cause |
+| Serial Fractal | Ongoing serial fiction | Each level (scene/chapter/arc/story) mirrors the whole |
+
+Ask: "Which framework fits your story's ambitions?" If uncertain, default to Truby for morally complex stories, Save the Cat for commercial pacing, Serial Fractal for web serials.
+
+### Character Arc Architecture
+
+For each major character, apply these three tests:
+
+1. **Lie/Truth paradigm**: What Lie does the character believe at the start? What Truth do they discover (or fail to discover)? Map the Lie/Truth pair to a Ghost (past wound) and a Need (what they must learn).
+2. **Load-bearing test**: Remove this character's arc entirely. Does the story collapse? If not, the arc is decorative and needs integration or cutting.
+3. **Complementary arc test**: Do character arcs create thematic counterpoint? The protagonist, ally, opponent, and fake-ally should each embody a different answer to the central thematic question.
+4. **Escalation test**: Does each arc make the theme harder to believe? If the theme is "solidarity works," each arc should present a stronger counter-argument.
+
+### Thematic Design
+
+Apply McKee's controlling idea formula: **Value + Cause** (e.g., "Justice prevails when individuals sacrifice personal safety for collective action"). Then:
+
+1. Frame theme as a **question**, not an answer. The story argues toward the answer through dramatic action.
+2. Build **four-corner opposition** (Truby): protagonist, ally, opponent, fake-ally each represent a different position on the thematic question. Map these positions in a 2x2 grid.
+3. Ensure the theme **escalates** across arcs (the counter-argument grows stronger each time, forcing the protagonist to earn the theme at greater cost).
+
+### Serial Architecture
+
+For serial/web fiction, apply these structural principles:
+
+1. **Fractal structure**: Each level mirrors the whole. A scene has setup/confrontation/resolution. So does a chapter, an arc, and the full story. Verify each level has this shape.
+2. **Sawtooth pacing**: Each arc opens at lower energy than the previous arc's climax, but higher than that arc's opening. This creates rising baseline tension. Map the energy curve across all arcs.
+3. **Promise management**: Track every promise made to the reader (mysteries, foreshadowing, character questions). Each arc should pay off at least 2 promises and plant at least 2 new ones.
+
+### Foreshadowing Blueprint
+
+Plan long-game setups at the story level:
+
+1. **Plant density**: Apply the Rule of Three (plant, reminder, payoff). Major payoffs need at least one reminder between plant and payoff. Map plants to their planned payoff arcs.
+2. **Ring composition**: Does the ending echo the beginning? Identify 3-5 structural echoes between the first and last arcs (images, phrases, situations inverted).
+3. **Fair play check**: For any mystery or revelation, has the reader been given enough information to suspect it? Unfair surprises feel like cheating. List what the reader knows vs. what they'll learn.
+
+### Emotional Arc Mapping
+
+Apply Vonnegut's story shapes to the full narrative:
+
+1. Map the protagonist's fortune (high/low) across all arcs. Identify which shape the story follows (Man in Hole, Cinderella, Kafka, etc.).
+2. **Stakes hierarchy**: Plan escalation across the story: identity stakes (Arc 1-2) → relationship stakes (Arc 3-4) → survival stakes (Arc 5-6) → community/world stakes (Arc 7-8).
+3. **Hope-despair engine**: Alternate victories and defeats to prevent reader exhaustion. Never stack more than two defeats without a small win. Never stack more than two wins without raising the threat.
+
 ## Step 4: Continuity & Structure Check
 
 After discussion, check:

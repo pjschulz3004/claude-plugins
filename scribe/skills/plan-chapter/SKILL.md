@@ -23,6 +23,10 @@ For the previous chapter, prioritize reading the `(scenes)` or `(beats)` file if
 
 Do NOT load prose style guides — this is structural planning.
 
+Load references (for Step 4b craft integration):
+- `${CLAUDE_PLUGIN_ROOT}/references/scene-structure.md`
+- `${CLAUDE_PLUGIN_ROOT}/references/tension-reference.md`
+
 ### Knowledge Graph Lookup
 
 Query the KG for character trajectories and relevant events:
@@ -77,6 +81,79 @@ Use the "therefore/but" test: each beat should connect to the next via causation
 - **Scene count**: How many scenes (typically 3-6)
 - **Tension curve**: Where are the high and low points?
 - **Ending hinge**: What decision, reversal, or image closes the chapter?
+
+## Step 4b: Craft Integration
+
+### Chapter Type Classification
+
+Classify this chapter as one of: **dialogue-heavy**, **battle/action**, **reflection**, **transition**, **ensemble**, or **mixed**. The type determines pacing targets:
+
+| Type | Scene Length | Key Checks |
+|------|-------------|------------|
+| Battle/Action | 800-1500 words | High compression, voice ladder levels 3-5 |
+| Dialogue | 1000-2000 words | Subtext density, power dynamic mapping |
+| Reflection | 500-1000 words | Psychic distance 4-5, interiority balance |
+| Transition | 200-500 words | Efficient grounding, set up next chapter's friction |
+| Ensemble | 800-1500 words | POV discipline, cast rotation, distinct voices |
+| Mixed | Varies by scene | Match scene length to its dominant type |
+
+Route battle chapters to `/scribe:plan battle` when available. For dialogue-heavy chapters, flag for `dialogue-reference.md` loading at scene/beat stages.
+
+### Scene-Sequel Pacing
+
+Map the chapter's scene-sequel rhythm before designing individual scenes:
+
+- **Scene beats** (Goal > Conflict > Disaster): action, confrontation, events happening
+- **Sequel beats** (Reaction > Dilemma > Decision): processing, choosing, regrouping
+
+Chapters need both types. Pure action exhausts the reader. Pure reflection stalls momentum. Target ratios:
+- High-energy chapters: **2:1 scene:sequel**
+- Character development chapters: **1:1 scene:sequel**
+- Climax chapters: **3:1 scene:sequel** (sequels compressed to single beats)
+
+### Emotional Trajectory
+
+Define three points:
+1. **Entry state**: What emotional state does the reader arrive in (from previous chapter's hinge)?
+2. **Exit state**: What state should the reader leave in?
+3. **Value change**: What flips from positive to negative (or vice versa)?
+
+The chapter must turn at least one value. Examples: safety to danger, ignorance to knowledge, trust to betrayal, isolation to solidarity. If no value changes, the chapter is filler.
+
+### Tension Architecture
+
+Design a nested question structure (3-5 questions that stack through the chapter):
+1. **Chapter question**: The overarching "will they/won't they" for the whole chapter
+2. **Scene questions**: Each scene's dramatic question (subordinate to the chapter question)
+3. **Micro-tension**: For every quiet moment, identify the competing emotions. Calm description without internal conflict = dead space. A character waiting has no tension. A character waiting while doubting their plan has tension.
+
+Every non-action beat needs at least one pair of conflicting feelings, desires, or loyalties.
+
+### Chapter Hooks
+
+**Opening hook** (select one):
+- In medias res: begin mid-action, orient the reader after
+- Sensory grounding: place the reader physically before anything else
+- Embedded question: raise curiosity in the first line
+- Friction first: open on conflict, discomfort, or disagreement
+- Callback: connect to previous chapter's hinge with a new angle
+
+**Closing hook** (select one of 7 cliffhanger types):
+- **Threat**: danger approaches
+- **Mystery**: new question raised
+- **Decision**: character must choose, answer withheld
+- **Reversal**: what they believed is wrong
+- **Arrival**: someone/something new enters
+- **Departure**: someone leaves or is taken
+- **Revelation**: hidden truth exposed
+
+### Deep Dive Routing
+
+Based on chapter type classification:
+- **Dialogue-heavy**: Load `dialogue-reference.md` at scene/beat planning stages
+- **Battle/action**: Route to `/scribe:plan battle` (when available), load `tension-reference.md`
+- **Exposition-heavy**: Reference worldbuilding-exposition techniques (incluing over infodump, 2:1 concrete:abstract ratio)
+- **Ensemble**: Review cast management principles (cognitive limit of 4-5 active characters per scene)
 
 ## Step 5: Arc-Level Pacing Check
 

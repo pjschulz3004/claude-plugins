@@ -130,6 +130,53 @@ Track for every editing session:
 - Active threads: ongoing plot elements, relationships, props/objects
 - This chapter must: required beats, foreshadowing, callbacks
 
+## Chapter Type Variants
+
+### Battle Chapter Variant (Stages 1-2)
+For chapters with significant action/combat:
+- **Stage 1**: Also verify spatial logic consistency, power interaction accuracy, casualty tracking
+- **Stage 2**: Check pacing oscillation (never >500 words at single register), voice compression ladder progression, aftermath weight equal to action weight
+- Consider launching `battle-reviewer` agent for dedicated battle craft review
+- Deep dive: load `battle-craft-reference.md`
+
+### Dialogue-Heavy Chapter Variant (Stages 2-3)
+For chapters driven primarily by conversation:
+- **Stage 2**: Check subtext density, power dynamic shifts within conversations, voice differentiation between speakers
+- **Stage 3**: Apply Radio Test to all dialogue exchanges, audit tag craft, verify oblique responses (>60% of dialogue should be indirect)
+- Consider launching `dialogue-auditor` agent for dedicated dialogue review
+- Deep dive: load `dialogue-reference.md`
+
+## Deep Dive Resources by Stage
+
+When persistent issues appear in a particular stage, load the relevant research file:
+
+| Stage | Issue | Deep Dive Resource |
+|-------|-------|-------------------|
+| 1 (Plot) | Character arc problems | `character-arc-design.md` |
+| 1 (Plot) | Foreshadowing gaps | `foreshadowing-payoff-architecture.md` |
+| 1 (Plot) | Theme preaching | `thematic-integration-craft.md` |
+| 2 (Scene) | Flat scenes | `scene-construction-craft.md` |
+| 2 (Scene) | Weak dialogue | `dialogue-craft.md`, `power-dynamics-dialogue.md` |
+| 2 (Scene) | Pacing drag | `tension-mechanics-in-action.md` |
+| 3 (Line) | Sentence monotony | `prose-style-sentence-craft.md` |
+| 3 (Line) | Subtext missing | `subtext-and-implication.md` |
+| 3 (Line) | Voice drift | `first-person-pov-mastery.md` |
+| 4 (AI) | Persistent AI texture | `revision-self-editing-craft.md` |
+| 5 (Hostile) | Emotional dishonesty | `emotional-impact-craft.md` |
+
+## Specialized Skill Routing
+
+Some chapters benefit from specialized editing passes beyond the standard 5-stage pipeline:
+
+| Skill | When to Use | Command |
+|-------|------------|---------|
+| `edit-dialogue` | Dialogue-heavy chapters, voice differentiation issues | `/scribe:edit dialogue` |
+| `edit-tension` | Pacing problems, flat middle sections, insufficient micro-tension | `/scribe:edit tension` |
+| `battle-reviewer` agent | Any chapter with combat (launched from Stage 2) | Auto-suggested |
+| `dialogue-auditor` agent | Any chapter with 40%+ dialogue (launched from Stage 2-3) | Auto-suggested |
+
+These are optional additions, not replacements for the standard pipeline stages.
+
 ## Full Editorial Pass Order (Quick Reference)
 1. Continuity skim → create scratchpad
 2. Structural pass → mark beats, check causality, add/trim hinges
@@ -137,3 +184,4 @@ Track for every editing session:
 4. AI-pattern elimination → 8-category checklist, vocabulary scan
 5. Hostile reader pass → specificity test, humanity check
 6. Continuity re-check → bodies, props, time, consequences
+7. (Optional) Specialized pass → dialogue audit, tension audit, battle review
