@@ -116,3 +116,47 @@ After all editing, ask of every paragraph:
 - Observations slightly off-topic
 - Humor that emerges from character, not setup
 - Imperfect grammar choices that serve voice
+
+## Density Audit Protocol
+
+The most insidious AI tell is cumulative density: every paragraph containing a tricolon AND a contrastive frame AND a participial clause AND a stock metaphor reads as AI even when each instance seems defensible.
+
+### Density-First Principle
+Count globally before fixing locally. Run the density audit BEFORE dispatching line-level editing.
+
+### Density Targets (per 1000 words)
+| Pattern | AI Density | Human Target |
+|---------|-----------|--------------|
+| Contrastive frames ("not X, but Y") | 3-5+ | Max 1-2 |
+| Tricolons (lists of 3) | 5-8+ | Max 2-3 |
+| Present participial clauses | 8-15+ | Max 3-5 |
+| Metaphors/similes | 8-12+ | 3-5 |
+| Fragments | 0-2 | 5-6 (earned) |
+| Em dashes | 5-10+ | Max 2-3 (0 for Union) |
+| AI vocabulary hits | 5-15+ | 0 |
+| Emotional labels (telling) | 3-8+ | 0-1 |
+| Sentences within 5w of avg length | 80%+ | Under 50% |
+
+### Counting Methodology
+1. Concatenate all scenes into a single text
+2. Count word total
+3. For each pattern type: count instances, divide by (word total / 1000)
+4. Compare against human target column
+5. Flag any category exceeding target
+
+### Burstiness Check
+Measure sentence length variance: compute std dev of sentence word counts.
+Target: std dev > 8 words. AI std dev is typically 3-5.
+If burstiness is low: deliberately vary sentence lengths before line-editing.
+
+### Additional Patterns (from research)
+- **Participial clause density**: count -ing constructions used as modifiers. 2+ per sentence is a strong tell.
+- **Nominalization density**: noun forms of verbs ("implementation" vs "implement"). 3+ per sentence flags.
+- **Pronoun frequency**: first-person pronouns per 1000 words. Low count = narrator feels like camera, not consciousness.
+- **Present participle openings**: sentences starting with -ing clause. Max 1 per 500 words.
+
+### Audit Workflow
+1. Run density counts across full chapter
+2. Flag categories over target
+3. Thin densest categories first (global reduction)
+4. Then dispatch line-level agents for quality assessment of remaining instances

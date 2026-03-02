@@ -1,149 +1,122 @@
 ---
 name: write-draft
-description: "Draft prose from a beats file. Loads voice guide and prose style rules. Produces the (draft) file. Use after beat planning is complete."
+description: "Orchestrate scene-by-scene drafting from beat files. Dispatches scene-drafter sub-agents for each scene independently. Produces per-scene draft files."
 ---
 
-# Write Draft
+# Write Draft (Orchestrator)
 
-You are helping the author draft prose from a completed beats file. Your job is to produce a full prose draft that hits every planned beat while maintaining the POV character's voice.
+You are the drafting orchestrator. You do NOT write prose yourself. You prepare context and dispatch scene-drafter sub-agents for each scene, keeping each generation within the ~2,600 word quality ceiling.
 
 ## Step 1: Identify Target Chapter
 
-From the user's argument or `scribe.local.md`, determine which chapter to draft. Format: `[arc].[chapter]` (e.g., `3.5`).
+From the user's argument or `scribe.local.md`, determine which chapter to draft. Format: `[arc].[chapter]` (e.g., `3.7`).
 
-## Step 2: Load Context
+## Step 2: Set Up Chapter Directory
 
-Read these files:
-1. **The (beats) file**: `{paths.arcs}/arc-N-name/X.X Title (beats).md` — your primary blueprint
-2. **Previous chapter ending**: Last 500-1000 words of the prior chapter (for continuity of tone and situation)
-3. **Character files**: For the POV character and major characters in the chapter
-4. **Voice guide** (if exists in project): Check `{paths.style_guides}/` for character-specific voice guides
+Check if the chapter subdirectory exists: `{paths.arcs}/arc-N-name/X.X/`
 
-Load references:
-- `${CLAUDE_PLUGIN_ROOT}/references/prose-rules.md` — rhythm, imagery, voice, POV
-- `${CLAUDE_PLUGIN_ROOT}/references/character-voices.md` — voice techniques
+If it exists, verify `beats/` directory has scene files.
+If not, check for old-format `(beats)` file and inform user to run scene planning first.
 
-If database exists, query character states:
+Create the `draft/` subdirectory if it doesn't exist:
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/db-helper.sh "{paths.database}" character-state "[POV character]"
+mkdir -p "{paths.arcs}/arc-N-name/X.X/draft"
 ```
+
+## Step 3: Load Shared Context
+
+Read these files (you'll pass relevant portions to each sub-agent):
+1. **Character files**: For the POV character and major characters in the chapter
+2. **Voice guide** (if exists): `{paths.style_guides}/` for character-specific voice guides
+
+Load references (to extract voice summary, NOT to pass whole files):
+- `${CLAUDE_PLUGIN_ROOT}/references/prose-rules.md`
+- `${CLAUDE_PLUGIN_ROOT}/references/character-voices.md`
+
+DO NOT load:
+- ai-ism-checklist.md
+- Any AI detection references
+- editing-pipeline.md
 
 ### Knowledge Graph Lookup
 
-Query the KG for grounding details needed during drafting:
+Query the KG for grounding details:
+1. POV character: `kg_search(query="[POV character] voice personality speech patterns", scope="au", limit=5)`
+2. POV character powers: `kg_search(query="[POV character] powers abilities", scope="canon", limit=5)`
+3. Key locations: `kg_search(query="[location] physical description", scope="canon", limit=5)`
+4. Key relationships: `kg_search(query="[character A] relationship [character B]", scope="au", limit=5)`
 
-1. For POV character: `kg_search(query="[POV character] voice personality speech patterns", scope="au", limit=5)` and `kg_search(query="[POV character] powers abilities", scope="canon", limit=5)`
-2. For each location in the beats: `kg_search(query="[location] physical description layout", scope="canon", limit=5)`
-3. For key interactions: `kg_search(query="[character A] relationship with [character B]", scope="au", limit=5)`
-4. Flag any canon vs AU inconsistencies briefly. Use KG results to inform concrete sensory details and accurate character interactions.
+## Step 3b: Chapter Type Routing
 
-## Step 2b: Chapter Type Routing
+Classify the chapter's dominant mode:
+- **Battle chapter**: Suggest `/scribe:write battle` instead.
+- **Dialogue-heavy**: Note for voice summary (emphasize subtext, power dynamics).
+- **Exposition**: Note for voice summary (emphasize incluing, concrete grounding).
 
-Before drafting, classify the chapter's dominant mode:
-- **Battle chapter**: Suggest `/scribe:write battle` when available. If drafting here, load `epic-battle-scene-craft.md` and `battle-craft-reference.md` from research.
-- **Dialogue-heavy chapter**: Load `dialogue-craft.md` and `power-dynamics-dialogue.md` for subtext and status transaction guidance.
-- **Exposition/worldbuilding chapter**: Load `worldbuilding-exposition-craft.md` for incluing techniques.
-- **Mixed**: Identify the dominant mode per scene and apply the relevant craft per scene break.
+## Step 4: Prepare Voice Summary
 
-## Step 3: Establish Voice
+Create a concise voice summary for the sub-agents (~200 words):
+- Vocabulary level and register
+- Sentence patterns (long recursive? short punchy? hedged?)
+- What they notice (exits? power dynamics? machinery?)
+- Humor style
+- Emotional processing style
+- Verbal tics
+- Confidence level for current arc position
 
-Before drafting, confirm the POV character's voice:
-- **Vocabulary level**: What words would they use / avoid?
-- **Sentence patterns**: Long and recursive? Short and punchy? Mixed?
-- **What they notice**: A tactician sees exits. An organizer sees power dynamics.
-- **Humor style**: Dry? Self-deprecating? Observational? Absent?
-- **Emotional register**: How do they process feelings?
+Present this to the author for confirmation before dispatching.
 
-Present a brief voice summary to the author for confirmation.
+## Step 5: Discover Scene Files
 
-## Step 4: Draft Prose
-
-Work through the beats file scene by scene. For each scene:
-
-### First-Person Craft
-Before writing each scene, verify:
-- **Information control**: The narrator can only know what they witness or are told. Trace every fact back to its source.
-- **Interiority balance**: Neither interior thought nor exterior action should dominate for more than a page (Janice Hardy rule). Alternate.
-- **Intellectual Narrator Trap**: If the character is analytical (Taylor, Lena), force situations where analysis fails. Feeling must coexist with thinking. If three consecutive paragraphs are analysis, the next must be sensory or emotional.
-- **Voice consistency**: Vocabulary, syntax, and worldview must match the character profile loaded in Step 3. Cross-check against `character-voices.md`.
-
-### Opening
-- Start with friction (tension in the first 2-3 lines)
-- Establish POV, location, and situation quickly
-- Ground with a sensory detail (rotate: sight, sound, touch, smell, taste)
-
-### Beat-by-Beat Drafting
-For each beat:
-- Hit the planned event/change
-- Maintain MRU order (motivation before reaction)
-- Keep the job-mix heuristic going (vary sentence types)
-- Aim for the target word count per beat
-- Connect to next beat via therefore/but
-
-### Closing
-- End on the planned hinge (decision, reversal, or striking image)
-- Do NOT resolve tension — leave it open
-
-### Prose Rhythm Engine
-- **Spiral+jab**: Long recursive sentence followed by short punch. Never >2 same-type sentences consecutively.
-- **Job-mix rotation**: Cycle through sentence types: Sensory, Observation, Action, Thought, Analogy, Fact, Dialogue, Orientation, Micro-tension. Track which types you've used recently and rotate.
-- **Pacing heartbeat**: Every 120-180 words, insert an Action or Micro-tension beat. Every 300-500 words, ground with a Fact or fresh concrete detail. If 500+ words pass at a single register, force a shift.
-
-### Subtext Discipline
-- **Iceberg principle**: Cut surface narration that explains what action or dialogue already shows.
-- **Show OR tell, never both**: When a character's actions demonstrate their emotion, delete the sentence that names the emotion.
-- **Dialogue subtext**: Characters rarely say exactly what they mean. Write the line they would say, not the one that most efficiently conveys information.
-
-### Concrete:Abstract Engine
-- **2:1 ratio minimum**: Every abstract concept must be earned through prior concrete showing.
-- **Theory solves the moment**: Ideology must solve the present dramatic problem, not lecture about the general case. Tie each abstraction to a physical prop, an immediate decision, or a character's body language.
-- **Test**: If you can delete a theoretical passage and the scene still makes emotional sense, the theory wasn't doing dramatic work.
-
-### Prose Quality Rules (from reference)
-- Spiral+jab rhythm: long recursive sentence followed by short punch
-- Max 1 figurative per paragraph, on turning points
-- Concrete:abstract ratio 2:1+
-- Cut filter words (saw, felt, noticed, realized)
-- Deep POV: we ARE the character, no thought tags
-- Paragraph shape variety (don't repeat the same shape)
-
-## Step 5: Scene Breaks
-
-Use `---` or `* * *` for scene breaks within the chapter. Each scene should:
-- Be readable as its own unit
-- Transition smoothly from the previous scene's hinge
-- Open with fresh friction (not a recap)
-
-## Step 6: Produce the (draft) File
-
-Write the file following the naming convention:
-`{paths.arcs}/arc-N-name/X.X Title (draft).md`
-
-Structure:
-```markdown
-# X.X [Title]
-
-[Full prose draft with scene breaks]
-
----
-
-## Author Notes for Editing Phase
-- **Voice confidence**: [1-5, how well did the voice land?]
-- **Beats hit**: [list any beats that were modified or skipped, with reasons]
-- **Known issues**: [anything the author should look at]
-- **Continuity flags**: [things to verify in editing]
-- **Word count**: [total]
+Read all beat files from `X.X/beats/`:
+```
+X.X/beats/scene-1.md
+X.X/beats/scene-2.md
+...
 ```
 
-## Step 7: Author Review
+Count total scenes. Estimate total word count from beat files.
 
-After producing the draft, ask the author:
+## Step 6: Draft Each Scene
+
+For each scene, dispatch a `scene-drafter` sub-agent with:
+
+1. **Scene beats**: the full content of `X.X/beats/scene-N.md`
+2. **Character voice summary**: the prepared summary from Step 4
+3. **Prose rules**: content of `prose-rules.md` (the reference, not the checklist)
+4. **Previous scene ending**: last ~500 words from the previous scene's draft (for Scene 2+), or previous chapter ending (for Scene 1)
+
+The sub-agent prompt should include:
+- The scene beats (full content)
+- The voice summary
+- Key prose rules (rhythm, job-mix, concrete:abstract, spiral+jab)
+- Previous scene ending for continuity
+- Project-specific rules: ZERO dashes, Taylor thinks "Mom" and "Dad" not Annette/Danny
+- Instruction: NO AI-ism checking. Focus on voice, beats, rhythm, humanity.
+
+Save each sub-agent's output to: `X.X/draft/scene-N.md`
+
+**Dispatch scenes sequentially** (each needs the previous scene's ending for continuity).
+
+## Step 7: Post-Draft Summary
+
+After all scenes are drafted, present to the author:
+- Total word count
+- Per-scene word counts
+- Voice confidence ratings from each sub-agent
+- Any beats that were modified (from drafter notes)
+- Any weak spots flagged by drafters
+- Continuity flags
+
+## Step 8: Author Review
+
+Ask the author:
 - Does the voice feel right for this character?
-- Any beats that landed wrong or need reworking?
 - Any scenes that need more or less space?
-- Ready to move to editing, or revise the draft first?
+- Any beats that landed wrong?
+- Ready to move to editing, or revise specific scenes?
 
-## Step 8: Update State
+## Step 9: Update State
 
 Update `scribe.local.md`:
 - `pipeline_stage: edit-1`
@@ -151,16 +124,13 @@ Update `scribe.local.md`:
 
 Suggest next step: `/scribe:edit plot [X.X]`
 
-## Deep Dive Resource List
+## Deep Dive Resources
 
-When specific drafting problems arise, load the relevant research file from `knowledge-base/research/`:
-- **Flat dialogue**: `dialogue-craft.md`, `power-dynamics-dialogue.md`
-- **Voice drifting**: `first-person-pov-mastery.md`
-- **Pacing dragging**: `tension-mechanics-in-action.md`
-- **Battle scenes**: `epic-battle-scene-craft.md`, `battle-craft-reference.md`
-- **Exposition dumps**: `worldbuilding-exposition-craft.md`
-- **Emotional scenes falling flat**: `emotional-impact-craft.md`
-
-**Note:** This skill loads `prose-rules.md` and `character-voices.md` from the references directory. Both contain updated craft integration.
+When specific drafting problems arise, suggest loading from `knowledge-base/research/`:
+- Flat dialogue: `dialogue-craft.md`
+- Voice drift: `first-person-pov-mastery.md`
+- Pacing drag: `tension-mechanics-in-action.md`
+- Battle scenes: `epic-battle-scene-craft.md`
+- Exposition dumps: `worldbuilding-exposition-craft.md`
 
 **Remember:** The draft does NOT need to be polished. It needs to hit the beats, maintain voice, and be structurally sound. Polish comes in editing.

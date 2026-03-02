@@ -1,144 +1,82 @@
 ---
 name: "scribe:edit"
-description: "Run the editing pipeline. Routes to current editing stage or a specific one: plot, scene, line, ai, hostile."
-argument-hint: "[plot|scene|line|ai|hostile] [chapter-number]"
-allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "AskUserQuestion", "Task", "mcp__kg__kg_search"]
+description: "Run the editing pipeline. Routes to current stage or specific one: plot, scene, line, ai, hostile, dialogue, tension, combine."
+argument-hint: "[plot|scene|line|ai|hostile|dialogue|tension|combine] [chapter-number]"
+allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "Agent", "AskUserQuestion", "mcp__kg__kg_search"]
 ---
 
 # /scribe:edit
 
-You are running the Scribe editing pipeline. Your job is to route to the correct editing stage and load ONLY the context that stage needs.
+You are running the Scribe editing pipeline. Route to the correct stage and load ONLY what that stage needs.
 
 ## Step 1: Read Project State
 
-Read the project's `scribe.local.md`. Extract current state and paths.
+Read `scribe.local.md`. Extract current state and paths.
 
 ## Step 2: Determine Stage and Target
 
-Parse the user's argument as: `[stage] [chapter-number]`
+Parse argument as: `[stage] [chapter-number]`
 
-| Argument | Stage | Pipeline Stage Name |
-|----------|-------|-------------------|
-| `plot` | Stage 1: Plot & Continuity | `edit-1` |
-| `scene` | Stage 2: Scene & Beat | `edit-2` |
-| `line` | Stage 3: Line Edit | `edit-3` |
-| `ai` | Stage 4: AI-Pattern Elimination | `edit-4` |
-| `hostile` | Stage 5: Hostile Reader Pass | `edit-5` |
-| `dialogue` | Optional: Dialogue Quality Pass | (optional) |
-| `tension` | Optional: Pacing & Tension Audit | (optional) |
+| Argument | Stage | Skill |
+|----------|-------|-------|
+| `plot` | Stage 1: Plot & Continuity | `scribe:edit-plot` |
+| `scene` | Stage 2: Scene & Beat | `scribe:edit-scene` |
+| `line` | Stage 3: Line Edit | `scribe:edit-line` |
+| `ai` | Stage 4: AI-Pattern (3-agent) | `scribe:edit-ai-patterns` |
+| `hostile` | Stage 5: Hostile Reader (3-persona) | `scribe:edit-hostile` |
+| `dialogue` | Optional: Dialogue Pass | `scribe:edit-dialogue` |
+| `tension` | Optional: Tension Audit | `scribe:edit-tension` |
+| `combine` | Combine scenes to final | (run combine script) |
 | (none) | Resume from `pipeline_stage` | (current) |
 
-If no stage argument, read `pipeline_stage` from `scribe.local.md` and route to that stage.
+If no stage argument, read `pipeline_stage` and route accordingly.
 If no chapter argument, use `current_chapter`.
 
-## Step 3: Find the Input File
+## Step 3: Find Input Files
 
-Each stage reads from the previous stage's output:
+Each stage reads from the previous stage's output directory:
 
-| Stage | Input File Suffix |
-|-------|------------------|
-| edit-1 (plot) | `(draft)` |
-| edit-2 (scene) | `(edited-1-plot)` |
-| edit-3 (line) | `(edited-2-scene)` |
-| edit-4 (ai) | `(edited-3-line)` |
-| edit-5 (hostile) | `(edited-4-ai)` |
+| Stage | Input Directory / Suffix |
+|-------|-------------------------|
+| edit-1 (plot) | `X.X/draft/` or `(draft)` |
+| edit-2 (scene) | `X.X/edit-1-plot/` or `(edited-1-plot)` |
+| edit-3 (line) | `X.X/edit-2-scene/` or `(edited-2-scene)` |
+| edit-4 (ai) | `X.X/edit-3-line/` or `(edited-3-line)` |
+| edit-5 (hostile) | `X.X/edit-4-ai/` or `(edited-4-ai)` |
+| combine | `X.X/edit-5-hostile/` or `(edited-5-hostile)` |
 
-Search for the input file using Glob. If it doesn't exist, check if the previous stage's output exists and suggest running that stage first. If the user wants to skip stages, allow it but note the skip.
+Check new format (subdirectory) first, then old format (flat file).
 
-## Step 4: Load Stage-Specific Context
+## Step 4: Route to Skill
 
-Each stage loads ONLY its required references. This is critical for token efficiency.
+Route to the appropriate skill. Each skill handles its own context loading.
 
-### Stage 1: Plot & Continuity
-Load:
-- The draft file
-- `{paths.context}/story-overview.md`
-- Arc context file for the relevant arc
-- Previous chapter (latest version)
-- Character files for characters in this chapter
-- If database exists: query character states and knowledge facts
-- **KG lookup**: For each character in the chapter, query `kg_search(query="[character] state powers relationships", scope="au")`. Also query `kg_search(query="[location/event]", scope="canon")` for canon verification of any referenced locations or events. Flag canon vs AU inconsistencies.
+### Stages 4 and 5: Sub-Agent Dispatch
+These stages dispatch sub-agents WITHOUT conversation context:
+- Stage 4: 3 detection agents (language, structure, voice) per scene in parallel
+- Stage 5: 3 hostile readers (ai-hater, lit-snob, worm-fan) per scene in parallel
 
-Reference: `${CLAUDE_PLUGIN_ROOT}/references/editing-pipeline.md` (Stage 1 section)
+Both produce reports, synthesis, and edited scene files.
 
-### Stage 2: Scene & Beat
-Load:
-- Stage 1 output file
-- `${CLAUDE_PLUGIN_ROOT}/references/scene-structure.md`
-- `${CLAUDE_PLUGIN_ROOT}/references/editing-pipeline.md` (Stage 2 section)
+## Step 5: Combine (special command)
 
-### Stage 3: Line Edit
-Load:
-- Stage 2 output file
-- `${CLAUDE_PLUGIN_ROOT}/references/prose-rules.md`
-- `${CLAUDE_PLUGIN_ROOT}/references/editing-pipeline.md` (Stage 3 section)
-- Voice guide for POV character (from project's style guides)
-
-### Stage 4: AI-Pattern Elimination
-Load:
-- Stage 3 output file
-- `${CLAUDE_PLUGIN_ROOT}/references/ai-ism-checklist.md`
-- `${CLAUDE_PLUGIN_ROOT}/references/editing-pipeline.md` (Stage 4 section)
-
-Optionally launch the `scribe:ai-ism-detector` agent as a subprocess for thorough scanning.
-
-### Stage 5: Hostile Reader Pass
-Load:
-- Stage 4 output file ONLY
-- No additional references (this is the "fresh eyes" pass)
-- `${CLAUDE_PLUGIN_ROOT}/references/editing-pipeline.md` (Stage 5 section)
-
-Adopt the hostile reader persona. No safety net of style guides.
-
-## Step 5: Perform the Edit
-
-Route to the appropriate skill:
-- `edit-1` → `scribe:edit-plot`
-- `edit-2` → `scribe:edit-scene`
-- `edit-3` → `scribe:edit-line`
-- `edit-4` → `scribe:edit-ai-patterns`
-- `edit-5` → `scribe:edit-hostile`
-- `dialogue` → `scribe:edit-dialogue`
-- `tension` → `scribe:edit-tension`
-
-If the skill doesn't exist yet, perform the edit directly using the loaded context and the editing-pipeline reference.
-
-### Feedback Format
-
-For each issue found, use this format:
-
-```markdown
-### [ISSUE TYPE] Line/Para Reference
-
-**Current text**:
-> [quoted text]
-
-**Problem**: [what's wrong and why]
-
-**Suggested fix**:
-> [revised text]
-
-**Rationale**: [why this fix works]
+When argument is `combine`:
+1. Find scene files in `X.X/edit-5-hostile/` (or latest stage with scene files)
+2. Run the combine script:
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/combine-scenes.sh" "{paths.arcs}/arc-N-name/X.X" "edit-5-hostile"
 ```
+3. Output: `X.X/final/chapter.md`
+4. Present combined chapter to author for final review
 
-Present findings to the user in batches. Let them accept/reject/modify each suggestion.
+## Step 6: Update State
 
-## Step 6: Produce Output File
-
-After the user has reviewed all feedback and approved changes:
-- Apply accepted changes to produce the stage output file
-- Name it: `X.X ArcName (edited-N-type).md` matching existing naming conventions
-- Write to the same directory as the input file
-
-## Step 7: Update Project State
-
-Update `scribe.local.md`:
-- Advance `pipeline_stage` to the next stage
-- If Stage 5 complete, set stage to `final`
+After each stage completes, advance `pipeline_stage`:
+- edit-1 → edit-2 → edit-3 → edit-4 → edit-5 → final
 
 Suggest the next step:
-- After edit-1: "Run `/scribe:edit scene` for scene structure review."
-- After edit-2: "Run `/scribe:edit line` for prose polish."
-- After edit-3: "Run `/scribe:edit ai` for AI-pattern elimination."
-- After edit-4: "Run `/scribe:edit hostile` for the hostile reader pass."
-- After edit-5: "Editing complete. Create the `(final)` version when ready."
+- After edit-1: `/scribe:edit scene`
+- After edit-2: `/scribe:edit line`
+- After edit-3: `/scribe:edit ai`
+- After edit-4: `/scribe:edit hostile`
+- After edit-5: `/scribe:edit combine` to produce final chapter

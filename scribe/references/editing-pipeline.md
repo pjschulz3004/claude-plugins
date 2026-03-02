@@ -1,114 +1,162 @@
 # Multi-Stage Editing Pipeline
 
-Systematic workflow from scene breakdown through final polish.
+Systematic workflow from scene breakdown through final polish. Scene-level processing throughout.
+
+## Directory Structure
+
+Each chapter gets its own subdirectory with stage-specific folders:
+
+```
+arc-N-name/
+  X.X/
+    planning/
+      chapter-plan.md
+      scene-1.md, scene-2.md, ...
+    beats/
+      scene-1.md, scene-2.md, ...
+    draft/
+      scene-1.md, scene-2.md, ...
+    edit-1-plot/
+      scene-1.md, scene-2.md, ...
+      continuity-notes.md
+    edit-2-scene/
+      scene-1.md, scene-2.md, ...
+    edit-3-line/
+      scene-1.md, scene-2.md, ...
+    edit-4-ai/
+      density-audit.md
+      reports/
+        scene-N-language.md, scene-N-structure.md, scene-N-voice.md
+      synthesis.md
+      scene-1.md, scene-2.md, ...
+    edit-5-hostile/
+      reports/
+        scene-N-ai-hater.md, scene-N-lit-snob.md, scene-N-worm-reader.md
+      synthesis.md
+      scene-1.md, scene-2.md, ...
+    final/
+      chapter.md
+```
+
+### Scene File Format
+```markdown
+# Scene N: [Title]
+<!-- Chapter X.X | [Location] | [POV] | ~[word estimate] words -->
+
+[prose content]
+```
+
+### Backward Compatibility
+Chapters 3.1-3.6 use the old flat file format (`X.X Title (stage).md`).
+New chapters (3.7+) use per-scene subdirectories.
+Skills detect format by checking whether `X.X/` directory exists.
 
 ## Pipeline Overview
 
-### Pre-Draft Phase
-| Stage | Suffix | Focus |
-|-------|--------|-------|
-| Scenes | `(scenes)` | Chapter broken into scenes with purpose |
-| Beats | `(beats)` | Scenes expanded to specific beats |
-| Draft | `(draft)` | First prose draft from beats |
+### Stage-by-Stage Processing Model
 
-### Editing Phase
-| Stage | Suffix | Focus |
-|-------|--------|-------|
-| Edit 1 | `(edited-1-plot)` | Plot & Continuity |
-| Edit 2 | `(edited-2-scene)` | Scene & Beat structure |
-| Edit 3 | `(edited-3-line)` | Line-level prose |
-| Edit 4 | `(edited-4-ai)` | AI-Pattern elimination |
-| Edit 5 | `(edited-5-hostile)` | Hostile reader pass |
+| Stage | Input Dir | Output Dir | Processing | Model |
+|-------|-----------|------------|------------|-------|
+| Scenes | (arc context) | `X.X/planning/` | whole-chapter | main agent |
+| Beats | `X.X/planning/` | `X.X/beats/` | per-scene | main agent |
+| Draft | `X.X/beats/` | `X.X/draft/` | per-scene | sub-agent (opus) |
+| Edit 1 (Plot) | `X.X/draft/` | `X.X/edit-1-plot/` | whole-chapter read, per-scene output | main agent |
+| Edit 2 (Scene) | `X.X/edit-1-plot/` | `X.X/edit-2-scene/` | per-scene | main agent |
+| Edit 3 (Line) | `X.X/edit-2-scene/` | `X.X/edit-3-line/` | per-scene | main agent |
+| Edit 4 (AI) | `X.X/edit-3-line/` | `X.X/edit-4-ai/` | density audit then 3 sub-agents per scene | sub-agents (sonnet) |
+| Edit 5 (Hostile) | `X.X/edit-4-ai/` | `X.X/edit-5-hostile/` | 3 sub-agents per scene | sub-agents (sonnet) |
+| Combine | `X.X/edit-5-hostile/` | `X.X/final/` | script | combine-scenes.sh |
+
+### Sub-Agent Isolation
+Stages 4 and 5 dispatch sub-agents WITHOUT conversation context. This prevents:
+- Goodwill bias (agent that wrote the prose going easy on detection)
+- Context contamination (knowing the story makes you forgive AI patterns)
+- Blind spots from familiarity
 
 ## Pre-Draft Phase
 
 ### Scenes Stage
 Input: Arc outline, previous chapter, character files, context docs.
-Output format: Scene title, purpose, POV, location, characters, rough content, ending hinge.
-Checklist: Each scene has clear purpose, identified characters, ends on hinge, flows logically.
+Output: `X.X/planning/chapter-plan.md` + `X.X/planning/scene-N.md` per scene.
+Each scene file: title, purpose, POV, location, characters, structure, hinge.
 
 ### Beats Stage
-Input: (scenes) file with author notes.
-Output format: Beat number, what happens, what turns, approximate words.
-Checklist: Every beat turns something, therefore/but causality, ~1 turn per 300 words.
+Input: `X.X/planning/scene-N.md` files.
+Output: `X.X/beats/scene-N.md` per scene.
+Each file: beat-by-beat expansion with turns, causality, word estimates.
 
 ### Draft Stage
-Input: (beats) file, voice/style guides.
-Focus: Get the story down. Hit the beats. Maintain voice. End scenes on hinges.
-The draft does NOT need to be polished. It's meant to be edited.
+Input: `X.X/beats/scene-N.md` + voice/style context.
+Output: `X.X/draft/scene-N.md` per scene.
+Dispatched as sub-agents (scene-drafter, opus). Each scene drafted independently.
+NO AI-ism checking at draft stage. Only voice + style + beats.
 
 ## Editing Phase
 
 ### Stage 1: Plot & Continuity
 **Goal**: Chapter serves the story, maintains continuity, advances arcs.
-
-Prerequisites: Story overview, arc context, previous chapter, character files.
+**Processing**: Read ALL scene files for continuity analysis. Output per-scene files + `continuity-notes.md`.
 
 Checks:
-- **Continuity**: Timeline, character states, props/locations, canon compliance
-- **Plot function**: Chapter purpose, planned beats present, causality chain, stakes escalation
-- **Character arc**: Protagonist's state changes, supporting characters serve function
-- **Thematic integrity**: Core themes present, ideology deployed correctly
-
-Output: Issue list + structural recommendations + (edited-1-plot) file.
+- Timeline, character states, props/locations, canon compliance
+- Plot function, planned beats present, causality chain, stakes escalation
+- Character arc progression, supporting character function
+- Thematic integrity, ideology grounded in drama
+- First-person information audit, omniscient slips
 
 ### Stage 2: Scene & Beat Edit
 **Goal**: Every scene functions dramatically.
+**Processing**: Read all scenes (for cross-scene patterns). Edit each individually.
 
 Checks:
-- **Scene structure**: Opens friction, closes hinge, single goal, obstacle present
-- **Beat analysis**: Each turns something, ~1 per 300 words, causality
-- **Pacing**: Scenes escalate, tangents proportionate, dialogue intercutting
-- **Character voice**: POV consistent, no impossible knowledge, emotional truth
-- **Dialogue**: Every line turns something, distinctive voices, subtext present
-
-Output: Scene-by-scene notes + (edited-2-scene) file.
+- Scene value change (entry vs exit charge must differ)
+- Opens friction, closes hinge, single goal, obstacle present
+- Beat analysis: each turns something, ~1 per 300 words, causality
+- Scene-sequel pattern across scenes
+- Pacing, character voice, dialogue subtext
 
 ### Stage 3: Line Edit
 **Goal**: Professional prose quality.
+**Processing**: Per-scene. Line editing is local work.
 
 Checks:
-- **Rhythm**: Spiral+jab, sentence variety, job-mix heuristic, action/tension density
-- **Figurative language**: Density ≤1/paragraph, 3-question test, no mixed vehicles
-- **Sensory details**: Rotation, smell limited, locale-specific
-- **Voice calibration**: Confidence level, humor style, knowledge base
-- **House style**: Punctuation, lexical repetition, concrete:abstract ratio
+- Rhythm: spiral+jab, sentence variety, job-mix, pacing checkpoints
+- Figurative language: density, 3-question test, image field coherence
+- Sensory details: rotation, smell discipline, specificity
+- Voice calibration: confidence level, humor, knowledge base
+- House style: punctuation, lexical repetition, concrete:abstract ratio
 
-Output: Polished prose + (edited-3-line) file.
+### Stage 4: AI-Pattern Elimination (3-Agent Detection)
+**Goal**: Eliminate AI-generated texture through multi-agent consensus.
+**Processing**: Density audit (full chapter), then 3 agents per scene in parallel.
 
-### Stage 4: AI-Pattern Elimination
-**Goal**: Eliminate AI-generated texture.
+Steps:
+1. **Density audit**: Concatenate all scenes, count patterns globally, write `density-audit.md`
+2. **Dispatch per scene** (3 agents in parallel):
+   - Language agent: vocabulary, sentence patterns, punctuation, linearity
+   - Structure agent: contrastive frames, rhetorical devices, narrative structure
+   - Voice agent: metaphor quality, interiority, show-don't-tell, POV consistency
+3. **Collect reports** to `reports/` directory
+4. **Synthesize**: identify high-confidence issues (2+ agents agree), single-agent flags, disagreements
+5. **Apply fixes** to scene files after author review
 
-Run the 8-category checklist systematically:
-1. Vagueness crutches → near zero
-2. Triple cascades → max 2-3 earned
-3. Simile density → 1 per 600-800 words
-4. Parallel construction sameness → vary every 2-3
-5. Fragment overuse → max 5-6 per 1000 words
-6. Filtering verbs → cut unless intentional
-7. Verbal tics → no phrase >3x per 1000 words
-8. Over-explaining → show OR tell, not both
+### Stage 5: Hostile Reader Pass (3-Persona Reading)
+**Goal**: Final check through three distinct hostile perspectives.
+**Processing**: 3 agents per scene in parallel, no references loaded.
 
-Also: AI vocabulary scan (Tier 1/2/3), structural tells (sentence length, paragraph shapes).
+Agents:
+- **AI Hater**: smells AI slop from a paragraph away. Flags anything machine-generated.
+- **Lit Snob**: MFA standards. Prose quality, craft, literary merit. High bar.
+- **Worm Fan**: 500+ fics read. Knows every fanfic cliche. Checks voice accuracy, canon, originality.
 
-Output: Documented fixes per category + (edited-4-ai) file.
+Steps:
+1. Dispatch 3 readers per scene (no references, fresh eyes)
+2. Collect reports to `reports/` directory
+3. Synthesize: consensus flags (2+ agree), persona-specific concerns
+4. Apply fixes after author review
 
-### Stage 5: Hostile Reader Pass
-**Goal**: Final check through eyes of a brilliant, picky reader who hates AI content.
-
-Questions for every paragraph:
-1. Could this appear in generic AI output? → Rewrite for THIS story.
-2. Pattern in last three paragraphs? → Break it.
-3. Explaining something just shown? → Cut explanation.
-4. Generic or specific comparison? → Make specific.
-5. Same paragraph shape as last? → Vary.
-6. Would a cynical reader roll their eyes? → Rewrite.
-7. Too smooth? Needs grit? → Add human imperfection.
-
-Preserve/add: stray thoughts, irrelevant details, off-topic observations,
-character-driven humor, imperfect grammar serving voice.
-
-Output: Final polish + (edited-5-hostile) file.
+### Combination Step
+After Stage 5, run `combine-scenes.sh` to concatenate scene files into `final/chapter.md`.
 
 ## Feedback Format
 
@@ -122,33 +170,21 @@ Output: Final polish + (edited-5-hostile) file.
 
 Author response options: Accept / Reject (with reason) / Modify / Discuss.
 
-## Continuity Scratchpad Template
-
-Track for every editing session:
-- Prior state: last chapter summary, physical/emotional state, voice level
-- Already used: analogies/images, ideology citations, sensory motifs
-- Active threads: ongoing plot elements, relationships, props/objects
-- This chapter must: required beats, foreshadowing, callbacks
-
 ## Chapter Type Variants
 
 ### Battle Chapter Variant (Stages 1-2)
-For chapters with significant action/combat:
-- **Stage 1**: Also verify spatial logic consistency, power interaction accuracy, casualty tracking
-- **Stage 2**: Check pacing oscillation (never >500 words at single register), voice compression ladder progression, aftermath weight equal to action weight
-- Consider launching `battle-reviewer` agent for dedicated battle craft review
-- Deep dive: load `battle-craft-reference.md`
+- Stage 1: verify spatial logic, power interaction accuracy, casualty tracking
+- Stage 2: pacing oscillation (never >500w single register), voice compression ladder, aftermath weight
+- Consider launching `battle-reviewer` agent
+- Deep dive: `battle-craft-reference.md`
 
 ### Dialogue-Heavy Chapter Variant (Stages 2-3)
-For chapters driven primarily by conversation:
-- **Stage 2**: Check subtext density, power dynamic shifts within conversations, voice differentiation between speakers
-- **Stage 3**: Apply Radio Test to all dialogue exchanges, audit tag craft, verify oblique responses (>60% of dialogue should be indirect)
-- Consider launching `dialogue-auditor` agent for dedicated dialogue review
-- Deep dive: load `dialogue-reference.md`
+- Stage 2: subtext density, power dynamic shifts, voice differentiation
+- Stage 3: Radio Test, tag craft, oblique responses (>60% indirect)
+- Consider launching `dialogue-auditor` agent
+- Deep dive: `dialogue-reference.md`
 
 ## Deep Dive Resources by Stage
-
-When persistent issues appear in a particular stage, load the relevant research file:
 
 | Stage | Issue | Deep Dive Resource |
 |-------|-------|-------------------|
@@ -166,22 +202,18 @@ When persistent issues appear in a particular stage, load the relevant research 
 
 ## Specialized Skill Routing
 
-Some chapters benefit from specialized editing passes beyond the standard 5-stage pipeline:
-
 | Skill | When to Use | Command |
 |-------|------------|---------|
-| `edit-dialogue` | Dialogue-heavy chapters, voice differentiation issues | `/scribe:edit dialogue` |
-| `edit-tension` | Pacing problems, flat middle sections, insufficient micro-tension | `/scribe:edit tension` |
-| `battle-reviewer` agent | Any chapter with combat (launched from Stage 2) | Auto-suggested |
-| `dialogue-auditor` agent | Any chapter with 40%+ dialogue (launched from Stage 2-3) | Auto-suggested |
-
-These are optional additions, not replacements for the standard pipeline stages.
+| `edit-dialogue` | Dialogue-heavy chapters | `/scribe:edit dialogue` |
+| `edit-tension` | Pacing problems, flat sections | `/scribe:edit tension` |
+| `battle-reviewer` agent | Combat chapters (from Stage 2) | Auto-suggested |
+| `dialogue-auditor` agent | 40%+ dialogue chapters | Auto-suggested |
 
 ## Full Editorial Pass Order (Quick Reference)
-1. Continuity skim → create scratchpad
-2. Structural pass → mark beats, check causality, add/trim hinges
-3. Line polish → rhythm, sensory rotation, voice
-4. AI-pattern elimination → 8-category checklist, vocabulary scan
-5. Hostile reader pass → specificity test, humanity check
-6. Continuity re-check → bodies, props, time, consequences
-7. (Optional) Specialized pass → dialogue audit, tension audit, battle review
+1. Continuity skim (Stage 1): scratchpad, structural fixes
+2. Scene structure (Stage 2): beats, causality, hinges
+3. Line polish (Stage 3): rhythm, sensory, voice
+4. AI detection (Stage 4): density audit, 3-agent scan, synthesis, fixes
+5. Hostile reading (Stage 5): 3-persona fresh eyes, synthesis, fixes
+6. Combine: `scripts/combine-scenes.sh` produces `final/chapter.md`
+7. (Optional) Specialized pass: dialogue audit, tension audit, battle review

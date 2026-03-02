@@ -1,11 +1,11 @@
 {
   "name": "scribe",
-  "version": "0.1.0",
-  "description": "Collaborative creative writing studio. Supports the full refinement pipeline: planning (story/arc/chapter/scenes/beats), drafting, 5-stage editing, continuity checking, and growing knowledge base with SQLite-backed character/relationship tracking.",
+  "version": "0.2.0",
+  "description": "Collaborative creative writing studio with scene-level pipeline processing. Supports planning (story/arc/chapter/scenes/beats), scene-by-scene drafting via sub-agents, 5-stage editing with 3-agent AI detection and 3-persona hostile reading, density auditing, continuity checking, and knowledge base with SQLite-backed tracking.",
   "author": {
     "name": "Paul",
     "email": "paul@jschulz.org"
   },
   "license": "MIT",
-  "keywords": ["writing", "creative-writing", "editing", "fiction", "plugin"]
+  "keywords": ["writing", "creative-writing", "editing", "fiction", "plugin", "ai-detection"]
 }
