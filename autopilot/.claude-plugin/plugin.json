@@ -1,0 +1,11 @@
+{
+  "name": "autopilot",
+  "version": "0.1.0",
+  "description": "Project-scoped autopilot mode. Toggles auto-approval of all tool calls via a .autopilot marker file in the working directory.",
+  "author": {
+    "name": "Paul Schulz",
+    "email": "paul@jschulz.org"
+  },
+  "license": "MIT",
+  "keywords": ["autopilot", "auto-approve", "permissions"]
+}

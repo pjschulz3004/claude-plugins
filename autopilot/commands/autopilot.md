@@ -21,5 +21,3 @@ fi
 Run the above command. Report the result to the user.
 
 **Scope:** Project directory only. The `.autopilot` file lives in the current working directory, so it only affects sessions running in this folder. Add `.autopilot` to `.gitignore` if the project has one.
-
-**Tip:** `/improve` enables autopilot automatically at the start and disables it when done.

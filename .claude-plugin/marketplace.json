@@ -74,6 +74,17 @@
         "name": "Paul Schulz",
         "email": "paul@jschulz.org"
       }
+    },
+    {
+      "name": "autopilot",
+      "source": "./autopilot",
+      "description": "Project-scoped autopilot mode. Toggles auto-approval of all tool calls via a .autopilot marker file in the working directory.",
+      "version": "0.1.0",
+      "category": "workflow",
+      "author": {
+        "name": "Paul Schulz",
+        "email": "paul@jschulz.org"
+      }
     }
   ]
 }
