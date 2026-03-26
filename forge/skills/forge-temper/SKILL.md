@@ -84,7 +84,34 @@ Apply changes conservatively. Each simplification should make the code clearer, 
 
 Update `forge.local.md`: set `temper.simplified: true`
 
-## Step 5: Final Test Suite
+## Step 5: Visual Verification (Web Projects Only)
+
+Skip this step if the project has no web frontend (no HTML, no dev server, no UI).
+
+Use `agent-browser` to verify the UI hasn't broken during hardening:
+
+```bash
+# Start dev server if not running, then:
+agent-browser open http://localhost:<port>
+agent-browser wait --load networkidle
+agent-browser screenshot temper-visual-check.png --annotate
+agent-browser snapshot -i
+```
+
+Check:
+- All interactive elements are present and labeled (snapshot -i output)
+- No visual regressions from the annotated screenshot (Read the image)
+- Critical user flows still work (navigate, fill forms, submit)
+- Error states display correctly (try invalid inputs)
+- Responsive layout at different viewports if applicable
+
+Use `impeccable:audit` for a structured accessibility and quality check if significant UI was touched during TEMPER.
+
+Close browser when done: `agent-browser close`
+
+Update `forge.local.md`: set `temper.visual_verified: true`
+
+## Step 6: Final Test Suite
 
 Spawn `forge-tester` subagent to run the complete test suite.
 
