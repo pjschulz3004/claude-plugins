@@ -13,7 +13,7 @@
       "name": "forge",
       "source": "./forge",
       "description": "Development pipeline orchestrator. Guides projects from empty folder to production through IGNITE (foundation), SHAPE (execution), TEMPER (hardening), DELIVER (shipping) phases.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "development",
       "author": {
         "name": "Paul Schulz",
@@ -46,7 +46,7 @@
       "name": "union-writer",
       "source": "./union-writer",
       "description": "Output style: collaborative writing partner for DFW-influenced literary fiction.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "output-style",
       "author": {
         "name": "Paul Schulz",
@@ -57,7 +57,7 @@
       "name": "library",
       "source": "./library",
       "description": "Research library pipeline. Search LibGen, download books, convert EPUB/PDF to chapter-structured markdown, and ingest into the Knowledge Graph.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "knowledge",
       "author": {
         "name": "Paul Schulz",
@@ -68,7 +68,7 @@
       "name": "improve",
       "source": "./improve",
       "description": "Autonomous codebase improvement engine. Rotates through security, quality, simplification, testing, performance, design, and UI cycles with timed sessions and feature creep mode.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "development",
       "author": {
         "name": "Paul Schulz",

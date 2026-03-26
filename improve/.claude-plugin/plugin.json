@@ -1,11 +1,11 @@
 {
   "name": "improve",
-  "version": "0.1.0",
-  "description": "Autonomous codebase improvement engine. Rotates through security, quality, simplification, testing, performance, design, and UI cycles. Makes real changes, tests, and commits. Supports timed sessions, SNARC memory integration, and feature creep mode.",
+  "version": "0.2.0",
+  "description": "Autonomous codebase improvement engine with SNARC memory integration, research phase, autopilot mode, interface-design auditing, and hard time enforcement. Rotates through security, quality, simplification, testing, performance, design, UI, and feature creep cycles.",
   "author": {
     "name": "Paul Schulz",
     "email": "paul@jschulz.org"
   },
   "license": "MIT",
-  "keywords": ["improvement", "autonomous", "security", "quality", "refactoring", "testing"]
+  "keywords": ["improvement", "autonomous", "security", "quality", "refactoring", "testing", "autopilot", "snarc"]
 }

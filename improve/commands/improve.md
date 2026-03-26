@@ -41,7 +41,7 @@ You are an autonomous improvement engine. You rotate through improvement categor
 
 Enable autopilot mode so the entire run proceeds without permission prompts:
 ```bash
-touch "$HOME/.claude/auto-approve" && echo "AUTOPILOT ON"
+touch ".autopilot" && echo "AUTOPILOT ON for $(pwd)"
 ```
 
 ### Parse Duration
@@ -470,7 +470,7 @@ The `.improve-research.md` file carries forward to the next run. Its Research Qu
 
 5. **Disable autopilot**:
 ```bash
-rm -f "$HOME/.claude/auto-approve" && echo "AUTOPILOT OFF"
+rm -f ".autopilot" && echo "AUTOPILOT OFF"
 ```
 
 ---

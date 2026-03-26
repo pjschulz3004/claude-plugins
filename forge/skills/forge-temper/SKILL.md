@@ -105,6 +105,8 @@ Check:
 - Error states display correctly (try invalid inputs)
 - Responsive layout at different viewports if applicable
 
+If `.interface-design/system.md` exists, use `interface-design:audit` to validate code against the design system (spacing, depth, colors, patterns).
+Use `interface-design:critique` for craft quality evaluation (composition, surfaces, states, content).
 Use `impeccable:audit` for a structured accessibility and quality check if significant UI was touched during TEMPER.
 
 Close browser when done: `agent-browser close`
