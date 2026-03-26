@@ -63,6 +63,17 @@
         "name": "Paul Schulz",
         "email": "paul@jschulz.org"
       }
+    },
+    {
+      "name": "improve",
+      "source": "./improve",
+      "description": "Autonomous codebase improvement engine. Rotates through security, quality, simplification, testing, performance, design, and UI cycles with timed sessions and feature creep mode.",
+      "version": "0.1.0",
+      "category": "development",
+      "author": {
+        "name": "Paul Schulz",
+        "email": "paul@jschulz.org"
+      }
     }
   ]
 }
