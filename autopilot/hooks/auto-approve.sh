@@ -6,6 +6,9 @@
 # Toggle from within a session: /autopilot
 # Or manually: touch .autopilot / rm .autopilot
 
-if [ -f ".autopilot" ]; then
+# CLAUDE_PROJECT_DIR is set by Claude Code to the project root
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
+
+if [ -f "${PROJECT_DIR}/.autopilot" ] || [ -f ".autopilot" ]; then
     echo '{"hookSpecificOutput":{"permissionDecision":"allow","permissionDecisionReason":"autopilot mode (project)"}}'
 fi
