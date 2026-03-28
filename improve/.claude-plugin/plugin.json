@@ -1,7 +1,7 @@
 {
   "name": "improve",
   "version": "0.2.0",
-  "description": "Autonomous codebase improvement engine with SNARC memory integration, research phase, autopilot mode, interface-design auditing, and hard time enforcement. Rotates through security, quality, simplification, testing, performance, design, UI, and feature creep cycles.",
+  "description": "[DEPRECATED — Use Demiurge instead] Autonomous codebase improvement engine. This plugin has been superseded by Demiurge, which integrates Improve's capabilities directly into GSD. See DEPRECATED.md for migration instructions. The standalone /improve command continues to work via Demiurge's safe zone.",
   "author": {
     "name": "Paul Schulz",
     "email": "paul@jschulz.org"

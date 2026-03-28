@@ -1,7 +1,7 @@
 {
   "name": "forge",
   "version": "0.1.2",
-  "description": "Development pipeline orchestrator. Guides projects from empty folder to production through disciplined phases: IGNITE (foundation) \u2192 SHAPE (execution) \u2192 TEMPER (hardening) \u2192 DELIVER (shipping).",
+  "description": "[DEPRECATED — Use Demiurge instead] Development pipeline orchestrator. This plugin has been superseded by Demiurge, which integrates Forge's capabilities directly into GSD. See DEPRECATED.md for migration instructions.",
   "author": {
     "name": "Paul",
     "email": "paul@jschulz.org"
