@@ -43,13 +43,13 @@
 
 ### Budget Tool Plugin (BUD)
 
-- [ ] **BUD-01**: User can view budget categories with balances via MCP tool
-- [ ] **BUD-02**: User can view transactions by date range via MCP tool
-- [ ] **BUD-03**: User can categorize uncategorized transactions via MCP tool
-- [ ] **BUD-04**: User can batch-approve transactions via MCP tool
-- [ ] **BUD-05**: Plugin works standalone as Claude Code plugin
-- [ ] **BUD-06**: Plugin exposes `/jarvis-budget:summary` standalone command
-- [ ] **BUD-07**: YNAB SDK backend handles UUID-to-string conversion (no SQLite binding errors)
+- [x] **BUD-01**: User can view budget categories with balances via MCP tool
+- [x] **BUD-02**: User can view transactions by date range via MCP tool
+- [x] **BUD-03**: User can categorize uncategorized transactions via MCP tool
+- [x] **BUD-04**: User can batch-approve transactions via MCP tool
+- [x] **BUD-05**: Plugin works standalone as Claude Code plugin
+- [x] **BUD-06**: Plugin exposes `/jarvis-budget:summary` standalone command
+- [x] **BUD-07**: YNAB SDK backend handles UUID-to-string conversion (no SQLite binding errors)
 
 ### Files Tool Plugin (FILE)
 
@@ -170,13 +170,13 @@
 | CONT-03 | Phase 2 | Pending |
 | CONT-04 | Phase 2 | Pending |
 | CONT-05 | Phase 2 | Pending |
-| BUD-01 | Phase 2 | Pending |
-| BUD-02 | Phase 2 | Pending |
-| BUD-03 | Phase 2 | Pending |
-| BUD-04 | Phase 2 | Pending |
-| BUD-05 | Phase 2 | Pending |
-| BUD-06 | Phase 2 | Pending |
-| BUD-07 | Phase 2 | Pending |
+| BUD-01 | Phase 2 | Complete |
+| BUD-02 | Phase 2 | Complete |
+| BUD-03 | Phase 2 | Complete |
+| BUD-04 | Phase 2 | Complete |
+| BUD-05 | Phase 2 | Complete |
+| BUD-06 | Phase 2 | Complete |
+| BUD-07 | Phase 2 | Complete |
 | FILE-01 | Phase 2 | Complete |
 | FILE-02 | Phase 2 | Complete |
 | FILE-03 | Phase 2 | Complete |
