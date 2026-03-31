@@ -30,6 +30,11 @@ export class TaskLedger {
 		this.db.exec(CREATE_INDEX_SQL);
 	}
 
+	/** Expose the underlying SQLite database for sharing with ChatHistory. */
+	get database(): Database.Database {
+		return this.db;
+	}
+
 	record(entry: LedgerEntry): number {
 		const stmt = this.db.prepare(`
 			INSERT INTO task_runs (task_name, status, started_at, duration_ms, error, cost_usd, input_tokens, output_tokens)
@@ -75,6 +80,16 @@ export class TaskLedger {
 			}
 		}
 		return count;
+	}
+
+	getRecentAll(limit = 10): LedgerEntry[] {
+		const stmt = this.db.prepare(`
+			SELECT id, task_name, status, started_at, duration_ms, error, cost_usd, input_tokens, output_tokens
+			FROM task_runs
+			ORDER BY started_at DESC
+			LIMIT ?
+		`);
+		return stmt.all(limit) as LedgerEntry[];
 	}
 
 	prune(olderThanDays = 30): number {

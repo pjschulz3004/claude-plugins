@@ -14,7 +14,10 @@
 		"skipLibCheck": true
 	},
 	"references": [
-		{ "path": "../jarvis-shared" }
+		{ "path": "../jarvis-shared" },
+		{ "path": "../jarvis-email" },
+		{ "path": "../jarvis-calendar" },
+		{ "path": "../jarvis-budget" }
 	],
 	"include": ["src/**/*.ts"],
 	"exclude": ["src/**/*.test.ts"]

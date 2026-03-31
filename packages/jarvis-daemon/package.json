@@ -10,9 +10,13 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
+		"@jarvis/budget": "*",
+		"@jarvis/calendar": "*",
+		"@jarvis/email": "*",
 		"@jarvis/shared": "*",
 		"better-sqlite3": "^12.8.0",
 		"croner": "^10.0.1",
+		"telegraf": "^4.16.0",
 		"yaml": "^2.7.0"
 	},
 	"devDependencies": {
