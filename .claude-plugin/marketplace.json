@@ -85,6 +85,54 @@
         "name": "Paul Schulz",
         "email": "paul@jschulz.org"
       }
+    },
+    {
+      "name": "jarvis",
+      "source": "./packages/jarvis",
+      "description": "Personal AI assistant orchestrator. Unified commands, skills, and agents for email triage, calendar briefings, budget tracking, and cross-domain synthesis.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "author": { "name": "Paul Schulz", "email": "paul@jschulz.org" }
+    },
+    {
+      "name": "jarvis-email",
+      "source": "./packages/jarvis-email",
+      "description": "IMAP email MCP server. List, search, move, flag, trash, archive emails via mailbox.org.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "author": { "name": "Paul Schulz", "email": "paul@jschulz.org" }
+    },
+    {
+      "name": "jarvis-calendar",
+      "source": "./packages/jarvis-calendar",
+      "description": "CalDAV calendar MCP server. List events, todos, create events via mailbox.org.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "author": { "name": "Paul Schulz", "email": "paul@jschulz.org" }
+    },
+    {
+      "name": "jarvis-contacts",
+      "source": "./packages/jarvis-contacts",
+      "description": "CardDAV contacts MCP server. Search, get, create, update contacts via mailbox.org.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "author": { "name": "Paul Schulz", "email": "paul@jschulz.org" }
+    },
+    {
+      "name": "jarvis-budget",
+      "source": "./packages/jarvis-budget",
+      "description": "YNAB budget MCP server. View categories, transactions, categorize, and approve.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "author": { "name": "Paul Schulz", "email": "paul@jschulz.org" }
+    },
+    {
+      "name": "jarvis-files",
+      "source": "./packages/jarvis-files",
+      "description": "File management MCP server. Inbox, outbox, archive, and WebDAV sync.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "author": { "name": "Paul Schulz", "email": "paul@jschulz.org" }
     }
   ]
 }
