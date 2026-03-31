@@ -1,0 +1,45 @@
+{
+  "mode": "yolo",
+  "granularity": "standard",
+  "parallelization": {
+    "enabled": true,
+    "plan_level": true,
+    "task_level": false,
+    "skip_checkpoints": true,
+    "max_concurrent_agents": 3,
+    "min_plans_for_parallel": 2
+  },
+  "planning": {
+    "commit_docs": true,
+    "search_gitignored": false,
+    "sub_repos": []
+  },
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "auto_advance": true,
+    "nyquist_validation": true,
+    "discuss_mode": "discuss",
+    "research_before_questions": false,
+    "_auto_chain_active": true
+  },
+  "model_profile": "balanced",
+  "gates": {
+    "confirm_plan_before_execute": false,
+    "confirm_each_task": false,
+    "confirm_destructive_actions": true,
+    "confirm_external_api_calls": false,
+    "confirm_file_deletions": true,
+    "confirm_branch_operations": true,
+    "confirm_database_operations": true,
+    "confirm_deployment": true
+  },
+  "safety": {
+    "confirm_destructive": true
+  },
+  "hooks": {
+    "context_warnings": true
+  },
+  "agent_skills": {}
+}
