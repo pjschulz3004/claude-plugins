@@ -68,7 +68,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md -- Plugin structure, commands (status/briefing/ask), voice reference, email-rules, budget-rules (wave 1)
+- [x] 03-01-PLAN.md -- Plugin structure, commands (status/briefing/ask), voice reference, email-rules, budget-rules (wave 1)
 - [ ] 03-02-PLAN.md -- Skills (triage/brief/filing) and agents (email/budget/briefing) with model tiering (wave 2, depends on 03-01)
 
 ### Phase 4: Telegram + Notifications
@@ -125,7 +125,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Foundation + Email | 0/3 | Planning complete | - |
 | 2. Remaining Tools | 0/4 | Planning complete | - |
-| 3. Orchestrator | 0/2 | Planning complete | - |
+| 3. Orchestrator | 1/2 | In Progress|  |
 | 4. Telegram + Notifications | 0/3 | Not started | - |
 | 5. Intelligence | 0/3 | Not started | - |
 | 6. Cutover | 0/2 | Not started | - |
