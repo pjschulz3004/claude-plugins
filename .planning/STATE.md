@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-31T14:25:31.747Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-03-31T14:26:33.300Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 14
-  completed_plans: 12
+  completed_plans: 13
   percent: 0
 ---
 
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-telegram P01 | 5min | 2 tasks | 8 files |
 | Phase 04-telegram P02 | 160s | 2 tasks | 4 files |
 | Phase 05-intelligence P01 | 2min | 2 tasks | 4 files |
+| Phase 05-intelligence P02 | 3min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,9 @@ Recent decisions affecting current work:
 - [Phase 04-telegram]: Task failures are urgent (bypass quiet hours); successes are non-urgent
 - [Phase 05-intelligence]: Healing agent is strictly read-only -- probes health but never modifies data or credentials
 - [Phase 05-intelligence]: Re-entry guard uses in-memory Set; healing dispatch is fire-and-forget from scheduler
+- [Phase 05-intelligence]: 1+ email corrections for sender rules, 2+ budget observations for payee rules (signal quality thresholds)
+- [Phase 05-intelligence]: Improve agent dimensions 1,4 are observation-only; dimensions 2,3 collect evidence; dimension 5 applies; dimension 6 reports
+- [Phase 05-intelligence]: Rule files are append/correct only -- improve agent never deletes existing rules
 
 ### Pending Todos
 
@@ -111,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T14:25:31.745Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-03-31T14:26:33.298Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None

@@ -98,7 +98,7 @@ Plans:
 
 Plans:
 - [x] 05-01-PLAN.md -- Healing skill + agent (pure markdown) and daemon healing dispatch logic (wave 1)
-- [ ] 05-02-PLAN.md -- Self-improvement skill + agent (6 analysis dimensions) and heartbeat task wiring (wave 1)
+- [x] 05-02-PLAN.md -- Self-improvement skill + agent (6 analysis dimensions) and heartbeat task wiring (wave 1)
 - [ ] 05-03-PLAN.md -- Knowledge graph module (neo4j-driver wrapper) and memory consolidation task (wave 2, depends on 05-01 + 05-02)
 
 ### Phase 6: Cutover
