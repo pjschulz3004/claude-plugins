@@ -7,14 +7,20 @@
 	"keywords": ["email", "imap", "jarvis", "mcp"],
 	"userConfig": {
 		"JARVIS_MAILBOX_EMAIL": {
+			"title": "Mailbox Email",
+			"type": "string",
 			"description": "Mailbox email address",
 			"sensitive": false
 		},
 		"JARVIS_MAILBOX_PASSWORD": {
+			"title": "Mailbox Password",
+			"type": "string",
 			"description": "Mailbox password",
 			"sensitive": true
 		},
 		"JARVIS_MAILBOX_IMAP_HOST": {
+			"title": "IMAP Host",
+			"type": "string",
 			"description": "IMAP server hostname (e.g. imap.mailbox.org)",
 			"sensitive": false
 		}
