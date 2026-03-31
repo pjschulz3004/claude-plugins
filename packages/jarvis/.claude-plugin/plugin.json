@@ -1,0 +1,8 @@
+{
+	"name": "jarvis",
+	"version": "0.1.0",
+	"description": "Unified Jarvis assistant — cross-domain briefings, email triage, budget monitoring, and free-text queries. Orchestrates jarvis-email, jarvis-calendar, jarvis-contacts, jarvis-budget, and jarvis-files tool plugins.",
+	"author": { "name": "Paul", "email": "paul@jschulz.org" },
+	"license": "MIT",
+	"keywords": ["jarvis", "assistant", "orchestrator", "plugin"]
+}
