@@ -6,7 +6,8 @@
 		"packages/jarvis-daemon",
 		"packages/jarvis-budget",
 		"packages/jarvis-calendar",
-		"packages/jarvis-files"
+		"packages/jarvis-files",
+		"packages/jarvis-contacts"
 	],
 	"scripts": {
 		"build": "tsc --build",
