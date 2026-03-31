@@ -109,11 +109,10 @@ Plans:
   1. New TS daemon runs alongside old Python service in shadow mode, processing the same heartbeat schedule without affecting production
   2. Shadow mode comparison shows equivalent or better outputs for all heartbeat tasks
   3. After cutover, health endpoint is green, all heartbeat tasks fire on schedule, and all plugins are published to the marketplace
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 06-01: Shadow mode and output comparison
-- [ ] 06-02: Clean cutover and marketplace publishing
+- [ ] 06-01-PLAN.md -- Deployment artifacts: systemd service, .env.example, deploy script, cutover runbook, marketplace checklist (wave 1)
 
 ## Progress
 
@@ -127,4 +126,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Orchestrator | 1/2 | In Progress|  |
 | 4. Telegram + Notifications | 2/2 | Complete   | 2026-03-31 |
 | 5. Intelligence | 3/3 | Complete   | 2026-03-31 |
-| 6. Cutover | 0/2 | Not started | - |
+| 6. Cutover | 0/1 | Planning complete | - |
