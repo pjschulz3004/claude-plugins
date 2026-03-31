@@ -53,12 +53,12 @@
 
 ### Files Tool Plugin (FILE)
 
-- [ ] **FILE-01**: User can list inbox and outbox files via MCP tool
-- [ ] **FILE-02**: User can save files to inbox via MCP tool
-- [ ] **FILE-03**: User can move files from inbox to outbox via MCP tool
-- [ ] **FILE-04**: User can archive outbox files to archive/YYYY/MM/ via MCP tool
-- [ ] **FILE-05**: Plugin works standalone as Claude Code plugin
-- [ ] **FILE-06**: rclone sync to mailbox.org WebDAV works from daemon
+- [x] **FILE-01**: User can list inbox and outbox files via MCP tool
+- [x] **FILE-02**: User can save files to inbox via MCP tool
+- [x] **FILE-03**: User can move files from inbox to outbox via MCP tool
+- [x] **FILE-04**: User can archive outbox files to archive/YYYY/MM/ via MCP tool
+- [x] **FILE-05**: Plugin works standalone as Claude Code plugin
+- [x] **FILE-06**: rclone sync to mailbox.org WebDAV works from daemon
 
 ### Daemon Core (DAEMON)
 
@@ -177,12 +177,12 @@
 | BUD-05 | Phase 2 | Pending |
 | BUD-06 | Phase 2 | Pending |
 | BUD-07 | Phase 2 | Pending |
-| FILE-01 | Phase 2 | Pending |
-| FILE-02 | Phase 2 | Pending |
-| FILE-03 | Phase 2 | Pending |
-| FILE-04 | Phase 2 | Pending |
-| FILE-05 | Phase 2 | Pending |
-| FILE-06 | Phase 2 | Pending |
+| FILE-01 | Phase 2 | Complete |
+| FILE-02 | Phase 2 | Complete |
+| FILE-03 | Phase 2 | Complete |
+| FILE-04 | Phase 2 | Complete |
+| FILE-05 | Phase 2 | Complete |
+| FILE-06 | Phase 2 | Complete |
 | ORCH-01 | Phase 3 | Pending |
 | ORCH-02 | Phase 3 | Pending |
 | ORCH-03 | Phase 3 | Pending |
