@@ -62,15 +62,15 @@
 
 ### Daemon Core (DAEMON)
 
-- [ ] **DAEMON-01**: Daemon starts as systemd service on VPS and stays running
-- [ ] **DAEMON-02**: Heartbeat scheduler reads heartbeat.yaml and fires tasks on cron schedule
-- [ ] **DAEMON-03**: Dispatcher calls `claude -p` with focused prompts and parses JSON output
-- [ ] **DAEMON-04**: Circuit breakers per service (imap, caldav, carddav, ynab) prevent cascading failures
-- [ ] **DAEMON-05**: Task ledger records every heartbeat run (task_name, status, duration, error) in SQLite
-- [ ] **DAEMON-06**: Health endpoint returns JSON at /health for Uptime Kuma monitoring
-- [ ] **DAEMON-07**: Graceful shutdown on SIGTERM (stop scheduler, close DB, close bot)
-- [ ] **DAEMON-08**: `claude -p` dispatch uses Max subscription (no ANTHROPIC_API_KEY set)
-- [ ] **DAEMON-09**: Dispatcher stagger tasks with jitter to avoid rate limit bursts
+- [x] **DAEMON-01**: Daemon starts as systemd service on VPS and stays running
+- [x] **DAEMON-02**: Heartbeat scheduler reads heartbeat.yaml and fires tasks on cron schedule
+- [x] **DAEMON-03**: Dispatcher calls `claude -p` with focused prompts and parses JSON output
+- [x] **DAEMON-04**: Circuit breakers per service (imap, caldav, carddav, ynab) prevent cascading failures
+- [x] **DAEMON-05**: Task ledger records every heartbeat run (task_name, status, duration, error) in SQLite
+- [x] **DAEMON-06**: Health endpoint returns JSON at /health for Uptime Kuma monitoring
+- [x] **DAEMON-07**: Graceful shutdown on SIGTERM (stop scheduler, close DB, close bot)
+- [x] **DAEMON-08**: `claude -p` dispatch uses Max subscription (no ANTHROPIC_API_KEY set)
+- [x] **DAEMON-09**: Dispatcher stagger tasks with jitter to avoid rate limit bursts
 
 ### Orchestrator Plugin (ORCH)
 
@@ -149,15 +149,15 @@
 | EMAIL-08 | Phase 1 | Pending |
 | EMAIL-09 | Phase 1 | Pending |
 | EMAIL-10 | Phase 1 | Pending |
-| DAEMON-01 | Phase 1 | Pending |
-| DAEMON-02 | Phase 1 | Pending |
-| DAEMON-03 | Phase 1 | Pending |
-| DAEMON-04 | Phase 1 | Pending |
-| DAEMON-05 | Phase 1 | Pending |
-| DAEMON-06 | Phase 1 | Pending |
-| DAEMON-07 | Phase 1 | Pending |
-| DAEMON-08 | Phase 1 | Pending |
-| DAEMON-09 | Phase 1 | Pending |
+| DAEMON-01 | Phase 1 | Complete |
+| DAEMON-02 | Phase 1 | Complete |
+| DAEMON-03 | Phase 1 | Complete |
+| DAEMON-04 | Phase 1 | Complete |
+| DAEMON-05 | Phase 1 | Complete |
+| DAEMON-06 | Phase 1 | Complete |
+| DAEMON-07 | Phase 1 | Complete |
+| DAEMON-08 | Phase 1 | Complete |
+| DAEMON-09 | Phase 1 | Complete |
 | CAL-01 | Phase 2 | Pending |
 | CAL-02 | Phase 2 | Pending |
 | CAL-03 | Phase 2 | Pending |

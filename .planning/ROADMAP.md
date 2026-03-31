@@ -35,8 +35,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md -- Monorepo scaffold and jarvis-shared package (wave 1)
-- [ ] 01-02-PLAN.md -- Email backend and MCP server (wave 2, depends on 01-01)
-- [ ] 01-03-PLAN.md -- Daemon core: scheduler, dispatcher, ledger, breakers, health (wave 2, depends on 01-01)
+- [x] 01-02-PLAN.md -- Email backend and MCP server (wave 2, depends on 01-01)
+- [x] 01-03-PLAN.md -- Daemon core: scheduler, dispatcher, ledger, breakers, health (wave 2, depends on 01-01)
 
 ### Phase 2: Remaining Tools
 **Goal**: All five tool domains (email, calendar, contacts, budget, files) have working MCP plugins that operate standalone
