@@ -54,6 +54,13 @@ tasks:
     plugin_dirs:
       - packages/jarvis
     prompt: |
-      You are Jarvis running memory consolidation.
-      Connect to the Neo4j knowledge graph and expire edges older than 30 days
-      that have not been reinforced. Report statistics.
+      You are Jarvis running nightly memory consolidation.
+
+      Connect to the Neo4j knowledge graph at bolt://localhost:7687 (user: neo4j).
+      Password is in the NEO4J_PASSWORD environment variable.
+
+      1. Get current stats: node count, edge count, stale edges (>30 days).
+      2. Expire stale edges that haven't been reinforced in the last 30 days.
+      3. Report: "Memory consolidation: {deleted} stale edges expired. Graph now has {nodes} entities, {edges} relationships."
+
+      If Neo4j is unavailable, report: "Memory consolidation skipped -- Neo4j unreachable."
