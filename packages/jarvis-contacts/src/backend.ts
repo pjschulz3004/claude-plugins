@@ -281,7 +281,7 @@ export class TsdavContactsBackend implements ContactsBackend {
 			await client.createVCard({
 				addressBook: addressBooks[0],
 				filename: `${uid}.vcf`,
-				data: vcardData,
+				vCardString: vcardData,
 			});
 		});
 	}

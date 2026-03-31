@@ -6,7 +6,8 @@
 		{ "path": "packages/jarvis-daemon" },
 		{ "path": "packages/jarvis-files" },
 		{ "path": "packages/jarvis-budget" },
-		{ "path": "packages/jarvis-calendar" }
+		{ "path": "packages/jarvis-calendar" },
+		{ "path": "packages/jarvis-contacts" }
 	],
 	"files": []
 }

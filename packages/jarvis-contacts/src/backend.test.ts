@@ -182,8 +182,8 @@ describe("TsdavContactsBackend", () => {
 			DAVClient.mockImplementation(function mockDAV() {
 				return makeMockClient({
 					fetchAddressBooks: vi.fn().mockResolvedValue([{ url: "/addr/" }]),
-					createVCard: vi.fn().mockImplementation((opts: { data: string }) => {
-						capturedData = opts.data;
+					createVCard: vi.fn().mockImplementation((opts: { vCardString: string }) => {
+						capturedData = opts.vCardString;
 					}),
 				});
 			});
@@ -212,8 +212,8 @@ describe("TsdavContactsBackend", () => {
 			DAVClient.mockImplementation(function mockDAV() {
 				return makeMockClient({
 					fetchAddressBooks: vi.fn().mockResolvedValue([{ url: "/addr/" }]),
-					createVCard: vi.fn().mockImplementation((opts: { data: string }) => {
-						capturedData = opts.data;
+					createVCard: vi.fn().mockImplementation((opts: { vCardString: string }) => {
+						capturedData = opts.vCardString;
 					}),
 				});
 			});

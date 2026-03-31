@@ -1,0 +1,30 @@
+{
+	"name": "jarvis-contacts",
+	"version": "0.1.0",
+	"description": "CardDAV contacts tools for Jarvis. Search, view, create, and update contacts via MCP.",
+	"author": { "name": "Paul", "email": "paul@jschulz.org" },
+	"license": "MIT",
+	"keywords": ["contacts", "carddav", "jarvis", "mcp"],
+	"userConfig": {
+		"JARVIS_MAILBOX_EMAIL": {
+			"description": "Mailbox email address",
+			"sensitive": false
+		},
+		"JARVIS_MAILBOX_PASSWORD": {
+			"description": "Mailbox password",
+			"sensitive": true
+		}
+	},
+	"hooks": {
+		"SessionStart": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "diff -q \"${CLAUDE_PLUGIN_ROOT}/package.json\" \"${CLAUDE_PLUGIN_DATA}/package.json\" >/dev/null 2>&1 || (cp \"${CLAUDE_PLUGIN_ROOT}/package.json\" \"${CLAUDE_PLUGIN_DATA}/\" && cd \"${CLAUDE_PLUGIN_DATA}\" && npm install --omit=dev --ignore-scripts 2>/dev/null) || rm -f \"${CLAUDE_PLUGIN_DATA}/package.json\""
+					}
+				]
+			}
+		]
+	}
+}
