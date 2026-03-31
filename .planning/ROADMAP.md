@@ -80,12 +80,11 @@ Plans:
   2. Free-text message sent via Telegram gets relayed to `claude -p` with conversation history and returns a meaningful response using Jarvis tools
   3. Heartbeat tasks with autonomy=notify deliver notifications to Telegram, and quiet hours (23:00-07:00) suppress non-urgent messages
   4. Messages from unauthorized chat IDs are silently dropped, and long messages split at paragraph boundaries
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Telegram bot (slash commands, auth middleware, message splitting)
-- [ ] 04-02: Free-text relay and conversation history
-- [ ] 04-03: Notification abstraction and quiet hours
+- [ ] 04-01-PLAN.md -- Telegram bot: telegraf setup, auth middleware, 7 slash commands, free-text relay, chat history (wave 1)
+- [ ] 04-02-PLAN.md -- Notification abstraction: NotifyChannel interface, TelegramChannel, quiet hours, scheduler wiring (wave 2, depends on 04-01)
 
 ### Phase 5: Intelligence
 **Goal**: Jarvis autonomously recovers from failures, learns from corrections, and maintains cross-domain memory
@@ -126,6 +125,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Foundation + Email | 0/3 | Planning complete | - |
 | 2. Remaining Tools | 0/4 | Planning complete | - |
 | 3. Orchestrator | 1/2 | In Progress|  |
-| 4. Telegram + Notifications | 0/3 | Not started | - |
+| 4. Telegram + Notifications | 0/2 | Planning complete | - |
 | 5. Intelligence | 0/3 | Not started | - |
 | 6. Cutover | 0/2 | Not started | - |
