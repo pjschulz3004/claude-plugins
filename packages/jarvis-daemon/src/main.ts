@@ -5,6 +5,7 @@ import { Dispatcher } from "./dispatcher.js";
 import { Scheduler } from "./scheduler.js";
 import { HealthServer } from "./health.js";
 import { createBot } from "./telegram.js";
+import { TelegramChannel } from "./notify.js";
 import { ImapFlowBackend } from "@jarvis/email";
 import { TsdavCalendarBackend } from "@jarvis/calendar";
 import { YnabBackend } from "@jarvis/budget";
@@ -18,17 +19,8 @@ const ledger = new TaskLedger(join(__dirname, "..", "jarvis.db"));
 const breakers = new BreakerManager();
 const dispatcher = new Dispatcher();
 const history = new ChatHistory(ledger.database);
-const scheduler = new Scheduler({
-	yamlPath: join(__dirname, "..", "heartbeat.yaml"),
-	dispatcher,
-	ledger,
-	breakers,
-});
-const health = new HealthServer({
-	breakers,
-	ledger,
-	taskNames: () => scheduler.getTaskNames(),
-});
+let scheduler: Scheduler;
+let health: HealthServer;
 
 // Build tool backends from env vars (optional -- commands degrade gracefully)
 function buildEmailBackend(): ImapFlowBackend | undefined {
@@ -63,12 +55,12 @@ let bot: Telegraf | undefined;
 
 async function start() {
 	console.log("[jarvis] Starting daemon...");
-	await health.start();
-	scheduler.start();
 
 	// Telegram bot (optional -- skip if no token)
 	const telegramToken = process.env.JARVIS_TELEGRAM_BOT_TOKEN;
 	const telegramChatId = process.env.JARVIS_TELEGRAM_CHAT_ID;
+	const notifyChannels: import("./notify.js").NotifyChannel[] = [];
+
 	if (telegramToken && telegramChatId) {
 		bot = createBot({
 			token: telegramToken,
@@ -81,6 +73,9 @@ async function start() {
 			calendar: buildCalendarBackend(),
 			budget: buildBudgetBackend(),
 		});
+		notifyChannels.push(
+			new TelegramChannel({ bot, chatId: telegramChatId }),
+		);
 		bot.launch({ dropPendingUpdates: true });
 		console.log("[jarvis] Telegram bot started.");
 	} else {
@@ -88,6 +83,24 @@ async function start() {
 			"[jarvis] No TELEGRAM_BOT_TOKEN, skipping Telegram bot",
 		);
 	}
+
+	// Create scheduler with notification channels (empty if no Telegram)
+	scheduler = new Scheduler({
+		yamlPath: join(__dirname, "..", "heartbeat.yaml"),
+		dispatcher,
+		ledger,
+		breakers,
+		notifyChannels,
+	});
+
+	health = new HealthServer({
+		breakers,
+		ledger,
+		taskNames: () => scheduler.getTaskNames(),
+	});
+
+	await health.start();
+	scheduler.start();
 
 	console.log(
 		`[jarvis] Daemon running. Health at :${process.env.JARVIS_HEALTH_PORT || "3333"}/health`,

@@ -5,6 +5,7 @@ import type { Dispatcher, DispatchOptions } from "./dispatcher.js";
 import { addJitter } from "./dispatcher.js";
 import type { TaskLedger } from "./state/ledger.js";
 import type { BreakerManager } from "./state/breakers.js";
+import { sendNotification, type NotifyChannel } from "./notify.js";
 
 interface HeartbeatTask {
 	schedule: string;
@@ -27,6 +28,7 @@ export interface SchedulerConfig {
 	dispatcher: Dispatcher;
 	ledger: TaskLedger;
 	breakers: BreakerManager;
+	notifyChannels?: NotifyChannel[];
 }
 
 export class Scheduler {
@@ -126,6 +128,14 @@ export class Scheduler {
 				output_tokens: result.usage.output_tokens,
 			});
 			breakers.recordSuccess(service);
+
+			// Notify on success (non-urgent -- suppressed during quiet hours)
+			if (task.autonomy === "notify" && this.config.notifyChannels?.length) {
+				const summary = `Task "${taskName}" completed successfully.\n\n${result.result.slice(0, 500)}`;
+				await sendNotification(this.config.notifyChannels, summary, {
+					urgent: false,
+				});
+			}
 		} catch (err) {
 			const error = err instanceof Error ? err.message : String(err);
 			ledger.record({
@@ -136,6 +146,14 @@ export class Scheduler {
 				error,
 			});
 			breakers.recordFailure(service);
+
+			// Notify on failure (urgent -- bypasses quiet hours)
+			if (task.autonomy === "notify" && this.config.notifyChannels?.length) {
+				const summary = `Task "${taskName}" failed: ${error.slice(0, 300)}`;
+				await sendNotification(this.config.notifyChannels, summary, {
+					urgent: true,
+				});
+			}
 		}
 	}
 }
