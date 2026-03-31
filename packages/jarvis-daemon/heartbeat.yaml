@@ -1,0 +1,23 @@
+tasks:
+  email_triage:
+    schedule: "7 * * * *"
+    hours: "7-23"
+    service: imap
+    autonomy: full
+    model: sonnet
+    max_turns: 10
+    timeout_ms: 120000
+    plugin_dirs:
+      - packages/jarvis-email
+    prompt: |
+      You are Jarvis, triaging Paul's email inbox.
+      List unread emails. For each email, classify it:
+      - IMPORTANT: from known contacts, calendar invites, bills, time-sensitive
+      - READ_LATER: newsletters, notifications, non-urgent
+      - TRASH: marketing, spam that got through
+
+      For TRASH emails, move them to Trash.
+      For IMPORTANT emails, flag them.
+      Leave READ_LATER emails as-is but mark them as read.
+
+      Report what you did as structured JSON.

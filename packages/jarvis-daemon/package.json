@@ -1,0 +1,22 @@
+{
+	"name": "@jarvis/daemon",
+	"version": "0.1.0",
+	"type": "module",
+	"main": "dist/main.js",
+	"scripts": {
+		"build": "tsc --build",
+		"start": "node --env-file=.env dist/main.js",
+		"dev": "npx tsx --env-file=.env src/main.ts",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@jarvis/shared": "*",
+		"better-sqlite3": "^12.8.0",
+		"croner": "^10.0.1",
+		"yaml": "^2.7.0"
+	},
+	"devDependencies": {
+		"@types/better-sqlite3": "^7.6.0",
+		"typescript": "^5.7.0"
+	}
+}
