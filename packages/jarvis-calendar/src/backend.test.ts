@@ -241,17 +241,18 @@ describe("TsdavCalendarBackend", () => {
 			expect(inst.createCalendarObject).toHaveBeenCalledOnce();
 
 			const callArgs = inst.createCalendarObject.mock.calls[0][0];
-			expect(callArgs.data).toContain("BEGIN:VCALENDAR");
-			expect(callArgs.data).toContain("BEGIN:VEVENT");
-			expect(callArgs.data).toContain("SUMMARY:New Meeting");
-			expect(callArgs.data).toContain("DTSTART:20260331T100000Z");
-			expect(callArgs.data).toContain("DTEND:20260331T110000Z");
-			expect(callArgs.data).toContain("LOCATION:Office");
-			expect(callArgs.data).toContain("DESCRIPTION:Standup");
-			expect(callArgs.data).toContain("END:VEVENT");
-			expect(callArgs.data).toContain("END:VCALENDAR");
+			const ical = callArgs.iCalString;
+			expect(ical).toContain("BEGIN:VCALENDAR");
+			expect(ical).toContain("BEGIN:VEVENT");
+			expect(ical).toContain("SUMMARY:New Meeting");
+			expect(ical).toContain("DTSTART:20260331T100000Z");
+			expect(ical).toContain("DTEND:20260331T110000Z");
+			expect(ical).toContain("LOCATION:Office");
+			expect(ical).toContain("DESCRIPTION:Standup");
+			expect(ical).toContain("END:VEVENT");
+			expect(ical).toContain("END:VCALENDAR");
 			// Should have a UID
-			expect(callArgs.data).toMatch(/UID:.+/);
+			expect(ical).toMatch(/UID:.+/);
 		});
 
 		it("creates event without optional fields", async () => {
@@ -263,9 +264,10 @@ describe("TsdavCalendarBackend", () => {
 
 			const inst = mockInstances[0];
 			const callArgs = inst.createCalendarObject.mock.calls[0][0];
-			expect(callArgs.data).toContain("SUMMARY:Simple Event");
-			expect(callArgs.data).not.toContain("LOCATION:");
-			expect(callArgs.data).not.toContain("DESCRIPTION:");
+			const ical = callArgs.iCalString;
+			expect(ical).toContain("SUMMARY:Simple Event");
+			expect(ical).not.toContain("LOCATION:");
+			expect(ical).not.toContain("DESCRIPTION:");
 		});
 	});
 
@@ -293,10 +295,10 @@ describe("TsdavCalendarBackend", () => {
 			expect(inst.updateCalendarObject).toHaveBeenCalledOnce();
 
 			const callArgs = inst.updateCalendarObject.mock.calls[0][0];
-			expect(callArgs.data).toContain("STATUS:COMPLETED");
-			expect(callArgs.data).toMatch(/COMPLETED:\d{8}T\d{6}Z/);
-			expect(callArgs.url).toBe("/caldav/calendars/default/todo1.ics");
-			expect(callArgs.etag).toBe('"etag-todo1"');
+			expect(callArgs.calendarObject.data).toContain("STATUS:COMPLETED");
+			expect(callArgs.calendarObject.data).toMatch(/COMPLETED:\d{8}T\d{6}Z/);
+			expect(callArgs.calendarObject.url).toBe("/caldav/calendars/default/todo1.ics");
+			expect(callArgs.calendarObject.etag).toBe('"etag-todo1"');
 		});
 
 		it("throws when todo not found", async () => {

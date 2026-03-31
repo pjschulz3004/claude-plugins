@@ -277,7 +277,6 @@ export class TsdavCalendarBackend implements CalendarBackend {
 				calendar: calendars[0],
 				filename: `${uid}.ics`,
 				iCalString: lines.join("\r\n"),
-				data: lines.join("\r\n"),
 			});
 		});
 	}
@@ -290,7 +289,9 @@ export class TsdavCalendarBackend implements CalendarBackend {
 			}
 
 			// Find the todo object
-			let foundObj: { url: string; etag: string; data: string } | undefined;
+			let foundUrl: string | undefined;
+			let foundEtag: string | undefined;
+			let foundData: string | undefined;
 			for (const calendar of calendars) {
 				const objects = await client.fetchCalendarObjects({ calendar });
 				for (const obj of objects) {
@@ -298,14 +299,16 @@ export class TsdavCalendarBackend implements CalendarBackend {
 					if (!vtodo) continue;
 					const uid = parseICalProp(vtodo, "UID");
 					if (uid === id) {
-						foundObj = obj;
+						foundUrl = obj.url;
+						foundEtag = obj.etag ?? undefined;
+						foundData = obj.data;
 						break;
 					}
 				}
-				if (foundObj) break;
+				if (foundUrl) break;
 			}
 
-			if (!foundObj) {
+			if (!foundUrl || !foundData) {
 				throw new Error(`Todo with id '${id}' not found`);
 			}
 
@@ -315,22 +318,17 @@ export class TsdavCalendarBackend implements CalendarBackend {
 				.replace(/[-:]/g, "")
 				.replace(/\.\d{3}/, "");
 
-			let updatedData = foundObj.data;
-			// Add STATUS:COMPLETED before END:VTODO
-			updatedData = updatedData.replace(
+			const updatedData = foundData.replace(
 				"END:VTODO",
 				`STATUS:COMPLETED\r\nCOMPLETED:${now}\r\nEND:VTODO`,
 			);
 
 			await client.updateCalendarObject({
 				calendarObject: {
-					url: foundObj.url,
-					etag: foundObj.etag,
+					url: foundUrl,
+					etag: foundEtag,
 					data: updatedData,
 				},
-				url: foundObj.url,
-				etag: foundObj.etag,
-				data: updatedData,
 			});
 		});
 	}
