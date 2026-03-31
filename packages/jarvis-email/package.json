@@ -19,6 +19,7 @@
 	},
 	"dependencies": {
 		"@jarvis/shared": "*",
+		"@modelcontextprotocol/sdk": "^1.28.0",
 		"imapflow": "^1.2.9",
 		"zod": "^3.25.0"
 	},

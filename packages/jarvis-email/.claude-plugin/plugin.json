@@ -1,0 +1,34 @@
+{
+	"name": "jarvis-email",
+	"version": "0.1.0",
+	"description": "IMAP email tools for Jarvis. List unread, search, move, flag, trash, archive emails via MCP.",
+	"author": { "name": "Paul", "email": "paul@jschulz.org" },
+	"license": "MIT",
+	"keywords": ["email", "imap", "jarvis", "mcp"],
+	"userConfig": {
+		"JARVIS_MAILBOX_EMAIL": {
+			"description": "Mailbox email address",
+			"sensitive": false
+		},
+		"JARVIS_MAILBOX_PASSWORD": {
+			"description": "Mailbox password",
+			"sensitive": true
+		},
+		"JARVIS_MAILBOX_IMAP_HOST": {
+			"description": "IMAP server hostname (e.g. imap.mailbox.org)",
+			"sensitive": false
+		}
+	},
+	"hooks": {
+		"SessionStart": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "diff -q \"${CLAUDE_PLUGIN_ROOT}/package.json\" \"${CLAUDE_PLUGIN_DATA}/package.json\" >/dev/null 2>&1 || (cp \"${CLAUDE_PLUGIN_ROOT}/package.json\" \"${CLAUDE_PLUGIN_DATA}/\" && cd \"${CLAUDE_PLUGIN_DATA}\" && npm install --omit=dev --ignore-scripts 2>/dev/null) || rm -f \"${CLAUDE_PLUGIN_DATA}/package.json\""
+					}
+				]
+			}
+		]
+	}
+}
