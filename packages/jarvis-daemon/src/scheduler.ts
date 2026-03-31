@@ -6,6 +6,7 @@ import { addJitter } from "./dispatcher.js";
 import type { TaskLedger } from "./state/ledger.js";
 import type { BreakerManager } from "./state/breakers.js";
 import { sendNotification, type NotifyChannel } from "./notify.js";
+import { dispatchHealing } from "./healing.js";
 
 interface HeartbeatTask {
 	schedule: string;
@@ -152,6 +153,19 @@ export class Scheduler {
 				const summary = `Task "${taskName}" failed: ${error.slice(0, 300)}`;
 				await sendNotification(this.config.notifyChannels, summary, {
 					urgent: true,
+				});
+			}
+
+			// Dispatch healing if 3+ consecutive failures (INTEL-01)
+			const consecutiveFailures = ledger.getConsecutiveFailures(taskName);
+			if (consecutiveFailures >= 3) {
+				dispatchHealing({
+					taskName,
+					ledger,
+					dispatcher,
+					notifyChannels: this.config.notifyChannels,
+				}).catch((healErr) => {
+					console.error(`[jarvis] Healing dispatch error for ${taskName}:`, healErr);
 				});
 			}
 		}
