@@ -1,0 +1,30 @@
+{
+	"name": "jarvis-budget",
+	"version": "0.1.0",
+	"description": "YNAB budget tools for Jarvis. View categories, transactions, categorize and approve via MCP.",
+	"author": { "name": "Paul", "email": "paul@jschulz.org" },
+	"license": "MIT",
+	"keywords": ["budget", "ynab", "jarvis", "mcp"],
+	"userConfig": {
+		"JARVIS_YNAB_ACCESS_TOKEN": {
+			"description": "YNAB personal access token",
+			"sensitive": true
+		},
+		"JARVIS_YNAB_BUDGET_ID": {
+			"description": "YNAB budget ID (UUID)",
+			"sensitive": false
+		}
+	},
+	"hooks": {
+		"SessionStart": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "diff -q \"${CLAUDE_PLUGIN_ROOT}/package.json\" \"${CLAUDE_PLUGIN_DATA}/package.json\" >/dev/null 2>&1 || (cp \"${CLAUDE_PLUGIN_ROOT}/package.json\" \"${CLAUDE_PLUGIN_DATA}/\" && cd \"${CLAUDE_PLUGIN_DATA}\" && npm install --omit=dev --ignore-scripts 2>/dev/null) || rm -f \"${CLAUDE_PLUGIN_DATA}/package.json\""
+					}
+				]
+			}
+		]
+	}
+}

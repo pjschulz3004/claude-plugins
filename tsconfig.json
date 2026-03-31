@@ -4,7 +4,8 @@
 		{ "path": "packages/jarvis-shared" },
 		{ "path": "packages/jarvis-email" },
 		{ "path": "packages/jarvis-daemon" },
-		{ "path": "packages/jarvis-files" }
+		{ "path": "packages/jarvis-files" },
+		{ "path": "packages/jarvis-budget" }
 	],
 	"files": []
 }
