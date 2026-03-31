@@ -90,7 +90,8 @@ export class ImapFlowBackend implements EmailBackend {
 				if (limitedUids.length === 0) return [];
 
 				const results: EmailSummary[] = [];
-				for await (const msg of client.fetch(limitedUids, {
+				const uidRange = limitedUids.join(",");
+				for await (const msg of client.fetch(uidRange, {
 					uid: true,
 					envelope: true,
 					flags: true,
@@ -136,7 +137,8 @@ export class ImapFlowBackend implements EmailBackend {
 				if (uids.length === 0) return [];
 
 				const results: EmailSummary[] = [];
-				for await (const msg of client.fetch(uids, {
+				const uidRange = (uids as number[]).join(",");
+				for await (const msg of client.fetch(uidRange, {
 					uid: true,
 					envelope: true,
 					flags: true,
