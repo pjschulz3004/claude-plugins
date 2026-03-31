@@ -24,7 +24,7 @@
     "research_before_questions": false,
     "_auto_chain_active": true
   },
-  "model_profile": "balanced",
+  "model_profile": "quality",
   "gates": {
     "confirm_plan_before_execute": false,
     "confirm_each_task": false,
