@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { loadCredentials, requireCredentials } from "./credentials.js";
 
 describe("loadCredentials", () => {
@@ -93,8 +93,8 @@ describe("requireCredentials", () => {
 	});
 
 	it("throws error listing all missing vars", () => {
-		expect(() =>
-			requireCredentials("MAILBOX", ["EMAIL", "PASSWORD"]),
-		).toThrow("JARVIS_MAILBOX_EMAIL");
+		expect(() => requireCredentials("MAILBOX", ["EMAIL", "PASSWORD"])).toThrow(
+			"JARVIS_MAILBOX_EMAIL",
+		);
 	});
 });

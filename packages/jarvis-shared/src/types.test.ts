@@ -1,10 +1,11 @@
-import { describe, it, expect } from "vitest";
-import {
-	BreakerState,
-	toolResult,
-	LedgerEntrySchema,
+import { describe, expect, it } from "vitest";
+import type {
+	BreakerConfig,
+	CredentialConfig,
+	LedgerEntry,
+	ToolResult,
 } from "./types.js";
-import type { ToolResult, CredentialConfig, LedgerEntry, BreakerConfig } from "./types.js";
+import { BreakerState, LedgerEntrySchema, toolResult } from "./types.js";
 
 describe("ToolResult", () => {
 	it("has content array with type text and text string", () => {
