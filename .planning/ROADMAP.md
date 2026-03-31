@@ -97,7 +97,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md -- Healing skill + agent (pure markdown) and daemon healing dispatch logic (wave 1)
+- [x] 05-01-PLAN.md -- Healing skill + agent (pure markdown) and daemon healing dispatch logic (wave 1)
 - [ ] 05-02-PLAN.md -- Self-improvement skill + agent (6 analysis dimensions) and heartbeat task wiring (wave 1)
 - [ ] 05-03-PLAN.md -- Knowledge graph module (neo4j-driver wrapper) and memory consolidation task (wave 2, depends on 05-01 + 05-02)
 
@@ -126,5 +126,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Remaining Tools | 0/4 | Planning complete | - |
 | 3. Orchestrator | 1/2 | In Progress|  |
 | 4. Telegram + Notifications | 2/2 | Complete   | 2026-03-31 |
-| 5. Intelligence | 0/3 | Planning complete | - |
+| 5. Intelligence | 1/3 | In Progress|  |
 | 6. Cutover | 0/2 | Not started | - |

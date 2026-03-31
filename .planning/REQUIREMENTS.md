@@ -95,8 +95,8 @@
 
 ### Intelligence (INTEL)
 
-- [ ] **INTEL-01**: Healing agent dispatched when task fails 3+ consecutive times
-- [ ] **INTEL-02**: Healing agent diagnoses root cause using MCP tools and escalates if unfixable
+- [x] **INTEL-01**: Healing agent dispatched when task fails 3+ consecutive times
+- [x] **INTEL-02**: Healing agent diagnoses root cause using MCP tools and escalates if unfixable
 - [ ] **INTEL-03**: Nightly self-improvement agent reads ledger, email folder state, YNAB recategorizations
 - [ ] **INTEL-04**: Self-improvement agent updates email-rules.md and budget-rules.md with learned patterns
 - [ ] **INTEL-05**: Self-improvement produces summary notification of changes made
@@ -198,8 +198,8 @@
 | TG-05 | Phase 4 | Pending |
 | TG-06 | Phase 4 | Pending |
 | TG-07 | Phase 4 | Pending |
-| INTEL-01 | Phase 5 | Pending |
-| INTEL-02 | Phase 5 | Pending |
+| INTEL-01 | Phase 5 | Complete |
+| INTEL-02 | Phase 5 | Complete |
 | INTEL-03 | Phase 5 | Pending |
 | INTEL-04 | Phase 5 | Pending |
 | INTEL-05 | Phase 5 | Pending |
