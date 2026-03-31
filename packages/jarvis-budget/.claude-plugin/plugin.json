@@ -7,10 +7,14 @@
 	"keywords": ["budget", "ynab", "jarvis", "mcp"],
 	"userConfig": {
 		"JARVIS_YNAB_ACCESS_TOKEN": {
+			"title": "YNAB Access Token",
+			"type": "string",
 			"description": "YNAB personal access token",
 			"sensitive": true
 		},
 		"JARVIS_YNAB_BUDGET_ID": {
+			"title": "YNAB Budget ID",
+			"type": "string",
 			"description": "YNAB budget ID (UUID)",
 			"sensitive": false
 		}

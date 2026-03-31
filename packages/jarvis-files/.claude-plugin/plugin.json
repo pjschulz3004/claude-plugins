@@ -7,6 +7,8 @@
 	"keywords": ["files", "webdav", "rclone", "jarvis", "mcp"],
 	"userConfig": {
 		"JARVIS_FILES_BASE_DIR": {
+			"title": "Files Base Directory",
+			"type": "string",
 			"description": "Base directory for inbox/outbox/archive (e.g. /home/paul/jarvis-files)",
 			"sensitive": false
 		}
