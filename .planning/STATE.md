@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 05-03-PLAN.md
-last_updated: "2026-03-31T14:32:39.841Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-31T14:43:16.832Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 14
-  completed_plans: 14
+  completed_phases: 6
+  total_plans: 15
+  completed_plans: 15
   percent: 0
 ---
 
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05-intelligence P01 | 2min | 2 tasks | 4 files |
 | Phase 05-intelligence P02 | 3min | 2 tasks | 3 files |
 | Phase 05-intelligence PP03 | 4min | 2 tasks | 10 files |
+| Phase 06-cutover P01 | 259s | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,9 @@ Recent decisions affecting current work:
 - [Phase 05-intelligence]: Rule files are append/correct only -- improve agent never deletes existing rules
 - [Phase 05-intelligence]: MERGE nodes + CREATE edges pattern for Neo4j KG (avoids duplicates while allowing multi-relationships)
 - [Phase 05-intelligence]: Single RELATES_TO edge type with type property for relation semantics (simpler querying and uniform expiry)
+- [Phase 06-cutover]: TS daemon uses port 3334 to avoid conflict with Python jarvis on port 8085
+- [Phase 06-cutover]: deploy.sh enables but does NOT auto-start service; cutover timing is manual per runbook
+- [Phase 06-cutover]: Shadow mode requires second Telegram bot token to avoid 409 Conflict
 
 ### Pending Todos
 
@@ -118,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T14:32:39.839Z
-Stopped at: Completed 05-03-PLAN.md
+Last session: 2026-03-31T14:43:16.830Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None

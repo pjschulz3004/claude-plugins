@@ -105,10 +105,10 @@
 
 ### Migration (MIG)
 
-- [ ] **MIG-01**: New daemon can run alongside old Python service in shadow mode
-- [ ] **MIG-02**: Shadow mode compares outputs without affecting production
-- [ ] **MIG-03**: Clean cutover: stop Python service, start TS daemon, verify via health endpoint
-- [ ] **MIG-04**: All plugins published to pjschulz3004/claude-plugins marketplace
+- [x] **MIG-01**: New daemon can run alongside old Python service in shadow mode
+- [x] **MIG-02**: Shadow mode compares outputs without affecting production
+- [x] **MIG-03**: Clean cutover: stop Python service, start TS daemon, verify via health endpoint
+- [x] **MIG-04**: All plugins published to pjschulz3004/claude-plugins marketplace
 
 ## v2 Requirements (Deferred)
 
@@ -205,9 +205,9 @@
 | INTEL-05 | Phase 5 | Complete |
 | INTEL-06 | Phase 5 | Complete |
 | INTEL-07 | Phase 5 | Complete |
-| MIG-01 | Phase 6 | Pending |
-| MIG-02 | Phase 6 | Pending |
-| MIG-03 | Phase 6 | Pending |
-| MIG-04 | Phase 6 | Pending |
+| MIG-01 | Phase 6 | Complete |
+| MIG-02 | Phase 6 | Complete |
+| MIG-03 | Phase 6 | Complete |
+| MIG-04 | Phase 6 | Complete |
 
 **Coverage: 75/75 v1 requirements mapped**

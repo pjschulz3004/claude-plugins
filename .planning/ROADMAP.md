@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Orchestrator** - Unified assistant commands, skills, agents, voice reference
 - [x] **Phase 4: Telegram + Notifications** - Bot, free-text relay, notification abstraction, quiet hours (completed 2026-03-31)
 - [x] **Phase 5: Intelligence** - Self-healing, self-improvement, knowledge graph (completed 2026-03-31)
-- [ ] **Phase 6: Cutover** - Shadow mode, output comparison, clean migration from Python
+- [x] **Phase 6: Cutover** - Shadow mode, output comparison, clean migration from Python (completed 2026-03-31)
 
 ## Phase Details
 
@@ -112,7 +112,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 06-01-PLAN.md -- Deployment artifacts: systemd service, .env.example, deploy script, cutover runbook, marketplace checklist (wave 1)
+- [x] 06-01-PLAN.md -- Deployment artifacts: systemd service, .env.example, deploy script, cutover runbook, marketplace checklist (wave 1)
 
 ## Progress
 
@@ -126,4 +126,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Orchestrator | 1/2 | In Progress|  |
 | 4. Telegram + Notifications | 2/2 | Complete   | 2026-03-31 |
 | 5. Intelligence | 3/3 | Complete   | 2026-03-31 |
-| 6. Cutover | 0/1 | Planning complete | - |
+| 6. Cutover | 1/1 | Complete   | 2026-03-31 |
