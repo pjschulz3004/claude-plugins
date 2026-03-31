@@ -132,11 +132,82 @@
 
 ## Traceability
 
-| Phase | Requirements |
-|-------|-------------|
-| 1 | MONO-01..05, EMAIL-01..10, DAEMON-01..09 |
-| 2 | CAL-01..07, CONT-01..05, BUD-01..07, FILE-01..06 |
-| 3 | ORCH-01..08 |
-| 4 | TG-01..07 |
-| 5 | INTEL-01..07 |
-| 6 | MIG-01..04 |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| MONO-01 | Phase 1 | Pending |
+| MONO-02 | Phase 1 | Pending |
+| MONO-03 | Phase 1 | Pending |
+| MONO-04 | Phase 1 | Pending |
+| MONO-05 | Phase 1 | Pending |
+| EMAIL-01 | Phase 1 | Pending |
+| EMAIL-02 | Phase 1 | Pending |
+| EMAIL-03 | Phase 1 | Pending |
+| EMAIL-04 | Phase 1 | Pending |
+| EMAIL-05 | Phase 1 | Pending |
+| EMAIL-06 | Phase 1 | Pending |
+| EMAIL-07 | Phase 1 | Pending |
+| EMAIL-08 | Phase 1 | Pending |
+| EMAIL-09 | Phase 1 | Pending |
+| EMAIL-10 | Phase 1 | Pending |
+| DAEMON-01 | Phase 1 | Pending |
+| DAEMON-02 | Phase 1 | Pending |
+| DAEMON-03 | Phase 1 | Pending |
+| DAEMON-04 | Phase 1 | Pending |
+| DAEMON-05 | Phase 1 | Pending |
+| DAEMON-06 | Phase 1 | Pending |
+| DAEMON-07 | Phase 1 | Pending |
+| DAEMON-08 | Phase 1 | Pending |
+| DAEMON-09 | Phase 1 | Pending |
+| CAL-01 | Phase 2 | Pending |
+| CAL-02 | Phase 2 | Pending |
+| CAL-03 | Phase 2 | Pending |
+| CAL-04 | Phase 2 | Pending |
+| CAL-05 | Phase 2 | Pending |
+| CAL-06 | Phase 2 | Pending |
+| CAL-07 | Phase 2 | Pending |
+| CONT-01 | Phase 2 | Pending |
+| CONT-02 | Phase 2 | Pending |
+| CONT-03 | Phase 2 | Pending |
+| CONT-04 | Phase 2 | Pending |
+| CONT-05 | Phase 2 | Pending |
+| BUD-01 | Phase 2 | Pending |
+| BUD-02 | Phase 2 | Pending |
+| BUD-03 | Phase 2 | Pending |
+| BUD-04 | Phase 2 | Pending |
+| BUD-05 | Phase 2 | Pending |
+| BUD-06 | Phase 2 | Pending |
+| BUD-07 | Phase 2 | Pending |
+| FILE-01 | Phase 2 | Pending |
+| FILE-02 | Phase 2 | Pending |
+| FILE-03 | Phase 2 | Pending |
+| FILE-04 | Phase 2 | Pending |
+| FILE-05 | Phase 2 | Pending |
+| FILE-06 | Phase 2 | Pending |
+| ORCH-01 | Phase 3 | Pending |
+| ORCH-02 | Phase 3 | Pending |
+| ORCH-03 | Phase 3 | Pending |
+| ORCH-04 | Phase 3 | Pending |
+| ORCH-05 | Phase 3 | Pending |
+| ORCH-06 | Phase 3 | Pending |
+| ORCH-07 | Phase 3 | Pending |
+| ORCH-08 | Phase 3 | Pending |
+| TG-01 | Phase 4 | Pending |
+| TG-02 | Phase 4 | Pending |
+| TG-03 | Phase 4 | Pending |
+| TG-04 | Phase 4 | Pending |
+| TG-05 | Phase 4 | Pending |
+| TG-06 | Phase 4 | Pending |
+| TG-07 | Phase 4 | Pending |
+| INTEL-01 | Phase 5 | Pending |
+| INTEL-02 | Phase 5 | Pending |
+| INTEL-03 | Phase 5 | Pending |
+| INTEL-04 | Phase 5 | Pending |
+| INTEL-05 | Phase 5 | Pending |
+| INTEL-06 | Phase 5 | Pending |
+| INTEL-07 | Phase 5 | Pending |
+| MIG-01 | Phase 6 | Pending |
+| MIG-02 | Phase 6 | Pending |
+| MIG-03 | Phase 6 | Pending |
+| MIG-04 | Phase 6 | Pending |
+
+**Coverage: 75/75 v1 requirements mapped**
