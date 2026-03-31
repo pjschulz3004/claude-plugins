@@ -1,0 +1,26 @@
+{
+	"name": "jarvis-files",
+	"version": "0.1.0",
+	"description": "File management tools for Jarvis. Inbox/outbox workflow with archive and WebDAV sync via MCP.",
+	"author": { "name": "Paul", "email": "paul@jschulz.org" },
+	"license": "MIT",
+	"keywords": ["files", "webdav", "rclone", "jarvis", "mcp"],
+	"userConfig": {
+		"JARVIS_FILES_BASE_DIR": {
+			"description": "Base directory for inbox/outbox/archive (e.g. /home/paul/jarvis-files)",
+			"sensitive": false
+		}
+	},
+	"hooks": {
+		"SessionStart": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "diff -q \"${CLAUDE_PLUGIN_ROOT}/package.json\" \"${CLAUDE_PLUGIN_DATA}/package.json\" >/dev/null 2>&1 || (cp \"${CLAUDE_PLUGIN_ROOT}/package.json\" \"${CLAUDE_PLUGIN_DATA}/\" && cd \"${CLAUDE_PLUGIN_DATA}\" && npm install --omit=dev --ignore-scripts 2>/dev/null) || rm -f \"${CLAUDE_PLUGIN_DATA}/package.json\""
+					}
+				]
+			}
+		]
+	}
+}

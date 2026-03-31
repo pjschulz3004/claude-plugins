@@ -3,7 +3,8 @@
 	"references": [
 		{ "path": "packages/jarvis-shared" },
 		{ "path": "packages/jarvis-email" },
-		{ "path": "packages/jarvis-daemon" }
+		{ "path": "packages/jarvis-daemon" },
+		{ "path": "packages/jarvis-files" }
 	],
 	"files": []
 }

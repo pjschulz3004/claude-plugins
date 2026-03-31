@@ -3,7 +3,10 @@
 	"workspaces": [
 		"packages/jarvis-shared",
 		"packages/jarvis-email",
-		"packages/jarvis-daemon"
+		"packages/jarvis-daemon",
+		"packages/jarvis-budget",
+		"packages/jarvis-calendar",
+		"packages/jarvis-files"
 	],
 	"scripts": {
 		"build": "tsc --build",
