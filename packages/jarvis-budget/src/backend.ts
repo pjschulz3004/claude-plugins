@@ -1,0 +1,144 @@
+import ynab from "ynab";
+import type { YNABConfig, BudgetCategory, Transaction } from "./types.js";
+
+const TRANSIENT_CODES = new Set([
+	"ECONNRESET",
+	"ETIMEDOUT",
+	"ECONNREFUSED",
+	"EPIPE",
+	"EAI_AGAIN",
+]);
+
+function isTransientError(err: unknown): boolean {
+	if (err instanceof Error) {
+		const code = (err as NodeJS.ErrnoException).code;
+		if (code && TRANSIENT_CODES.has(code)) return true;
+	}
+	return false;
+}
+
+function isAuthError(err: unknown): boolean {
+	if (typeof err === "object" && err !== null && "status" in err) {
+		const status = (err as { status: number }).status;
+		return status === 401 || status === 403;
+	}
+	return false;
+}
+
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export interface BudgetBackend {
+	getCategories(): Promise<BudgetCategory[]>;
+	getTransactions(startDate?: string, endDate?: string): Promise<Transaction[]>;
+	categorizeTransaction(transactionId: string, categoryId: string): Promise<void>;
+	approveTransactions(transactionIds: string[]): Promise<void>;
+}
+
+export class YnabBackend implements BudgetBackend {
+	private config: YNABConfig;
+	private retryDelayMs: number;
+
+	constructor(config: YNABConfig, retryDelayMs = 1000) {
+		this.config = config;
+		this.retryDelayMs = retryDelayMs;
+	}
+
+	private createApi(): ynab.API {
+		return new ynab.API(this.config.accessToken);
+	}
+
+	private async withRetry<T>(operation: (api: ynab.API) => Promise<T>): Promise<T> {
+		let lastError: Error | undefined;
+		for (let attempt = 0; attempt < 3; attempt++) {
+			const api = this.createApi();
+			try {
+				return await operation(api);
+			} catch (err) {
+				lastError = err as Error;
+				if (isAuthError(err)) throw err;
+				if (!isTransientError(err)) throw err;
+				if (attempt < 2) {
+					await sleep(this.retryDelayMs * 2 ** attempt);
+				}
+			}
+		}
+		throw lastError;
+	}
+
+	async getCategories(): Promise<BudgetCategory[]> {
+		return this.withRetry(async (api) => {
+			const response = await api.categories.getCategories(this.config.budgetId);
+			const groups = response.data.category_groups;
+			const categories: BudgetCategory[] = [];
+
+			for (const group of groups) {
+				for (const cat of group.categories) {
+					if (cat.hidden || cat.deleted) continue;
+					categories.push({
+						id: String(cat.id),
+						name: cat.name,
+						groupName: group.name,
+						budgeted: cat.budgeted / 1000,
+						activity: cat.activity / 1000,
+						balance: cat.balance / 1000,
+					});
+				}
+			}
+
+			return categories;
+		});
+	}
+
+	async getTransactions(startDate?: string, endDate?: string): Promise<Transaction[]> {
+		return this.withRetry(async (api) => {
+			const response = await api.transactions.getTransactions(
+				this.config.budgetId,
+				startDate,
+			);
+			let transactions = response.data.transactions;
+
+			// Client-side endDate filter (YNAB API only supports sinceDate)
+			if (endDate) {
+				transactions = transactions.filter((t) => t.date <= endDate);
+			}
+
+			return transactions.map((t) => ({
+				id: String(t.id),
+				date: t.date,
+				amount: t.amount / 1000,
+				payee: t.payee_name ?? "",
+				categoryName: t.category_name ?? undefined,
+				categoryId: t.category_id ? String(t.category_id) : undefined,
+				memo: t.memo ?? undefined,
+				approved: t.approved,
+				cleared: t.cleared,
+			}));
+		});
+	}
+
+	async categorizeTransaction(transactionId: string, categoryId: string): Promise<void> {
+		await this.withRetry(async (api) => {
+			await api.transactions.updateTransaction(
+				this.config.budgetId,
+				transactionId,
+				{ transaction: { category_id: categoryId } } as Parameters<typeof api.transactions.updateTransaction>[2],
+			);
+		});
+	}
+
+	async approveTransactions(transactionIds: string[]): Promise<void> {
+		await this.withRetry(async (api) => {
+			await api.transactions.updateTransactions(
+				this.config.budgetId,
+				{
+					transactions: transactionIds.map((id) => ({
+						id,
+						approved: true,
+					})),
+				} as Parameters<typeof api.transactions.updateTransactions>[1],
+			);
+		});
+	}
+}
