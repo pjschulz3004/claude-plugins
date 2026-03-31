@@ -100,8 +100,8 @@
 - [x] **INTEL-03**: Nightly self-improvement agent reads ledger, email folder state, YNAB recategorizations
 - [x] **INTEL-04**: Self-improvement agent updates email-rules.md and budget-rules.md with learned patterns
 - [x] **INTEL-05**: Self-improvement produces summary notification of changes made
-- [ ] **INTEL-06**: Knowledge graph (Neo4j + Graphiti) stores cross-domain memory
-- [ ] **INTEL-07**: Memory consolidation task expires stale edges nightly
+- [x] **INTEL-06**: Knowledge graph (Neo4j + Graphiti) stores cross-domain memory
+- [x] **INTEL-07**: Memory consolidation task expires stale edges nightly
 
 ### Migration (MIG)
 
@@ -203,8 +203,8 @@
 | INTEL-03 | Phase 5 | Complete |
 | INTEL-04 | Phase 5 | Complete |
 | INTEL-05 | Phase 5 | Complete |
-| INTEL-06 | Phase 5 | Pending |
-| INTEL-07 | Phase 5 | Pending |
+| INTEL-06 | Phase 5 | Complete |
+| INTEL-07 | Phase 5 | Complete |
 | MIG-01 | Phase 6 | Pending |
 | MIG-02 | Phase 6 | Pending |
 | MIG-03 | Phase 6 | Pending |

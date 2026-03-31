@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-31T14:26:33.300Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-03-31T14:32:39.841Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-telegram P02 | 160s | 2 tasks | 4 files |
 | Phase 05-intelligence P01 | 2min | 2 tasks | 4 files |
 | Phase 05-intelligence P02 | 3min | 2 tasks | 3 files |
+| Phase 05-intelligence PP03 | 4min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,8 @@ Recent decisions affecting current work:
 - [Phase 05-intelligence]: 1+ email corrections for sender rules, 2+ budget observations for payee rules (signal quality thresholds)
 - [Phase 05-intelligence]: Improve agent dimensions 1,4 are observation-only; dimensions 2,3 collect evidence; dimension 5 applies; dimension 6 reports
 - [Phase 05-intelligence]: Rule files are append/correct only -- improve agent never deletes existing rules
+- [Phase 05-intelligence]: MERGE nodes + CREATE edges pattern for Neo4j KG (avoids duplicates while allowing multi-relationships)
+- [Phase 05-intelligence]: Single RELATES_TO edge type with type property for relation semantics (simpler querying and uniform expiry)
 
 ### Pending Todos
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T14:26:33.298Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-31T14:32:39.839Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
