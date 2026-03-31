@@ -35,11 +35,11 @@
 
 ### Contacts Tool Plugin (CONT)
 
-- [ ] **CONT-01**: User can search contacts by name, email, or organization via MCP tool
-- [ ] **CONT-02**: User can get full contact details via MCP tool
-- [ ] **CONT-03**: User can create and update contacts via MCP tool
-- [ ] **CONT-04**: Plugin works standalone as Claude Code plugin
-- [ ] **CONT-05**: tsdav backend authenticates against mailbox.org CardDAV
+- [x] **CONT-01**: User can search contacts by name, email, or organization via MCP tool
+- [x] **CONT-02**: User can get full contact details via MCP tool
+- [x] **CONT-03**: User can create and update contacts via MCP tool
+- [x] **CONT-04**: Plugin works standalone as Claude Code plugin
+- [x] **CONT-05**: tsdav backend authenticates against mailbox.org CardDAV
 
 ### Budget Tool Plugin (BUD)
 
@@ -165,11 +165,11 @@
 | CAL-05 | Phase 2 | Complete |
 | CAL-06 | Phase 2 | Complete |
 | CAL-07 | Phase 2 | Complete |
-| CONT-01 | Phase 2 | Pending |
-| CONT-02 | Phase 2 | Pending |
-| CONT-03 | Phase 2 | Pending |
-| CONT-04 | Phase 2 | Pending |
-| CONT-05 | Phase 2 | Pending |
+| CONT-01 | Phase 2 | Complete |
+| CONT-02 | Phase 2 | Complete |
+| CONT-03 | Phase 2 | Complete |
+| CONT-04 | Phase 2 | Complete |
+| CONT-05 | Phase 2 | Complete |
 | BUD-01 | Phase 2 | Complete |
 | BUD-02 | Phase 2 | Complete |
 | BUD-03 | Phase 2 | Complete |

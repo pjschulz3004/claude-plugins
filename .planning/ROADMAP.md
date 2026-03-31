@@ -52,7 +52,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md -- Calendar plugin: tsdav CalDAV backend, 4 MCP tools, /jarvis-calendar:today command (wave 1)
-- [ ] 02-02-PLAN.md -- Contacts plugin: tsdav CardDAV backend, 4 MCP tools, /jarvis-contacts:lookup command (wave 1)
+- [x] 02-02-PLAN.md -- Contacts plugin: tsdav CardDAV backend, 4 MCP tools, /jarvis-contacts:lookup command (wave 1)
 - [x] 02-03-PLAN.md -- Budget plugin: YNAB SDK backend with UUID-to-string, 4 MCP tools, /jarvis-budget:summary command (wave 1)
 - [x] 02-04-PLAN.md -- Files plugin: node:fs + rclone backend, 6 MCP tools, /jarvis-files:files command (wave 1)
 

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-31T13:27:54.114Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-31T13:36:49.718Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-remaining-tools P04 | 3min | 2 tasks | 13 files |
 | Phase 02 P03 | 245s | 2 tasks | 13 files |
 | Phase 02-remaining-tools P01 | 7min | 2 tasks | 12 files |
+| Phase 02-remaining-tools P02 | 7min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase 02]: UUID-to-string conversion with String() on every YNAB ID at boundary
 - [Phase 02]: Connection-per-operation pattern for YNAB SDK (stateless HTTP)
 - [Phase 02-remaining-tools]: tsdav ^2.1.8 for CalDAV (latest available; iCalString API for create, calendarObject wrapper for update)
+- [Phase 02-remaining-tools]: tsdav createVCard uses vCardString param (not data) in ^2.1.8
+- [Phase 02-remaining-tools]: Same MAILBOX credentials for CardDAV and IMAP (shared mailbox.org account)
 
 ### Pending Todos
 
@@ -90,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T13:27:54.113Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-31T13:36:49.716Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
