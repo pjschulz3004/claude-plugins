@@ -65,13 +65,11 @@ Plans:
   2. `/jarvis:briefing` produces a natural-language synthesis combining calendar events, unread email highlights, budget status, and pending todos
   3. Email triage skill classifies emails using deterministic rules first and falls back to LLM only for ambiguous cases
   4. All user-facing output follows the voice reference: efficient, polite, slight British humour, no emoji, no filler
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Commands and voice reference (status, briefing, ask)
-- [ ] 03-02: Skills (triage, briefing synthesis, invoice filing)
-- [ ] 03-03: Agent definitions and model tiering
+- [ ] 03-01-PLAN.md -- Plugin structure, commands (status/briefing/ask), voice reference, email-rules, budget-rules (wave 1)
+- [ ] 03-02-PLAN.md -- Skills (triage/brief/filing) and agents (email/budget/briefing) with model tiering (wave 2, depends on 03-01)
 
 ### Phase 4: Telegram + Notifications
 **Goal**: Paul can interact with Jarvis from his phone via Telegram and receives proactive notifications from heartbeat tasks
@@ -127,7 +125,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Foundation + Email | 0/3 | Planning complete | - |
 | 2. Remaining Tools | 0/4 | Planning complete | - |
-| 3. Orchestrator | 0/3 | Not started | - |
+| 3. Orchestrator | 0/2 | Planning complete | - |
 | 4. Telegram + Notifications | 0/3 | Not started | - |
 | 5. Intelligence | 0/3 | Not started | - |
 | 6. Cutover | 0/2 | Not started | - |
