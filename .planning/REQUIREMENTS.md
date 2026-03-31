@@ -78,10 +78,10 @@
 - [x] **ORCH-02**: `/jarvis:briefing` produces cross-domain synthesis (calendar + email + budget + todos)
 - [x] **ORCH-03**: `/jarvis:ask` routes free-text through Claude with full context (calendar, recent tasks, KG)
 - [x] **ORCH-04**: Voice reference (`jarvis-voice.md`) defines tone: efficient, polite, slight British humour
-- [ ] **ORCH-05**: Email triage skill classifies emails deterministically first, LLM fallback for ambiguous
-- [ ] **ORCH-06**: Briefing skill synthesizes cross-domain data into natural language
-- [ ] **ORCH-07**: Filing skill extracts PDFs from email, smart-names, files to inbox
-- [ ] **ORCH-08**: Model tiering: haiku for simple tasks, sonnet for synthesis, per agent config
+- [x] **ORCH-05**: Email triage skill classifies emails deterministically first, LLM fallback for ambiguous
+- [x] **ORCH-06**: Briefing skill synthesizes cross-domain data into natural language
+- [x] **ORCH-07**: Filing skill extracts PDFs from email, smart-names, files to inbox
+- [x] **ORCH-08**: Model tiering: haiku for simple tasks, sonnet for synthesis, per agent config
 
 ### Telegram + Notifications (TG)
 
@@ -187,10 +187,10 @@
 | ORCH-02 | Phase 3 | Complete |
 | ORCH-03 | Phase 3 | Complete |
 | ORCH-04 | Phase 3 | Complete |
-| ORCH-05 | Phase 3 | Pending |
-| ORCH-06 | Phase 3 | Pending |
-| ORCH-07 | Phase 3 | Pending |
-| ORCH-08 | Phase 3 | Pending |
+| ORCH-05 | Phase 3 | Complete |
+| ORCH-06 | Phase 3 | Complete |
+| ORCH-07 | Phase 3 | Complete |
+| ORCH-08 | Phase 3 | Complete |
 | TG-01 | Phase 4 | Pending |
 | TG-02 | Phase 4 | Pending |
 | TG-03 | Phase 4 | Pending |

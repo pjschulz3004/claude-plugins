@@ -69,7 +69,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md -- Plugin structure, commands (status/briefing/ask), voice reference, email-rules, budget-rules (wave 1)
-- [ ] 03-02-PLAN.md -- Skills (triage/brief/filing) and agents (email/budget/briefing) with model tiering (wave 2, depends on 03-01)
+- [x] 03-02-PLAN.md -- Skills (triage/brief/filing) and agents (email/budget/briefing) with model tiering (wave 2, depends on 03-01)
 
 ### Phase 4: Telegram + Notifications
 **Goal**: Paul can interact with Jarvis from his phone via Telegram and receives proactive notifications from heartbeat tasks

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-03-31T13:47:17.488Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-03-31T13:53:43.832Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-remaining-tools P01 | 7min | 2 tasks | 12 files |
 | Phase 02-remaining-tools P02 | 7min | 2 tasks | 13 files |
 | Phase 03-orchestrator P01 | 5min | 2 tasks | 7 files |
+| Phase 03-orchestrator P02 | 4min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [Phase 02-remaining-tools]: Same MAILBOX credentials for CardDAV and IMAP (shared mailbox.org account)
 - [Phase 03-orchestrator]: Jarvis orchestrator plugin is pure markdown with no MCP server; references tool plugin servers via allowed-tools
 - [Phase 03-orchestrator]: email-rules.md uses deterministic-first classification with LLM fallback; uncertainty biased toward reference over noise
+- [Phase 03-orchestrator]: Triage skill implements 4-signal deterministic chain; LLM fallback records reason for improve agent learning
+- [Phase 03-orchestrator]: Budget agent uses haiku model for mechanical categorisation; email and briefing agents use sonnet for judgment-heavy tasks
+- [Phase 03-orchestrator]: Filing skill gracefully handles missing PDF attachment content - flags email while providing smart filename convention
 
 ### Pending Todos
 
@@ -96,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T13:47:17.486Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-31T13:53:43.830Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
