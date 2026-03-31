@@ -25,13 +25,13 @@
 
 ### Calendar Tool Plugin (CAL)
 
-- [ ] **CAL-01**: User can list calendar events for a date range via MCP tool
-- [ ] **CAL-02**: User can list pending VTODOs via MCP tool
-- [ ] **CAL-03**: User can create calendar events via MCP tool (only when explicitly asked)
-- [ ] **CAL-04**: User can complete a VTODO via MCP tool
-- [ ] **CAL-05**: Plugin works standalone as Claude Code plugin
-- [ ] **CAL-06**: Plugin exposes `/jarvis-calendar:today` standalone command
-- [ ] **CAL-07**: tsdav backend authenticates against mailbox.org CalDAV
+- [x] **CAL-01**: User can list calendar events for a date range via MCP tool
+- [x] **CAL-02**: User can list pending VTODOs via MCP tool
+- [x] **CAL-03**: User can create calendar events via MCP tool (only when explicitly asked)
+- [x] **CAL-04**: User can complete a VTODO via MCP tool
+- [x] **CAL-05**: Plugin works standalone as Claude Code plugin
+- [x] **CAL-06**: Plugin exposes `/jarvis-calendar:today` standalone command
+- [x] **CAL-07**: tsdav backend authenticates against mailbox.org CalDAV
 
 ### Contacts Tool Plugin (CONT)
 
@@ -158,13 +158,13 @@
 | DAEMON-07 | Phase 1 | Complete |
 | DAEMON-08 | Phase 1 | Complete |
 | DAEMON-09 | Phase 1 | Complete |
-| CAL-01 | Phase 2 | Pending |
-| CAL-02 | Phase 2 | Pending |
-| CAL-03 | Phase 2 | Pending |
-| CAL-04 | Phase 2 | Pending |
-| CAL-05 | Phase 2 | Pending |
-| CAL-06 | Phase 2 | Pending |
-| CAL-07 | Phase 2 | Pending |
+| CAL-01 | Phase 2 | Complete |
+| CAL-02 | Phase 2 | Complete |
+| CAL-03 | Phase 2 | Complete |
+| CAL-04 | Phase 2 | Complete |
+| CAL-05 | Phase 2 | Complete |
+| CAL-06 | Phase 2 | Complete |
+| CAL-07 | Phase 2 | Complete |
 | CONT-01 | Phase 2 | Pending |
 | CONT-02 | Phase 2 | Pending |
 | CONT-03 | Phase 2 | Pending |
