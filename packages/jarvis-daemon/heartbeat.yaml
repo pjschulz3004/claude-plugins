@@ -21,3 +21,39 @@ tasks:
       Leave READ_LATER emails as-is but mark them as read.
 
       Report what you did as structured JSON.
+
+  self_improve:
+    schedule: "30 3 * * *"
+    autonomy: notify
+    model: sonnet
+    max_turns: 15
+    timeout_ms: 300000
+    plugin_dirs:
+      - packages/jarvis-email
+      - packages/jarvis-calendar
+      - packages/jarvis-budget
+      - packages/jarvis-files
+      - packages/jarvis
+    prompt: |
+      You are Jarvis running the nightly self-improvement cycle.
+      Read and follow the improve skill at packages/jarvis/skills/improve/SKILL.md.
+      Read packages/jarvis/references/jarvis-voice.md for output tone.
+
+      Analyse all 6 dimensions. Update rule files where evidence supports it.
+      Produce a summary of all changes and observations.
+
+      The SQLite database is at jarvis.db in the working directory.
+      Use the Read tool to read rule files and the Write tool to update them.
+
+  memory_consolidation:
+    schedule: "0 3 * * *"
+    autonomy: full
+    model: haiku
+    max_turns: 5
+    timeout_ms: 120000
+    plugin_dirs:
+      - packages/jarvis
+    prompt: |
+      You are Jarvis running memory consolidation.
+      Connect to the Neo4j knowledge graph and expire edges older than 30 days
+      that have not been reinforced. Report statistics.
