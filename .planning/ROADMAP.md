@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Foundation + Email** - Monorepo, shared types, email plugin, daemon skeleton -- prove the entire pattern end-to-end
 - [ ] **Phase 2: Remaining Tools** - Calendar, contacts, budget, files plugins following proven pattern
 - [ ] **Phase 3: Orchestrator** - Unified assistant commands, skills, agents, voice reference
-- [ ] **Phase 4: Telegram + Notifications** - Bot, free-text relay, notification abstraction, quiet hours
+- [x] **Phase 4: Telegram + Notifications** - Bot, free-text relay, notification abstraction, quiet hours (completed 2026-03-31)
 - [ ] **Phase 5: Intelligence** - Self-healing, self-improvement, knowledge graph
 - [ ] **Phase 6: Cutover** - Shadow mode, output comparison, clean migration from Python
 
@@ -83,8 +83,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md -- Telegram bot: telegraf setup, auth middleware, 7 slash commands, free-text relay, chat history (wave 1)
-- [ ] 04-02-PLAN.md -- Notification abstraction: NotifyChannel interface, TelegramChannel, quiet hours, scheduler wiring (wave 2, depends on 04-01)
+- [x] 04-01-PLAN.md -- Telegram bot: telegraf setup, auth middleware, 7 slash commands, free-text relay, chat history (wave 1)
+- [x] 04-02-PLAN.md -- Notification abstraction: NotifyChannel interface, TelegramChannel, quiet hours, scheduler wiring (wave 2, depends on 04-01)
 
 ### Phase 5: Intelligence
 **Goal**: Jarvis autonomously recovers from failures, learns from corrections, and maintains cross-domain memory
@@ -125,6 +125,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Foundation + Email | 0/3 | Planning complete | - |
 | 2. Remaining Tools | 0/4 | Planning complete | - |
 | 3. Orchestrator | 1/2 | In Progress|  |
-| 4. Telegram + Notifications | 0/2 | Planning complete | - |
+| 4. Telegram + Notifications | 2/2 | Complete   | 2026-03-31 |
 | 5. Intelligence | 0/3 | Not started | - |
 | 6. Cutover | 0/2 | Not started | - |

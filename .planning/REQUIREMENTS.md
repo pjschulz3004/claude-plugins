@@ -87,8 +87,8 @@
 
 - [ ] **TG-01**: Telegram bot responds to 7 slash commands (/start, /status, /inbox, /today, /budget, /tasks, /history)
 - [ ] **TG-02**: Free-text messages relayed to `claude -p` with conversation history (last 10 messages)
-- [ ] **TG-03**: Notifications sent for tasks with autonomy=notify
-- [ ] **TG-04**: Quiet hours (23:00-07:00) suppress non-urgent notifications
+- [x] **TG-03**: Notifications sent for tasks with autonomy=notify
+- [x] **TG-04**: Quiet hours (23:00-07:00) suppress non-urgent notifications
 - [ ] **TG-05**: Auth middleware drops messages from unauthorized chat IDs
 - [ ] **TG-06**: Long messages split at paragraph boundaries (4000 char Telegram limit)
 - [ ] **TG-07**: Second bot token for shadow mode during migration (avoid 409 Conflict)
@@ -193,8 +193,8 @@
 | ORCH-08 | Phase 3 | Complete |
 | TG-01 | Phase 4 | Pending |
 | TG-02 | Phase 4 | Pending |
-| TG-03 | Phase 4 | Pending |
-| TG-04 | Phase 4 | Pending |
+| TG-03 | Phase 4 | Complete |
+| TG-04 | Phase 4 | Complete |
 | TG-05 | Phase 4 | Pending |
 | TG-06 | Phase 4 | Pending |
 | TG-07 | Phase 4 | Pending |
