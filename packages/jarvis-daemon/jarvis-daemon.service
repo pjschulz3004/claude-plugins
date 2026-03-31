@@ -1,0 +1,19 @@
+[Unit]
+Description=Jarvis TS Daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=paul
+WorkingDirectory=/home/paul/dev/claude/plugins
+ExecStart=/usr/bin/node packages/jarvis-daemon/dist/main.js
+EnvironmentFile=/home/paul/dev/claude/plugins/packages/jarvis-daemon/.env
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=jarvis-daemon
+
+[Install]
+WantedBy=multi-user.target
