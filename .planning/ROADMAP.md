@@ -48,13 +48,13 @@ Plans:
   3. `/jarvis-budget:summary` shows real YNAB category balances and user can categorize transactions via MCP tool
   4. User can list inbox files, save a file, and archive it to the YYYY/MM structure via MCP tools
   5. Each tool plugin installs and works standalone in Claude Code without any other Jarvis plugin present
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 02-01: Calendar plugin (tsdav CalDAV backend)
-- [ ] 02-02: Contacts plugin (tsdav CardDAV backend)
-- [ ] 02-03: Budget plugin (YNAB SDK backend)
-- [ ] 02-04: Files plugin (fs + rclone backend)
+- [ ] 02-01-PLAN.md -- Calendar plugin: tsdav CalDAV backend, 4 MCP tools, /jarvis-calendar:today command (wave 1)
+- [ ] 02-02-PLAN.md -- Contacts plugin: tsdav CardDAV backend, 4 MCP tools, /jarvis-contacts:lookup command (wave 1)
+- [ ] 02-03-PLAN.md -- Budget plugin: YNAB SDK backend with UUID-to-string, 4 MCP tools, /jarvis-budget:summary command (wave 1)
+- [ ] 02-04-PLAN.md -- Files plugin: node:fs + rclone backend, 6 MCP tools, /jarvis-files:files command (wave 1)
 
 ### Phase 3: Orchestrator
 **Goal**: Users interact with a unified Jarvis assistant that synthesizes across all tool domains with a consistent voice
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation + Email | 0/3 | Planning complete | - |
-| 2. Remaining Tools | 0/4 | Not started | - |
+| 2. Remaining Tools | 0/4 | Planning complete | - |
 | 3. Orchestrator | 0/3 | Not started | - |
 | 4. Telegram + Notifications | 0/3 | Not started | - |
 | 5. Intelligence | 0/3 | Not started | - |
