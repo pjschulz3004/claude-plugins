@@ -29,3 +29,32 @@ claude plugin install improve@pjschulz-plugins
 claude plugin install union-writer@pjschulz-plugins
 claude plugin install autopilot@pjschulz-plugins
 ```
+
+---
+
+## Jarvis -- Personal AI Assistant
+
+TypeScript plugin constellation for personal assistant functionality. Each plugin works standalone in Claude Code. The daemon runs on the VPS as a systemd service for scheduled tasks and Telegram interaction.
+
+| Package | Type | Description |
+|---------|------|-------------|
+| jarvis-shared | Library | Common types, interfaces, credentials helper |
+| jarvis-email | Plugin | IMAP email tools (list, search, move, flag) |
+| jarvis-calendar | Plugin | CalDAV calendar and VTODO tools |
+| jarvis-contacts | Plugin | CardDAV contact search and management |
+| jarvis-budget | Plugin | YNAB budget categories and transactions |
+| jarvis-files | Plugin | File inbox/outbox/archive management |
+| jarvis-kg | Plugin | Neo4j knowledge graph integration |
+| jarvis | Plugin | Orchestrator (status, briefing, ask commands) |
+| jarvis-daemon | Service | Heartbeat scheduler, Telegram bot, health endpoint |
+
+```bash
+# Install Jarvis plugins
+claude plugin install jarvis-email@pjschulz-plugins
+claude plugin install jarvis-calendar@pjschulz-plugins
+claude plugin install jarvis-contacts@pjschulz-plugins
+claude plugin install jarvis-budget@pjschulz-plugins
+claude plugin install jarvis-files@pjschulz-plugins
+claude plugin install jarvis-kg@pjschulz-plugins
+claude plugin install jarvis@pjschulz-plugins
+```
