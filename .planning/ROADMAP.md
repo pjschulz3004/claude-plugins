@@ -31,12 +31,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. `/jarvis-email:inbox` standalone command works in a Claude Code session without the orchestrator or daemon
   4. Daemon starts as systemd service on VPS, fires a heartbeat task on schedule, dispatches it via `claude -p`, and records the outcome in the task ledger
   5. Health endpoint at /health returns JSON with service status, and circuit breakers trip after 3 consecutive failures
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Monorepo scaffold and jarvis-shared package
-- [ ] 01-02: Email backend and MCP server
-- [ ] 01-03: Daemon core (scheduler, dispatcher, ledger, breakers, health)
+- [ ] 01-01-PLAN.md -- Monorepo scaffold and jarvis-shared package (wave 1)
+- [ ] 01-02-PLAN.md -- Email backend and MCP server (wave 2, depends on 01-01)
+- [ ] 01-03-PLAN.md -- Daemon core: scheduler, dispatcher, ledger, breakers, health (wave 2, depends on 01-01)
 
 ### Phase 2: Remaining Tools
 **Goal**: All five tool domains (email, calendar, contacts, budget, files) have working MCP plugins that operate standalone
@@ -125,7 +125,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation + Email | 0/3 | Not started | - |
+| 1. Foundation + Email | 0/3 | Planning complete | - |
 | 2. Remaining Tools | 0/4 | Not started | - |
 | 3. Orchestrator | 0/3 | Not started | - |
 | 4. Telegram + Notifications | 0/3 | Not started | - |
