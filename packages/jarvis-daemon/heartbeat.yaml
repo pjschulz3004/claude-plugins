@@ -3,7 +3,7 @@ tasks:
     schedule: "7 * * * *"
     hours: "7-23"
     service: imap
-    autonomy: notify
+    autonomy: full
     model: sonnet
     max_turns: 40
     timeout_ms: 180000
