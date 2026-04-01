@@ -13,6 +13,7 @@ import {
 	runGrowthLoop,
 	buildReflectionPrompt,
 	compileMorningSummary,
+	IMPROVE_SKILL_PROCEDURE,
 	type GrowthConfig,
 	type GrowthSessionResult,
 } from "./growth.js";
@@ -267,6 +268,59 @@ describe("growth engine", () => {
 			expect(prompt).toContain("npm test");
 			expect(prompt).toContain("npm run build");
 			expect(prompt).toContain("MANDATORY");
+		});
+
+		it("includes capability_gaps section when gaps are provided", () => {
+			const prompt = buildReflectionPrompt(
+				"mission",
+				"ledger",
+				"backlog",
+				"log",
+				1,
+				"rates",
+				"procedure",
+				"", // kgContext
+				"", // promptVersionSummary
+				"Detected 2 recurring capability gaps:\n\n1. **no tool for invoice parsing** (5 occurrences)",
+			);
+
+			expect(prompt).toContain("<capability_gaps>");
+			expect(prompt).toContain("no tool for invoice parsing");
+			expect(prompt).toContain("</capability_gaps>");
+		});
+
+		it("omits capability_gaps section when no gaps", () => {
+			const prompt = buildReflectionPrompt(
+				"mission",
+				"ledger",
+				"backlog",
+				"log",
+				1,
+				"rates",
+				"procedure",
+				"", // kgContext
+				"", // promptVersionSummary
+				"", // no gaps
+			);
+
+			expect(prompt).not.toContain("<capability_gaps>");
+		});
+
+		it("includes skill creation procedure with staging branch and PR instructions", () => {
+			const prompt = buildReflectionPrompt(
+				"mission",
+				"ledger",
+				"backlog",
+				"log",
+				1,
+				"rates",
+				IMPROVE_SKILL_PROCEDURE,
+			);
+
+			expect(prompt).toContain("SKILL CREATION");
+			expect(prompt).toContain("skill/");
+			expect(prompt).toContain("gh pr create");
+			expect(prompt).toContain("Never merge your own PR");
 		});
 	});
 

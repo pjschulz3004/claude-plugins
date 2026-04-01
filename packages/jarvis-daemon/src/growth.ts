@@ -32,6 +32,7 @@ import {
 } from "./council.js";
 import { KGBridge } from "./kg-bridge.js";
 import type { PromptVersioner } from "./prompt-versioner.js";
+import { SkillCreator } from "./skill-creator.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -76,7 +77,7 @@ const DEFAULT_CONFIG: Partial<GrowthConfig> = {
 // Improve Skill Procedure (embedded to avoid file-path issues inside prompt)
 // ---------------------------------------------------------------------------
 
-const IMPROVE_SKILL_PROCEDURE = `Step 1: Reflect
+export const IMPROVE_SKILL_PROCEDURE = `Step 1: Reflect
 Read the performance data provided. Ask yourself:
 - What went well today? (successful tasks, good triage decisions, useful briefings)
 - What fell short? (failures, timeouts, misclassifications, empty results)
@@ -102,7 +103,52 @@ Step 5: Record
 Update GROWTH_BACKLOG.md (mark item done) and GROWTH_LOG.md (add round entry).
 
 Step 6: Identify Next
-Scan for the next improvement opportunity. Add new items to GROWTH_BACKLOG.md.`;
+Scan for the next improvement opportunity. Add new items to GROWTH_BACKLOG.md.
+
+SKILL CREATION (for 'new-tool' backlog items or detected capability gaps):
+
+When you identify a gap that needs a new tool:
+
+1. BRANCH: Create a staging branch
+   git checkout -b skill/{tool-name}
+
+2. SKILL.MD: Create packages/jarvis/skills/{name}/SKILL.md with these sections:
+   - Frontmatter: name, description
+   - ## Trigger (when to activate)
+   - ## Procedure (step by step)
+   - ## Tools (MCP tools used)
+   - ## Rules (decision rules)
+   - ## Output (expected format)
+
+3. MCP TOOL: Create the TypeScript MCP tool in packages/jarvis/src/tools/{name}.ts:
+   - Import { z } from "zod"
+   - Define input schema with z.object()
+   - Implement the handler function
+   - Export the tool definition
+
+4. TEST: Create packages/jarvis/src/tools/{name}.test.ts:
+   - Test input validation
+   - Test handler with mock data
+   - Test error cases
+
+5. VERIFY:
+   npm test
+   npm run build
+   Only proceed if BOTH pass.
+
+6. COMMIT:
+   git add -A && git commit -m "feat(skill): add {name} tool"
+
+7. PR: Create a GitHub pull request:
+   git push -u origin skill/{tool-name}
+   gh pr create --repo pjschulz3004/claude-plugins \\
+     --title "Jarvis Skill: {name}" \\
+     --body "## New Skill\\n{description}\\n\\n## Gap Detected\\n{gap details}\\n\\n## Test Results\\n{paste test output}"
+
+8. RETURN TO MAIN:
+   git checkout main
+
+IMPORTANT: Never merge your own PR. Paul reviews all new skills.`;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -148,6 +194,7 @@ export function buildReflectionPrompt(
 	skillProcedure: string,
 	kgContext: string = "",
 	promptVersionSummary: string = "",
+	capabilityGaps: string = "",
 ): string {
 	const kgSection = kgContext
 		? `\n<knowledge_graph>
@@ -188,6 +235,7 @@ Here are your current 7-day correction rates (lower is better):
 <correction_rates>
 ${correctionRates}
 </correction_rates>
+${capabilityGaps ? `\n<capability_gaps>\n${capabilityGaps}\n</capability_gaps>\n` : ""}
 ${kgSection}
 Follow this improvement procedure for each round:
 <procedure>
@@ -432,6 +480,18 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 			}
 		}
 
+		// Detect capability gaps from repeated failures (SKILL-01)
+		let capabilityGaps = "";
+		try {
+			const gaps = SkillCreator.detectGaps(cfg.ledger.database);
+			if (gaps.length > 0) {
+				capabilityGaps = SkillCreator.formatGapsForPrompt(gaps);
+				console.log(`[growth] Detected ${gaps.length} capability gap(s).`);
+			}
+		} catch (err) {
+			console.warn("[growth] Gap detection failed:", (err as Error).message);
+		}
+
 		const prompt = buildReflectionPrompt(
 			mission,
 			ledgerSummary,
@@ -442,6 +502,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 			IMPROVE_SKILL_PROCEDURE,
 			kgContext,
 			promptVersionSummary,
+			capabilityGaps,
 		);
 
 		try {
