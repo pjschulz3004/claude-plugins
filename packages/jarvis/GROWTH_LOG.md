@@ -26,6 +26,37 @@ What I want to focus on next.
 
 ## Sessions
 
+## 2026-04-01 Growth Session Round 11 (this session)
+
+**Rounds completed:** 11
+**Items addressed:** GB-012
+
+### Reflection
+
+All core tasks succeeding, correction rates clean at 0.0%. The remaining `error_max_turns` failures in the performance data are legacy runs from before the max_turns fix. One queued backlog item: GB-012, which was the identical TODO stub for budget corrections that email had before GB-007. The email correction loop is now end-to-end; budget corrections were silently disabled the same way emailLookup was.
+
+### Work Done
+
+Implemented GB-012: wired budget correction signal to real YNAB backend.
+
+- Added `getTransaction(id: string): Promise<{ category_name: string }>` to the `BudgetBackend` interface in `backend.ts`
+- Implemented on `YnabBackend` via `api.transactions.getTransactionById()`, returns `{ category_name: "" }` when YNAB returns null
+- Added `getTransactionById` mock to `createMockApi()` in `backend.test.ts`
+- Added 2 tests: returns `category_name` for a known transaction; returns empty string when `category_name` is null
+- Removed TODO stub in `main.ts`: `budgetLookup = (id) => budgetBackend.getTransaction(id)`
+
+347 tests pass. TypeScript build clean.
+
+### Commits
+
+- 6e75a05: growth(2026-04-01): wire budget correction signal to YNAB (GB-012)
+
+### Tomorrow
+
+Backlog is now clear of all queued items. Next growth session should look outward: review morning briefing quality after first real runs, consider whether any new patterns in email_triage warrant known-sender list expansion (GB-006 deferred), and scan for systemic gaps in observability or resilience.
+
+---
+
 ## 2026-04-01 Growth Session Round 10
 
 **Rounds completed:** 10

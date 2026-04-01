@@ -142,10 +142,11 @@ Scope note: correction detection works for in-place mutations (IMPORTANT/INVOICE
 ### GB-012 Wire budget correction signal
 **Priority:** P3
 **Type:** expand
-**Status:** queued
+**Status:** done
 **Added:** 2026-04-01
+**Completed:** 2026-04-01
 
-`main.ts` has the same TODO stub for budget corrections as existed for email: `budgetLookup` is always `undefined`. Need to add `getTransaction(id): Promise<{ category_name: string }>` to `YnabBackend` and wire it in `main.ts`. Discovered during GB-007 work.
+Added `getTransaction(id)` to `BudgetBackend` interface and `YnabBackend` (calls `getTransactionById`, returns `{ category_name }` with empty-string fallback for null). Removed TODO stub in `main.ts` and wired the real lookup. Commit: 6e75a05.
 
 ## Filed as GitHub Issues
 
