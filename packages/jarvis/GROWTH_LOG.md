@@ -26,6 +26,37 @@ What I want to focus on next.
 
 ## Sessions
 
+## 2026-04-01 Growth Session Round 10
+
+**Rounds completed:** 10
+**Items addressed:** GB-007
+
+### Reflection
+
+All correction rates show 0.0% -- but that's not the same as "no errors". The correction detection cron runs every 2 hours from 07:00-23:00, but `emailLookup` in main.ts was hardcoded `undefined`. The entire correction signal was dead: `detectEmailCorrections` returns 0 immediately when lookup is undefined. The 0.0% rate was a measurement artifact, not evidence of quality.
+
+### Work Done
+
+Implemented `getMessageFlags(uid)` to activate the email correction signal.
+
+- Added `getMessageFlags(uid: string): Promise<{ folder: string; flags: string[] }>` to the `EmailBackend` interface in `backend.ts`
+- Implemented in `ImapFlowBackend`: locks INBOX, fetches flags by UID, throws if not found (corrections.ts skips on error, so TRASH actions -- where UIDs change after move -- are handled gracefully)
+- Added 2 tests: returns folder+flags for found email; throws for missing UID
+- Removed the TODO stub in main.ts: `emailLookup = (uid) => emailBackend.getMessageFlags(uid)`
+- Added GB-012 to backlog: the identical TODO stub for budget corrections still exists
+
+345 tests pass. TypeScript build clean.
+
+### Commits
+
+- fef7893: growth(2026-04-01): wire email correction signal via getMessageFlags (GB-007)
+
+### Tomorrow
+
+GB-012: wire the budget correction signal (same pattern -- add `getTransaction` to `YnabBackend`, replace the TODO stub in main.ts). After that, backlog is clear of queued items. Next growth session should look outward: morning briefing quality after first few real runs, and whether there are new patterns worth tracking.
+
+---
+
 ## 2026-04-01 Growth Session Round 9
 
 **Rounds completed:** 9

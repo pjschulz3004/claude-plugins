@@ -131,10 +131,21 @@ After email_cleanup has run for a few days: review ledger for errors or unexpect
 ### GB-007 Correction signal for email_cleanup
 **Priority:** P3
 **Type:** research
+**Status:** done
+**Added:** 2026-04-01
+**Completed:** 2026-04-01
+
+Research found the correction detection cron was already wired in main.ts (every 2h, 07-23), but `emailLookup` was hardcoded `undefined` pending `getMessageFlags` on ImapFlowBackend. Implemented `getMessageFlags(uid)` on both the `EmailBackend` interface and `ImapFlowBackend`: fetches flags for a UID in INBOX, throws if not found. Wired the email lookup in main.ts, removing the TODO stub.
+
+Scope note: correction detection works for in-place mutations (IMPORTANT/INVOICE flag checks, NEWSLETTER mark_read). TRASH actions are not detectable via UID (IMAP UIDs change on folder move) -- correction.ts skips emails that throw from lookup, so this is handled gracefully. Commit: fef7893.
+
+### GB-012 Wire budget correction signal
+**Priority:** P3
+**Type:** expand
 **Status:** queued
 **Added:** 2026-04-01
 
-Currently there is no way to detect if Paul recovers an email that email_cleanup trashed (false positive). The IMAP Trash folder could be polled for recently-moved emails that Paul subsequently moves back to INBOX. Researching feasibility before deciding whether to implement.
+`main.ts` has the same TODO stub for budget corrections as existed for email: `budgetLookup` is always `undefined`. Need to add `getTransaction(id): Promise<{ category_name: string }>` to `YnabBackend` and wire it in `main.ts`. Discovered during GB-007 work.
 
 ## Filed as GitHub Issues
 
