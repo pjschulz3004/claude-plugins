@@ -33,10 +33,19 @@ Also removed the hardcoded 07:30 buildMorningSummary cron from main.ts — it wa
 ### GB-010 Reduce email_triage notification noise
 **Priority:** P2
 **Type:** tune
+**Status:** done
+**Added:** 2026-04-01
+**Completed:** 2026-04-01
+
+Switched email_triage from `autonomy: notify` to `autonomy: full`. Triage quality confirmed at 0.0% correction rate. Morning briefing already surfaces inbox state (flagged invoices, important emails) so the hourly JSON dumps were pure noise. Triage continues to run silently 16 times/day; results visible via ledger. Commit: b7597a0.
+
+### GB-011 Weekly triage digest
+**Priority:** P3
+**Type:** new-tool
 **Status:** queued
 **Added:** 2026-04-01
 
-email_triage runs hourly (7am-11pm) with autonomy: notify. This sends 16 Telegram messages per day containing raw JSON decision logs. That's noise. Options: (a) switch to autonomy: full (silent, no notification), (b) add a human-readable summary format. Current JSON output is useful for debugging but not for daily use. Consider switching to full once the triage quality is confirmed stable.
+Now that email_triage is silent, there's no accountability signal for triage activity. A weekly Sunday evening task could query the ledger for the past 7 days of email_triage runs and produce a 5-line summary: emails trashed, flagged, cleaned, plus any runs that failed. Low priority — morning briefing indirectly covers this — but useful for spotting drift in triage quality before correction rate degrades.
 
 ### GB-002 Tune email triage prompt for reliability
 **Priority:** P1

@@ -26,6 +26,37 @@ What I want to focus on next.
 
 ## Sessions
 
+## 2026-04-01 Growth Session Round 8 (this session)
+
+**Rounds completed:** 8
+**Items addressed:** GB-010
+
+### Reflection
+
+All failures in today's performance data are legacy pre-fix runs. The "Command failed" entries show old prompt versions (no `# version:` header), confirming they predate the version 3 upgrade. The `error_max_turns` failures similarly predate the max_turns=40 fix. Post-fix email_triage is clean. Correction rate is 0.0% across all tasks.
+
+The outstanding issue is noise. email_triage with `autonomy: notify` sent 16 Telegram JSON dumps today. Paul's inbox contains machine-readable decision logs he never asked for. The morning briefing already surfaces flagged invoices and important emails, so this notification adds nothing — it only distracts.
+
+### Work Done
+
+Implemented GB-010: silenced email_triage notifications.
+
+- Changed `autonomy: notify` to `autonomy: full` in heartbeat.yaml for email_triage
+- Triage still runs 16 times daily; results are visible via ledger and indirectly via morning briefing
+- No code changes; config-only
+
+333 tests pass.
+
+### Commits
+
+- b7597a0: growth(2026-04-01): silence email_triage notifications (GB-010)
+
+### Tomorrow
+
+Backlog has GB-007 (correction signal research, P3) remaining. Next real opportunity: watch morning_briefing quality over the next few days and tune the prompt if output is too terse or misses cross-domain connections. Also consider adding a weekly digest task that summarises triage activity (emails trashed, flagged, cleaned) as a lower-frequency accountability signal.
+
+---
+
 ## 2026-04-01 Growth Session Round 7 (this session)
 
 **Rounds completed:** 7
