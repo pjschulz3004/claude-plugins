@@ -18,10 +18,10 @@
 - [x] **GROW-04**: Growth engine has full access: Read, Write, Edit, Bash, WebSearch, GitHub CLI, all MCP tools
 - [x] **GROW-05**: Growth engine can edit heartbeat.yaml prompts, skill files, agent files, reference files, and TypeScript source
 - [x] **GROW-06**: Growth engine runs npm test after any code change, only commits if tests pass
-- [ ] **GROW-07**: Growth engine creates GitHub issues for features too large for a single night
+- [x] **GROW-07**: Growth engine creates GitHub issues for features too large for a single night
 - [x] **GROW-08**: Growth session results recorded in GROWTH_LOG.md with reflection, work done, commits
-- [ ] **GROW-09**: Morning summary notification sent after growth session completes
-- [ ] **GROW-10**: Growth backlog is self-maintaining: engine adds new items discovered during work
+- [x] **GROW-09**: Morning summary notification sent after growth session completes
+- [x] **GROW-10**: Growth backlog is self-maintaining: engine adds new items discovered during work
 
 ### Rule Evolution (RULE)
 
@@ -125,10 +125,10 @@
 | GROW-04 | Phase 9 | Complete |
 | GROW-05 | Phase 9 | Complete |
 | GROW-06 | Phase 9 | Complete |
-| GROW-07 | Phase 9 | Pending |
+| GROW-07 | Phase 9 | Complete |
 | GROW-08 | Phase 9 | Complete |
-| GROW-09 | Phase 9 | Pending |
-| GROW-10 | Phase 9 | Pending |
+| GROW-09 | Phase 9 | Complete |
+| GROW-10 | Phase 9 | Complete |
 | PROMPT-01 | Phase 10 | Pending |
 | PROMPT-02 | Phase 10 | Pending |
 | PROMPT-03 | Phase 10 | Pending |
