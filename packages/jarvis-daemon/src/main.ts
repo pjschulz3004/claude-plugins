@@ -9,7 +9,7 @@ import {
 import { Dispatcher } from "./dispatcher.js";
 import { Scheduler } from "./scheduler.js";
 import { HealthServer } from "./health.js";
-import { createBot, buildMorningSummary } from "./telegram.js";
+import { createBot } from "./telegram.js";
 import { TelegramChannel, sendNotification } from "./notify.js";
 import { runGrowthLoop } from "./growth.js";
 import type { TelegramConfig } from "./telegram.js";
@@ -135,24 +135,6 @@ async function start() {
 			console.error("[jarvis] Growth loop error:", err);
 		});
 	});
-
-	// Morning greeting cron: 07:30 Europe/Berlin
-	if (telegramConfig && notifyChannels.length > 0) {
-		const morningJob = new Cron(
-			"30 7 * * *",
-			{ timezone: "Europe/Berlin" },
-			() => {
-				buildMorningSummary(telegramConfig!)
-					.then((summary) =>
-						sendNotification(notifyChannels, summary, { urgent: true }),
-					)
-					.catch((err) => {
-						console.error("[jarvis] Morning greeting error:", err);
-					});
-			},
-		);
-		console.log("[jarvis] Morning greeting scheduled at 07:30 Europe/Berlin.");
-	}
 
 	// Correction detection cron: every 2 hours during waking hours (7-23)
 	const correctionJob = new Cron("0 */2 * * *", () => {

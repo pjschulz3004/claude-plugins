@@ -19,6 +19,8 @@ interface HeartbeatTask {
 	timeout_ms?: number;
 	retries?: number;
 	plugin_dirs?: string[];
+	/** If true, send result.result directly instead of wrapping in a task-status message. */
+	notify_raw?: boolean;
 	prompt: string;
 }
 
@@ -220,7 +222,9 @@ export class Scheduler {
 
 			// Notify on success (non-urgent -- suppressed during quiet hours)
 			if (task.autonomy === "notify" && this.config.notifyChannels?.length) {
-				const summary = `Task "${taskName}" completed successfully.\n\n${result.result.slice(0, 500)}`;
+				const summary = task.notify_raw
+					? result.result
+					: `Task "${taskName}" completed successfully.\n\n${result.result.slice(0, 500)}`;
 				await sendNotification(this.config.notifyChannels, summary, {
 					urgent: false,
 				});

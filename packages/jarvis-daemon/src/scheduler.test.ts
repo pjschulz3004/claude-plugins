@@ -26,6 +26,14 @@ const YAML_CONTENT = `tasks:
     max_turns: 5
     timeout_ms: 60000
     prompt: "Summarize today"
+  morning_briefing:
+    schedule: "35 7 * * *"
+    autonomy: notify
+    notify_raw: true
+    model: sonnet
+    max_turns: 20
+    timeout_ms: 150000
+    prompt: "Write morning briefing"
 `;
 
 function makeResult(overrides: Partial<ClaudeResult> = {}): ClaudeResult {
@@ -87,9 +95,9 @@ describe("Scheduler", () => {
 	it("reads heartbeat.yaml and creates a Cron job per task", () => {
 		scheduler.start();
 		expect(scheduler.getTaskNames()).toEqual(
-			expect.arrayContaining(["email_triage", "daily_summary"]),
+			expect.arrayContaining(["email_triage", "daily_summary", "morning_briefing"]),
 		);
-		expect(scheduler.getTaskNames()).toHaveLength(2);
+		expect(scheduler.getTaskNames()).toHaveLength(3);
 	});
 
 	it("when a task fires and breaker is open: records skipped, does not dispatch", async () => {
@@ -162,6 +170,33 @@ describe("Scheduler", () => {
 		scheduler.start();
 		scheduler.stop();
 		expect(scheduler.getTaskNames()).toHaveLength(0);
+	});
+
+	it("notify_raw: sends result directly without task-status wrapper", async () => {
+		const sent: string[] = [];
+		const captureChannel = {
+			name: "capture",
+			send: async (text: string) => { sent.push(text); },
+		};
+
+		const briefingResult = makeResult({ result: "Good morning, Paul.\n\nYou have two meetings today." });
+		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(briefingResult);
+
+		const briefingScheduler = new Scheduler({
+			yamlPath,
+			dispatcher: mockDispatcher,
+			ledger,
+			breakers,
+			notifyChannels: [captureChannel],
+		});
+		briefingScheduler.start();
+
+		await briefingScheduler.fireTask("morning_briefing");
+		briefingScheduler.stop();
+
+		expect(sent).toHaveLength(1);
+		expect(sent[0]).toBe("Good morning, Paul.\n\nYou have two meetings today.");
+		expect(sent[0]).not.toContain("completed successfully");
 	});
 
 	it("hot-reloads task config when heartbeat.yaml changes on disk", async () => {

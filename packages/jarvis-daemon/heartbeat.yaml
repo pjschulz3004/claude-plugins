@@ -74,6 +74,7 @@ tasks:
   morning_briefing:
     schedule: "35 7 * * *"
     autonomy: notify
+    notify_raw: true
     model: sonnet
     max_turns: 20
     timeout_ms: 150000
@@ -109,6 +110,7 @@ tasks:
   evening_summary:
     schedule: "0 21 * * *"
     autonomy: notify
+    notify_raw: true
     model: sonnet
     max_turns: 15
     timeout_ms: 120000
