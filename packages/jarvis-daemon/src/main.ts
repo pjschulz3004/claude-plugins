@@ -12,6 +12,7 @@ import { HealthServer } from "./health.js";
 import { createBot } from "./telegram.js";
 import { TelegramChannel, sendNotification } from "./notify.js";
 import { runGrowthLoop } from "./growth.js";
+import { collectWeeklyDigest, formatWeeklyDigest } from "./weekly-digest.js";
 import type { TelegramConfig } from "./telegram.js";
 import { ImapFlowBackend } from "@jarvis/email";
 import { TsdavCalendarBackend } from "@jarvis/calendar";
@@ -177,6 +178,21 @@ async function start() {
 			});
 	});
 	console.log("[jarvis] Correction detection scheduled every 2h (07:00-23:00).");
+
+	// Weekly triage digest: Sunday 20:00 — native query, no Claude dispatch
+	const weeklyDigestJob = new Cron("0 20 * * 0", () => {
+		try {
+			const stats = collectWeeklyDigest(ledger);
+			const message = formatWeeklyDigest(stats);
+			sendNotification(notifyChannels, message, { urgent: false }).catch(
+				(err) => console.error("[jarvis] Weekly digest notify error:", err),
+			);
+			console.log("[jarvis] Weekly digest sent.");
+		} catch (err) {
+			console.error("[jarvis] Weekly digest error:", err);
+		}
+	});
+	console.log("[jarvis] Weekly triage digest scheduled Sundays at 20:00.");
 
 	console.log(
 		`[jarvis] Daemon running. Health at :${process.env.JARVIS_HEALTH_PORT || "3333"}/health`,
