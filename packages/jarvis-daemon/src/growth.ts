@@ -30,6 +30,7 @@ import {
 	type CouncilMember,
 	type ReviewContext,
 } from "./council.js";
+import { KGBridge } from "./kg-bridge.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -52,6 +53,7 @@ export interface GrowthConfig {
 	timeoutPerRoundMs: number; // 900_000 (15 min)
 	maxRounds?: number; // Optional cap (useful for testing)
 	gitExecFn?: GitExecFn; // Injectable for testing
+	kgBridge?: KGBridge; // Optional KG bridge for contextual memory
 }
 
 export interface GrowthSessionResult {
@@ -142,7 +144,16 @@ export function buildReflectionPrompt(
 	roundNumber: number,
 	correctionRates: string,
 	skillProcedure: string,
+	kgContext: string = "",
 ): string {
+	const kgSection = kgContext
+		? `\n<knowledge_graph>
+Here is relevant context from your knowledge graph (past improvements and corrections):
+${kgContext}
+Use this to avoid repeating past mistakes and build on previous work.
+</knowledge_graph>\n`
+		: "";
+
 	return `You are Jarvis, running your nightly growth session. Round ${roundNumber}.
 
 Read your mission statement carefully. This is who you are and what you're striving toward:
@@ -173,7 +184,7 @@ Here are your current 7-day correction rates (lower is better):
 <correction_rates>
 ${correctionRates}
 </correction_rates>
-
+${kgSection}
 Follow this improvement procedure for each round:
 <procedure>
 ${skillProcedure}
@@ -275,6 +286,47 @@ export function compileMorningSummary(result: GrowthSessionResult): string {
 }
 
 // ---------------------------------------------------------------------------
+// KG Helpers
+// ---------------------------------------------------------------------------
+
+/** Extract keywords from the first unchecked backlog item for KG search. */
+export function extractBacklogKeywords(backlog: string): string[] {
+	const lines = backlog.split("\n");
+	for (const line of lines) {
+		// Match unchecked items like "- [ ] P2/tune: Email triage prompt ..."
+		const match = line.match(/^-\s*\[\s*\]\s*(?:P\d\/\w+:\s*)?(.+)/);
+		if (match) {
+			// Extract meaningful words (3+ chars, no markdown)
+			return match[1]
+				.replace(/[`*_#\[\]()]/g, "")
+				.split(/\s+/)
+				.filter((w) => w.length >= 3)
+				.slice(0, 5);
+		}
+	}
+	return [];
+}
+
+/** Sync recent corrections to KG (dedup handled by KG MERGE on entity name). */
+export async function syncCorrectionsToKG(
+	corrections: CorrectionStore,
+	kgBridge: KGBridge,
+	taskNames: string[],
+): Promise<void> {
+	try {
+		for (const taskName of taskNames) {
+			// Get last 20 corrections per task (covers ~7 days of typical activity)
+			const recent = corrections.getCorrections(taskName, 20);
+			for (const correction of recent) {
+				await kgBridge.storeCorrectionEpisode(correction);
+			}
+		}
+	} catch (err) {
+		console.warn("[growth] syncCorrectionsToKG failed:", (err as Error).message);
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Main Loop
 // ---------------------------------------------------------------------------
 
@@ -311,6 +363,12 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 		(args) => gitExec(args, cfg.repoRoot),
 	);
 
+	// Sync corrections to KG at session start (KG-02)
+	if (cfg.kgBridge) {
+		await syncCorrectionsToKG(cfg.corrections, cfg.kgBridge, cfg.taskNames);
+		console.log("[growth] Corrections synced to KG.");
+	}
+
 	while (isWithinWindow(cfg.startHour, cfg.endHour)) {
 		// Respect maxRounds cap (useful for testing)
 		if (cfg.maxRounds != null && roundNumber >= cfg.maxRounds) break;
@@ -336,6 +394,19 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 		// Build correction rates for prompt
 		const correctionRates = formatCorrectionRates(cfg.corrections, cfg.taskNames);
 
+		// Query KG for context before prompt assembly (KG-03)
+		let kgContext = "";
+		if (cfg.kgBridge) {
+			try {
+				const keywords = extractBacklogKeywords(backlog);
+				if (keywords.length > 0) {
+					kgContext = await cfg.kgBridge.searchContext(keywords);
+				}
+			} catch (err) {
+				console.warn("[growth] KG context query failed:", (err as Error).message);
+			}
+		}
+
 		const prompt = buildReflectionPrompt(
 			mission,
 			ledgerSummary,
@@ -344,6 +415,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 			roundNumber,
 			correctionRates,
 			IMPROVE_SKILL_PROCEDURE,
+			kgContext,
 		);
 
 		try {
@@ -439,6 +511,24 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 						const summary = result.result.slice(0, 500);
 						roundSummaries.push(`Round ${roundNumber}: ${summary}`);
 						console.log(`[growth] Round ${roundNumber} complete: ${summary.slice(0, 100)}`);
+
+						// Store growth episode in KG (KG-01)
+						if (cfg.kgBridge) {
+							try {
+								const changedFiles = gitExec(
+									["diff", "--name-only", "HEAD~1", "HEAD"],
+									cfg.repoRoot,
+								).split("\n").filter(Boolean);
+								await cfg.kgBridge.storeGrowthEpisode(
+									roundNumber,
+									result.result.slice(0, 200),
+									headAfter,
+									changedFiles,
+								);
+							} catch (err) {
+								console.warn("[growth] KG episode store failed:", (err as Error).message);
+							}
+						}
 
 						cfg.ledger.record({
 							task_name: "growth_round",

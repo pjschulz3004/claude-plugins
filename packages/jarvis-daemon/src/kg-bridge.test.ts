@@ -66,8 +66,8 @@ describe("KGBridge", () => {
 				task_name: "email_triage",
 				original_decision: "archive",
 				corrected_decision: "reply",
-				correction_type: "manual_override",
-				detected_at: "2026-03-30T12:00:00Z",
+				decided_at: "2026-03-30T10:00:00Z",
+				corrected_at: "2026-03-30T12:00:00Z",
 			};
 
 			await bridge.storeCorrectionEpisode(correction);
@@ -83,7 +83,7 @@ describe("KGBridge", () => {
 			expect(ep.relation.type).toBe("CORRECTED_BY");
 			expect(ep.relation.properties?.original).toBe("archive");
 			expect(ep.relation.properties?.corrected).toBe("reply");
-			expect(ep.relation.properties?.type).toBe("manual_override");
+			expect(ep.relation.properties?.decided_at).toBe("2026-03-30T10:00:00Z");
 
 			// Object is the correction entity
 			expect(ep.object.type).toBe("correction");
@@ -187,8 +187,8 @@ describe("KGBridge", () => {
 					task_name: "test",
 					original_decision: "a",
 					corrected_decision: "b",
-					correction_type: "manual",
-					detected_at: new Date().toISOString(),
+					decided_at: new Date().toISOString(),
+					corrected_at: new Date().toISOString(),
 				}),
 			).resolves.toBeUndefined();
 		});

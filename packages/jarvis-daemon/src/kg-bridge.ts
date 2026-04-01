@@ -67,7 +67,7 @@ export class KGBridge {
 	async storeCorrectionEpisode(correction: CorrectionEvent): Promise<void> {
 		if (!this.kg) return;
 
-		const date = correction.detected_at.slice(0, 10);
+		const date = correction.corrected_at.slice(0, 10);
 		const episode: Episode = {
 			subject: {
 				name: correction.task_name,
@@ -78,14 +78,14 @@ export class KGBridge {
 				properties: {
 					original: correction.original_decision,
 					corrected: correction.corrected_decision,
-					type: correction.correction_type,
+					decided_at: correction.decided_at,
 				},
 			},
 			object: {
 				name: `correction_${date}`,
 				type: "correction",
 			},
-			timestamp: correction.detected_at,
+			timestamp: correction.corrected_at,
 			source: "correction_detection",
 		};
 
