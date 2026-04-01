@@ -163,4 +163,33 @@ describe("Scheduler", () => {
 		scheduler.stop();
 		expect(scheduler.getTaskNames()).toHaveLength(0);
 	});
+
+	it("hot-reloads task config when heartbeat.yaml changes on disk", async () => {
+		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
+
+		scheduler.start();
+		await scheduler.fireTask("email_triage");
+
+		// Verify initial config was used
+		expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
+			"Triage email inbox",
+			expect.objectContaining({ maxTurns: 10, timeoutMs: 120000 }),
+		);
+
+		// Rewrite YAML with updated config (simulates a growth session editing heartbeat.yaml)
+		const updatedYaml = YAML_CONTENT
+			.replace("max_turns: 10", "max_turns: 30")
+			.replace("timeout_ms: 120000", "timeout_ms: 240000")
+			.replace('prompt: "Triage email inbox"', 'prompt: "Triage email inbox v2"');
+		writeFileSync(yamlPath, updatedYaml);
+
+		vi.mocked(mockDispatcher.dispatch).mockClear();
+		await scheduler.fireTask("email_triage");
+
+		// Verify updated config is now used without restart
+		expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
+			"Triage email inbox v2",
+			expect.objectContaining({ maxTurns: 30, timeoutMs: 240000 }),
+		);
+	});
 });

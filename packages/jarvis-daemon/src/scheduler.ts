@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { parse as parseYaml } from "yaml";
 import { Cron } from "croner";
 import type { Dispatcher, DispatchOptions } from "./dispatcher.js";
@@ -38,6 +38,7 @@ export class Scheduler {
 	private readonly config: SchedulerConfig;
 	private jobs: Map<string, Cron> = new Map();
 	private tasks: Map<string, HeartbeatTask> = new Map();
+	private yamlMtime = 0;
 
 	constructor(config: SchedulerConfig) {
 		this.config = config;
@@ -46,6 +47,7 @@ export class Scheduler {
 	start(): void {
 		const raw = readFileSync(this.config.yamlPath, "utf-8");
 		const parsed = parseYaml(raw) as HeartbeatConfig;
+		this.yamlMtime = statSync(this.config.yamlPath).mtimeMs;
 
 		for (const [name, task] of Object.entries(parsed.tasks)) {
 			this.tasks.set(name, task);
@@ -72,6 +74,32 @@ export class Scheduler {
 
 	getTaskNames(): string[] {
 		return Array.from(this.tasks.keys());
+	}
+
+	/**
+	 * Hot-reload heartbeat.yaml if it has changed on disk since last load.
+	 * Cron schedules are not affected — only task configs (prompt, model, turns, timeout).
+	 * Called lazily at the start of each fireTask to pick up growth improvements
+	 * without requiring a daemon restart.
+	 */
+	private reloadIfChanged(): void {
+		try {
+			const { mtimeMs } = statSync(this.config.yamlPath);
+			if (mtimeMs <= this.yamlMtime) return;
+
+			const raw = readFileSync(this.config.yamlPath, "utf-8");
+			const parsed = parseYaml(raw) as HeartbeatConfig;
+
+			for (const [name, task] of Object.entries(parsed.tasks)) {
+				this.tasks.set(name, task);
+			}
+
+			this.yamlMtime = mtimeMs;
+			console.log("[jarvis] Reloaded heartbeat.yaml (config updated)");
+		} catch (err) {
+			// Non-fatal: keep running with existing config
+			console.warn("[jarvis] heartbeat.yaml reload failed:", (err as Error).message);
+		}
 	}
 
 	/**
@@ -102,6 +130,8 @@ export class Scheduler {
 	 * Checks breaker, dispatches, records outcome.
 	 */
 	async fireTask(taskName: string): Promise<void> {
+		this.reloadIfChanged();
+
 		const task = this.tasks.get(taskName);
 		if (!task) {
 			throw new Error(`Unknown task: ${taskName}`);
