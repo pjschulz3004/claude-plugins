@@ -1,30 +1,11 @@
 import { ImapFlow } from "imapflow";
+import { isTransientError, sleep } from "@jarvis/shared";
 import type {
 	EmailFolder,
 	EmailSearchQuery,
 	EmailSummary,
 	IMAPConfig,
 } from "./types.js";
-
-const TRANSIENT_CODES = new Set([
-	"ECONNRESET",
-	"ETIMEDOUT",
-	"ECONNREFUSED",
-	"EPIPE",
-	"EAI_AGAIN",
-]);
-
-function isTransientError(err: unknown): boolean {
-	if (err instanceof Error) {
-		const code = (err as NodeJS.ErrnoException).code;
-		if (code && TRANSIENT_CODES.has(code)) return true;
-	}
-	return false;
-}
-
-function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export interface EmailBackend {
 	listUnread(limit?: number): Promise<EmailSummary[]>;

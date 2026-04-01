@@ -1,34 +1,6 @@
 import { DAVClient } from "tsdav";
+import { isTransientError, isAuthError, sleep } from "@jarvis/shared";
 import type { CardDAVConfig, Contact, ContactSummary } from "./types.js";
-
-const TRANSIENT_CODES = new Set([
-	"ECONNRESET",
-	"ETIMEDOUT",
-	"ECONNREFUSED",
-	"EPIPE",
-	"EAI_AGAIN",
-]);
-
-function isTransientError(err: unknown): boolean {
-	if (err instanceof Error) {
-		const code = (err as NodeJS.ErrnoException).code;
-		if (code && TRANSIENT_CODES.has(code)) return true;
-	}
-	return false;
-}
-
-function isAuthError(err: unknown): boolean {
-	if (err instanceof Error) {
-		if (err.message.includes("Unauthorized") || err.message.includes("401")) return true;
-		if ((err as Error & { status?: number }).status === 401) return true;
-		if ((err as Error & { status?: number }).status === 403) return true;
-	}
-	return false;
-}
-
-function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 /**
  * Unfold vCard lines (RFC 6350 section 3.2):

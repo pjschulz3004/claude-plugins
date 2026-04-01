@@ -1,33 +1,6 @@
 import ynab from "ynab";
+import { isTransientError, isAuthError, sleep } from "@jarvis/shared";
 import type { YNABConfig, BudgetCategory, Transaction } from "./types.js";
-
-const TRANSIENT_CODES = new Set([
-	"ECONNRESET",
-	"ETIMEDOUT",
-	"ECONNREFUSED",
-	"EPIPE",
-	"EAI_AGAIN",
-]);
-
-function isTransientError(err: unknown): boolean {
-	if (err instanceof Error) {
-		const code = (err as NodeJS.ErrnoException).code;
-		if (code && TRANSIENT_CODES.has(code)) return true;
-	}
-	return false;
-}
-
-function isAuthError(err: unknown): boolean {
-	if (typeof err === "object" && err !== null && "status" in err) {
-		const status = (err as { status: number }).status;
-		return status === 401 || status === 403;
-	}
-	return false;
-}
-
-function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export interface BudgetBackend {
 	getCategories(): Promise<BudgetCategory[]>;
