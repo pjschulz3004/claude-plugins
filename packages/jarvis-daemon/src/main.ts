@@ -122,6 +122,8 @@ async function start() {
 		runGrowthLoop({
 			dispatcher,
 			ledger,
+			corrections: correctionStore,
+			taskNames: scheduler.getTaskNames(),
 			notifyChannels,
 			repoRoot,
 			startHour: 1,
