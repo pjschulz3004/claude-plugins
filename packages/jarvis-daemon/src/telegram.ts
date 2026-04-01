@@ -8,6 +8,7 @@ import type { TaskLedger } from "./state/ledger.js";
 import type { BreakerManager } from "./state/breakers.js";
 import { BreakerState } from "@jarvis/shared";
 import type { ChatHistory } from "./state/history.js";
+import type { CorrectionStore } from "./state/telemetry.js";
 import type { ImapFlowBackend } from "@jarvis/email";
 import type { TsdavCalendarBackend } from "@jarvis/calendar";
 import type { YnabBackend } from "@jarvis/budget";
@@ -22,6 +23,7 @@ export interface TelegramConfig {
 	email?: ImapFlowBackend;
 	calendar?: TsdavCalendarBackend;
 	budget?: YnabBackend;
+	corrections?: CorrectionStore;
 }
 
 /**
@@ -242,6 +244,31 @@ export function createBot(config: TelegramConfig): Telegraf {
 							.join("\n")
 					: "  No recent tasks";
 
+			// Correction rates (TEL-05)
+			let correctionSection = "";
+			if (config.corrections) {
+				const taskTypes = ["email_triage", "budget"];
+				const rateLines: string[] = [];
+				for (const taskType of taskTypes) {
+					const rate7 = config.corrections.rollingCorrectionRate(taskType, 7);
+					const rate30 = config.corrections.rollingCorrectionRate(taskType, 30);
+					if (rate7 > 0 || rate30 > 0) {
+						rateLines.push(
+							`  ${taskType}: ${(rate7 * 100).toFixed(0)}% / ${(rate30 * 100).toFixed(0)}%`,
+						);
+					}
+				}
+				if (rateLines.length > 0) {
+					correctionSection = [
+						"",
+						"Correction Rates (7d / 30d):",
+						...rateLines,
+					].join("\n");
+				} else {
+					correctionSection = "\n\nNo correction data yet.";
+				}
+			}
+
 			const msg = [
 				`Uptime: ${hours}h ${minutes}m`,
 				"",
@@ -250,6 +277,7 @@ export function createBot(config: TelegramConfig): Telegraf {
 				"",
 				"Recent Tasks:",
 				taskLines,
+				correctionSection,
 			].join("\n");
 
 			await sendSplit(ctx, msg);

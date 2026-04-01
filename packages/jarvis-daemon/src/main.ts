@@ -1,6 +1,11 @@
 import { TaskLedger } from "./state/ledger.js";
 import { BreakerManager } from "./state/breakers.js";
 import { ChatHistory } from "./state/history.js";
+import { CorrectionStore } from "./state/telemetry.js";
+import {
+	detectEmailCorrections,
+	detectBudgetCorrections,
+} from "./state/corrections.js";
 import { Dispatcher } from "./dispatcher.js";
 import { Scheduler } from "./scheduler.js";
 import { HealthServer } from "./health.js";
@@ -22,6 +27,7 @@ const ledger = new TaskLedger(join(__dirname, "..", "jarvis.db"));
 const breakers = new BreakerManager();
 const dispatcher = new Dispatcher();
 const history = new ChatHistory(ledger.database);
+const correctionStore = new CorrectionStore(ledger.database);
 let scheduler: Scheduler;
 let health: HealthServer;
 
@@ -77,6 +83,7 @@ async function start() {
 			email: buildEmailBackend(),
 			calendar: buildCalendarBackend(),
 			budget: buildBudgetBackend(),
+			corrections: correctionStore,
 		};
 		bot = createBot(telegramConfig);
 		notifyChannels.push(
@@ -144,6 +151,48 @@ async function start() {
 		);
 		console.log("[jarvis] Morning greeting scheduled at 07:30 Europe/Berlin.");
 	}
+
+	// Correction detection cron: every 2 hours during waking hours (7-23)
+	const correctionJob = new Cron("0 */2 * * *", () => {
+		const hour = new Date().getHours();
+		if (hour < 7 || hour > 23) return; // Skip overnight
+
+		// Build email lookup stub (TODO: wire to real IMAP getMessageFlags when available)
+		const emailBackend = telegramConfig?.email;
+		const emailLookup = emailBackend
+			? undefined // TODO: implement emailBackend.getMessageFlags(uid) wrapper
+			: undefined;
+
+		// Build budget lookup stub (TODO: wire to real YNAB getTransaction when available)
+		const budgetBackend = telegramConfig?.budget;
+		const budgetLookup = budgetBackend
+			? undefined // TODO: implement budgetBackend.getTransaction(id) wrapper
+			: undefined;
+
+		Promise.all([
+			detectEmailCorrections({
+				ledger,
+				corrections: correctionStore,
+				emailLookup,
+			}),
+			detectBudgetCorrections({
+				ledger,
+				corrections: correctionStore,
+				budgetLookup,
+			}),
+		])
+			.then(([emailCount, budgetCount]) => {
+				if (emailCount > 0 || budgetCount > 0) {
+					console.log(
+						`[jarvis] Corrections detected: ${emailCount} email, ${budgetCount} budget`,
+					);
+				}
+			})
+			.catch((err) => {
+				console.error("[jarvis] Correction detection error:", err);
+			});
+	});
+	console.log("[jarvis] Correction detection scheduled every 2h (07:00-23:00).");
 
 	console.log(
 		`[jarvis] Daemon running. Health at :${process.env.JARVIS_HEALTH_PORT || "3333"}/health`,
