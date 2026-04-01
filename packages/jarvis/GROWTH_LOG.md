@@ -26,6 +26,38 @@ What I want to focus on next.
 
 ## Sessions
 
+## 2026-04-01 Growth Session Round 6
+
+**Rounds completed:** 6
+**Items addressed:** GB-008
+
+### Reflection
+
+email_triage is stable with a solid success rate. email_cleanup is in place. Memory consolidation runs clean. The five rounds so far have been noise-reduction work: fixing failures, tightening prompts, wiring up auto-delete. The mission's operational foundation is solid.
+
+What's been missing is the centrepiece: cross-domain briefings. The mission says "I synthesise everything into morning and evening briefings that connect the dots across his life." The briefing-agent.md explicitly expects `morning_briefing` (07:30) and `evening_summary` (21:00) heartbeat tasks. Neither existed. Paul has been getting a basic template-based morning greeting (date, calendar, "inbox zero / unread messages waiting") instead of the AI-synthesised briefing the design calls for. That's the gap. This session closes it.
+
+GB-006 (monitor email_cleanup) was premature -- email_cleanup has run exactly once. Deferred.
+
+### Work Done
+
+Added two new heartbeat tasks to heartbeat.yaml:
+
+- `morning_briefing` (07:35 daily, sonnet, max_turns=20, autonomy=notify): gathers events/todos/email/budget-categories/files, cross-references for connections (calendar attendee + unread email, invoice + overspent category, overdue todo + quiet afternoon), writes a plain-text 10-20 line briefing via Telegram.
+- `evening_summary` (21:00 daily, sonnet, max_turns=15, autonomy=notify): gathers today's transactions, tomorrow's calendar, open action-required emails, writes a brief 5-10 line close-of-day summary.
+
+Both times are intentionally offset from the existing template-based morning greeting (07:30) to avoid collision. Tool names verified against MCP server source (list_events, list_todos, list_unread, get_categories, get_transactions, list_inbox). 332 tests pass.
+
+### Commits
+
+- 0d89da5: growth(2026-04-01): add morning_briefing and evening_summary heartbeat tasks (GB-008)
+
+### Tomorrow
+
+Monitor morning_briefing quality on first run. Tune prompt if output is too long, too fragmented, or misses obvious cross-domain connections. Consider whether to retire the template-based buildMorningSummary in telegram.ts once Claude briefing is confirmed stable.
+
+---
+
 ## 2026-04-01 Night Session
 
 **Window:** Round 1
@@ -143,6 +175,37 @@ Implemented retry logic in `Dispatcher.dispatch()`:
 ### Tomorrow
 
 GB-005: add keyword search parameter to ImapFlowBackend.search() and the MCP search tool. This unblocks GB-003 (email_cleanup task for auto-delete TTLs).
+
+---
+
+## 2026-04-01 Growth Session Round 5
+
+**Rounds completed:** 5
+**Items addressed:** GB-003
+
+### Reflection
+
+The backlog is in clean shape: GB-001 through GB-005 are all resolved. The one remaining gap is operational — triage now correctly tags NOTIFICATION emails with $AutoDelete3d/$AutoDelete7d, but those tags were sitting inert with no process to act on them. Every tagged Cloudflare alert or DHL notification past its TTL just accumulates in INBOX as a read email. That's exactly the noise reduction the mission calls for.
+
+The secondary fix (ImapFlowBackend date conversion) was a quiet correctness bug: imapflow's IMAP BEFORE/SINCE criteria expect Date objects, not strings. The original code passed raw ISO strings. In practice JavaScript's Date coercion may have silently saved it, but it was wrong. Fixed before it could bite us.
+
+### Work Done
+
+Implemented GB-003: automated email cleanup.
+
+- Added `email_cleanup` task to heartbeat.yaml: daily at 4am, `autonomy: full`, `model: haiku`, `max_turns: 30`
+- Prompt: compute cutoff dates (today - 3d, today - 7d), search by keyword + before cutoff, trash all matches, output JSON summary
+- Fixed `ImapFlowBackend.search()` to convert before/since ISO strings to `new Date(...)` before passing to imapflow
+- Added test verifying Date conversion: `before: "2026-03-29"` → `new Date("2026-03-29")` in the IMAP search criteria
+- 332 tests pass, TypeScript build clean
+
+### Commits
+
+- 2e5b626: growth(2026-04-01): implement email_cleanup task for auto-delete TTLs (GB-003)
+
+### Tomorrow
+
+Backlog is clear. Next session should monitor email_cleanup correctness after first few runs. Potential next item: add correction tracking to email_cleanup (currently no mechanism to know if Paul manually recovers a trashed email). Also consider expanding the known-sender list in email_triage as new senders accumulate.
 
 ---
 

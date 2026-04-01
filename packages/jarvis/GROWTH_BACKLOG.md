@@ -29,10 +29,14 @@ Upgraded prompt to version 3: expanded known-sender list from 2 to 6 (matching e
 ### GB-003 Add email_cleanup task for auto-delete keywords
 **Priority:** P2
 **Type:** new-tool
-**Status:** queued
+**Status:** done
 **Added:** 2026-04-01
+**Completed:** 2026-04-01
 
-email-rules.md references $AutoDelete3d and $AutoDelete7d keywords for automated cleanup. Unblocked by GB-005 (keyword search now available in MCP backend). Next step: add an email_cleanup task to heartbeat.yaml that searches for emails tagged $AutoDelete3d/$AutoDelete7d and trashes those past their TTL.
+Added `email_cleanup` task to heartbeat.yaml (runs 4am daily, autonomy: full, model: haiku).
+Prompt searches for $AutoDelete3d emails older than 3 days and $AutoDelete7d emails older than
+7 days, then trashes all matches. Also fixed ImapFlowBackend.search() to convert before/since
+ISO strings to Date objects (imapflow expects Date, not string). Commit: 2e5b626.
 
 ### GB-005 Add keyword search to jarvis-email MCP backend
 **Priority:** P2
@@ -72,6 +76,34 @@ Root cause: max_turns=15 was too low. Worst-case with 10 emails × 2 actions = 2
 
 Structural gap: scheduler didn't hot-reload heartbeat.yaml, so config changes required daemon
 restart to take effect — addressed in Round 1 growth session (commit 969129f).
+
+### GB-008 Add morning_briefing and evening_summary heartbeat tasks
+**Priority:** P1
+**Type:** new-tool
+**Status:** done
+**Added:** 2026-04-01
+**Completed:** 2026-04-01
+
+Added two Claude-dispatched briefing tasks to heartbeat.yaml:
+- `morning_briefing` at 07:35: gathers calendar, todos, email, budget categories, and files; synthesises cross-domain connections; delivers plain-text briefing via Telegram notify.
+- `evening_summary` at 21:00: gathers today's transactions, tomorrow's calendar, open action-required emails; brief 5-10 line close-of-day summary.
+Both use sonnet model, autonomy: notify. Completes the mission's core promise of cross-domain briefings. Commit: 0d89da5.
+
+### GB-006 Monitor email_cleanup and expand known-sender list
+**Priority:** P2
+**Type:** tune
+**Status:** deferred
+**Added:** 2026-04-01
+
+After email_cleanup has run for a few days: review ledger for errors or unexpected trashing. Expand the known-sender table in the email_triage prompt as new automated senders accumulate. No code change required -- just observation and a heartbeat.yaml edit. Deferred: email_cleanup only ran for the first time today, insufficient data.
+
+### GB-007 Correction signal for email_cleanup
+**Priority:** P3
+**Type:** research
+**Status:** queued
+**Added:** 2026-04-01
+
+Currently there is no way to detect if Paul recovers an email that email_cleanup trashed (false positive). The IMAP Trash folder could be polled for recently-moved emails that Paul subsequently moves back to INBOX. Researching feasibility before deciding whether to implement.
 
 ## Filed as GitHub Issues
 
