@@ -133,7 +133,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md -- Council + regression wiring, enriched growth prompt with skill procedure and telemetry
+- [x] 09-01-PLAN.md -- Council + regression wiring, enriched growth prompt with skill procedure and telemetry
 - [ ] 09-02-PLAN.md -- GitHub issue creation, backlog self-maintenance, morning summary compilation
 
 ### Phase 10: Prompt Optimisation

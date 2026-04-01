@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Jarvis Growth Intelligence
-status: executing
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-04-01T08:06:48.782Z"
+status: verifying
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-04-01T08:21:22.494Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
   percent: 67
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 Phase: 8 of 12 (Rule Evolution + Regression Safety)
 Plan: 2 of 2 in current phase
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-01
 
 Progress: [███████░░░] 67%
@@ -60,6 +60,7 @@ Progress: [███████░░░] 67%
 | Phase 07 P03 | 3min | 2 tasks | 4 files |
 | Phase 08 P01 | 3min | 2 tasks | 4 files |
 | Phase 08 P02 | 2min | 1 tasks | 2 files |
+| Phase 09 P01 | 6min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,8 @@ Recent decisions affecting current work:
 - [Phase 08-01]: Extra YAML fields (llm_fallback, auto_delete_keywords, principles, alerts) preserved via index signature
 - [Phase 08]: ExecFn injection pattern for testable git operations without shell injection risk
 - [Phase 08]: Any correction rate increase triggers regression revert (conservative safety net)
+- [Phase 09]: Used failure status with error field for council rejections/regressions (ledger schema constraint)
+- [Phase 09]: Embedded improve skill procedure as const string in growth.ts (avoids disk reads in prompt)
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T08:06:48.780Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-04-01T08:21:22.492Z
+Stopped at: Completed 09-01-PLAN.md
 Resume file: None

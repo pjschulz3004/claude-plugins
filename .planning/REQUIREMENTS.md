@@ -12,14 +12,14 @@
 
 ### Growth Engine (GROW)
 
-- [ ] **GROW-01**: Growth loop runs 01:00-05:00 nightly as a time-bounded Ralph Loop
-- [ ] **GROW-02**: Each round reads MISSION.md, reviews task ledger, reads GROWTH_BACKLOG.md
-- [ ] **GROW-03**: Each round picks ONE improvement from backlog (highest priority) and implements it
-- [ ] **GROW-04**: Growth engine has full access: Read, Write, Edit, Bash, WebSearch, GitHub CLI, all MCP tools
-- [ ] **GROW-05**: Growth engine can edit heartbeat.yaml prompts, skill files, agent files, reference files, and TypeScript source
-- [ ] **GROW-06**: Growth engine runs npm test after any code change, only commits if tests pass
+- [x] **GROW-01**: Growth loop runs 01:00-05:00 nightly as a time-bounded Ralph Loop
+- [x] **GROW-02**: Each round reads MISSION.md, reviews task ledger, reads GROWTH_BACKLOG.md
+- [x] **GROW-03**: Each round picks ONE improvement from backlog (highest priority) and implements it
+- [x] **GROW-04**: Growth engine has full access: Read, Write, Edit, Bash, WebSearch, GitHub CLI, all MCP tools
+- [x] **GROW-05**: Growth engine can edit heartbeat.yaml prompts, skill files, agent files, reference files, and TypeScript source
+- [x] **GROW-06**: Growth engine runs npm test after any code change, only commits if tests pass
 - [ ] **GROW-07**: Growth engine creates GitHub issues for features too large for a single night
-- [ ] **GROW-08**: Growth session results recorded in GROWTH_LOG.md with reflection, work done, commits
+- [x] **GROW-08**: Growth session results recorded in GROWTH_LOG.md with reflection, work done, commits
 - [ ] **GROW-09**: Morning summary notification sent after growth session completes
 - [ ] **GROW-10**: Growth backlog is self-maintaining: engine adds new items discovered during work
 
@@ -119,14 +119,14 @@
 | REG-02 | Phase 8 | Complete |
 | REG-03 | Phase 8 | Complete |
 | REG-04 | Phase 8 | Complete |
-| GROW-01 | Phase 9 | Pending |
-| GROW-02 | Phase 9 | Pending |
-| GROW-03 | Phase 9 | Pending |
-| GROW-04 | Phase 9 | Pending |
-| GROW-05 | Phase 9 | Pending |
-| GROW-06 | Phase 9 | Pending |
+| GROW-01 | Phase 9 | Complete |
+| GROW-02 | Phase 9 | Complete |
+| GROW-03 | Phase 9 | Complete |
+| GROW-04 | Phase 9 | Complete |
+| GROW-05 | Phase 9 | Complete |
+| GROW-06 | Phase 9 | Complete |
 | GROW-07 | Phase 9 | Pending |
-| GROW-08 | Phase 9 | Pending |
+| GROW-08 | Phase 9 | Complete |
 | GROW-09 | Phase 9 | Pending |
 | GROW-10 | Phase 9 | Pending |
 | PROMPT-01 | Phase 10 | Pending |
