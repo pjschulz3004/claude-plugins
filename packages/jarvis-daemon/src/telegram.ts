@@ -3,12 +3,23 @@
 
 import { Telegraf } from "telegraf";
 import type { Context } from "telegraf";
+import { createLogger } from "./logger.js";
+
+const log = createLogger("telegram");
 import type { Dispatcher } from "./dispatcher.js";
 import type { TaskLedger } from "./state/ledger.js";
 import type { BreakerManager } from "./state/breakers.js";
 import { BreakerState } from "@jarvis/shared";
 import type { ChatHistory } from "./state/history.js";
 import type { CorrectionStore } from "./state/telemetry.js";
+import {
+	InteractionStore,
+	classifyIntent,
+	classifyTopic,
+	classifyMood,
+	getTimeOfDay,
+	getDayOfWeek,
+} from "./state/interactions.js";
 import type { ImapFlowBackend } from "@jarvis/email";
 import type { TsdavCalendarBackend } from "@jarvis/calendar";
 import type { YnabBackend } from "@jarvis/budget";
@@ -24,6 +35,7 @@ export interface TelegramConfig {
 	calendar?: TsdavCalendarBackend;
 	budget?: YnabBackend;
 	corrections?: CorrectionStore;
+	interactions?: InteractionStore;
 }
 
 /**
@@ -413,12 +425,34 @@ export function createBot(config: TelegramConfig): Telegraf {
 	});
 
 	// Free-text relay (TG-02) -- runs after command handlers
-	bot.on("text", async (ctx) => {
-		try {
-			const chatId = ctx.chat.id.toString();
-			const userText = ctx.message.text;
+	// Track last interaction ID for follow-up detection
+	let lastInteractionId: number | null = null;
+	let lastInteractionTopic: string | null = null;
 
-			// Record user message
+	bot.on("text", async (ctx) => {
+		const startMs = Date.now();
+		const chatId = ctx.chat.id.toString();
+		const userText = ctx.message.text;
+
+		// Classify the interaction
+		const intent = classifyIntent(userText);
+		const topic = classifyTopic(userText);
+		const mood = classifyMood(userText);
+
+		// Detect follow-up on same topic (possible dissatisfaction)
+		const isFollowUp = lastInteractionTopic !== null && lastInteractionTopic === topic;
+		if (isFollowUp && lastInteractionId !== null && config.interactions) {
+			config.interactions.markFollowUp(lastInteractionId);
+			log.info("follow_up_detected", { previousId: lastInteractionId, topic });
+		}
+
+		// Detect correction intent
+		if (intent === "correction" && lastInteractionId !== null && config.interactions) {
+			config.interactions.markCorrection(lastInteractionId, userText.slice(0, 200));
+		}
+
+		try {
+			// Record user message in chat history
 			config.history.record(chatId, "user", userText);
 
 			// Build prompt with conversation history
@@ -438,13 +472,81 @@ Respond to the latest message.`;
 				timeoutMs: 120_000,
 			});
 
-			// Record assistant response
+			const responseTimeMs = Date.now() - startMs;
+
+			// Record assistant response in chat history
 			config.history.record(chatId, "assistant", result.result);
 
-			// Send response, splitting if needed
+			// Deep interaction logging
+			if (config.interactions) {
+				lastInteractionId = config.interactions.record({
+					timestamp: new Date().toISOString(),
+					channel: "telegram",
+					user_message: userText,
+					intent,
+					topic,
+					entities: "[]",
+					assistant_response: result.result.slice(0, 500),
+					tools_used: "[]",
+					actions_taken: "[]",
+					response_time_ms: responseTimeMs,
+					model_used: "sonnet",
+					tokens_used: (result.usage?.input_tokens ?? 0) + (result.usage?.output_tokens ?? 0),
+					follow_up: false,
+					correction: false,
+					explicit_feedback: null,
+					time_of_day: getTimeOfDay(),
+					day_of_week: getDayOfWeek(),
+					mood_signal: mood,
+				});
+				lastInteractionTopic = topic;
+			}
+
+			// Send response
 			await sendSplit(ctx, result.result);
+
+			log.info("free_text_complete", {
+				intent,
+				topic,
+				mood,
+				response_time_ms: responseTimeMs,
+				response_length: result.result.length,
+			});
 		} catch (err) {
-			console.error("[telegram] free-text relay error:", err);
+			const responseTimeMs = Date.now() - startMs;
+			log.error("free_text_failed", {
+				intent,
+				topic,
+				mood,
+				response_time_ms: responseTimeMs,
+				error: err instanceof Error ? err.message : String(err),
+			});
+
+			// Still log the failed interaction
+			if (config.interactions) {
+				lastInteractionId = config.interactions.record({
+					timestamp: new Date().toISOString(),
+					channel: "telegram",
+					user_message: userText,
+					intent,
+					topic,
+					entities: "[]",
+					assistant_response: `ERROR: ${err instanceof Error ? err.message : String(err)}`,
+					tools_used: "[]",
+					actions_taken: "[]",
+					response_time_ms: responseTimeMs,
+					model_used: "sonnet",
+					tokens_used: 0,
+					follow_up: false,
+					correction: false,
+					explicit_feedback: null,
+					time_of_day: getTimeOfDay(),
+					day_of_week: getDayOfWeek(),
+					mood_signal: mood,
+				});
+				lastInteractionTopic = topic;
+			}
+
 			await ctx.reply(friendlyError(err));
 		}
 	});

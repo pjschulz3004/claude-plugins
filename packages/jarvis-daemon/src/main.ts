@@ -5,6 +5,7 @@ const log = createLogger("main");
 import { BreakerManager } from "./state/breakers.js";
 import { ChatHistory } from "./state/history.js";
 import { CorrectionStore } from "./state/telemetry.js";
+import { InteractionStore } from "./state/interactions.js";
 import {
 	detectEmailCorrections,
 	detectBudgetCorrections,
@@ -32,6 +33,7 @@ const breakers = new BreakerManager();
 const dispatcher = new Dispatcher();
 const history = new ChatHistory(ledger.database);
 const correctionStore = new CorrectionStore(ledger.database);
+const interactionStore = new InteractionStore(ledger.database);
 let scheduler: Scheduler;
 let health: HealthServer;
 
@@ -88,6 +90,7 @@ async function start() {
 			calendar: buildCalendarBackend(),
 			budget: buildBudgetBackend(),
 			corrections: correctionStore,
+			interactions: interactionStore,
 		};
 		bot = createBot(telegramConfig);
 		notifyChannels.push(
@@ -125,6 +128,7 @@ async function start() {
 			dispatcher,
 			ledger,
 			corrections: correctionStore,
+			interactions: interactionStore,
 			taskNames: scheduler.getTaskNames(),
 			notifyChannels,
 			repoRoot,

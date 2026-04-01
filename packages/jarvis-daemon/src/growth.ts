@@ -36,6 +36,7 @@ import {
 import { KGBridge } from "./kg-bridge.js";
 import type { PromptVersioner } from "./prompt-versioner.js";
 import { SkillCreator } from "./skill-creator.js";
+import type { InteractionStore } from "./state/interactions.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,6 +57,7 @@ export interface GrowthConfig {
 	pauseBetweenRoundsMs: number; // 60_000
 	maxTurnsPerRound: number; // 30
 	timeoutPerRoundMs: number; // 900_000 (15 min)
+	interactions?: InteractionStore; // Deep interaction analysis
 	maxRounds?: number; // Optional cap (useful for testing)
 	gitExecFn?: GitExecFn; // Injectable for testing
 	kgBridge?: KGBridge; // Optional KG bridge for contextual memory
@@ -198,8 +200,19 @@ export function buildReflectionPrompt(
 	kgContext: string = "",
 	promptVersionSummary: string = "",
 	capabilityGaps: string = "",
+	interactionAnalysis: string = "",
 	repoRoot: string = process.cwd(),
 ): string {
+	const interactionSection = interactionAnalysis
+		? `\n<interactions>
+Here is analysis of Paul's recent interactions with you. This tells you HOW he uses you, what he asks most, when he's satisfied vs frustrated, and what patterns emerge:
+
+${interactionAnalysis}
+
+Use this to guide your growth priorities. Recurring questions should become proactive features. Low satisfaction topics need immediate attention. Corrections are the strongest learning signal.
+</interactions>\n`
+		: "";
+
 	const kgSection = kgContext
 		? `\n<knowledge_graph>
 Here is relevant context from your knowledge graph (past improvements and corrections):
@@ -240,6 +253,7 @@ Here are your current 7-day correction rates (lower is better):
 ${correctionRates}
 </correction_rates>
 ${capabilityGaps ? `\n<capability_gaps>\n${capabilityGaps}\n</capability_gaps>\n` : ""}
+${interactionSection}
 ${kgSection}
 Follow this improvement procedure for each round:
 <procedure>
@@ -493,6 +507,17 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 			log.warn("gap_detection_failed", { error: (err as Error).message });
 		}
 
+		// Analyse interaction patterns for growth context
+		let interactionAnalysis = "";
+		if (cfg.interactions) {
+			try {
+				interactionAnalysis = cfg.interactions.formatForGrowth(7);
+				log.debug("interaction_analysis_loaded", { length: interactionAnalysis.length });
+			} catch (err) {
+				log.warn("interaction_analysis_failed", { error: (err as Error).message });
+			}
+		}
+
 		const prompt = buildReflectionPrompt(
 			mission,
 			ledgerSummary,
@@ -504,6 +529,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 			kgContext,
 			promptVersionSummary,
 			capabilityGaps,
+			interactionAnalysis,
 			cfg.repoRoot,
 		);
 
