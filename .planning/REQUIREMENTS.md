@@ -1,213 +1,99 @@
-# Requirements — Jarvis TypeScript Redesign
+# Requirements — v2.0 Jarvis Growth Intelligence
 
-## v1 Requirements
+## v2 Requirements
 
-### Monorepo Foundation (MONO)
+### Telemetry Foundation (TEL)
 
-- [x] **MONO-01**: Developer can build all packages from repo root with single command (`npm run build`)
-- [x] **MONO-02**: TypeScript project references resolve cross-package imports at compile time
-- [x] **MONO-03**: Vitest runs all tests from repo root with single command (`npm test`)
-- [x] **MONO-04**: Biome enforces consistent code style across all packages
-- [x] **MONO-05**: Shared types package (`jarvis-shared`) exports common interfaces (Backend, Config, types)
+- [ ] **TEL-01**: Every heartbeat task execution logs structured telemetry: task_name, input_features, decision_summary, outcome, duration_ms, cost_usd, tokens
+- [ ] **TEL-02**: User corrections are captured as correction events: when Paul moves an email to a different folder, recategorises a YNAB transaction, or rejects a Telegram response
+- [ ] **TEL-03**: Correction events link to the original Jarvis decision (task_name, timestamp, original_decision, corrected_decision)
+- [ ] **TEL-04**: Telemetry is queryable via SQLite (correction_events table alongside task_runs)
+- [ ] **TEL-05**: 7-day and 30-day rolling correction rates are computable per task type
 
-### Email Tool Plugin (EMAIL)
+### Growth Engine (GROW)
 
-- [ ] **EMAIL-01**: User can list unread emails via MCP tool `jarvis_email_list_unread`
-- [ ] **EMAIL-02**: User can search emails by sender, subject, date range, folder via MCP tool
-- [ ] **EMAIL-03**: User can move emails between IMAP folders via MCP tool
-- [ ] **EMAIL-04**: User can flag, unflag, trash, archive, mark read/spam emails via MCP tools
-- [ ] **EMAIL-05**: User can list all IMAP folders via MCP tool
-- [ ] **EMAIL-06**: User can set custom IMAP keywords ($AutoDelete3d, $AutoDelete7d, etc.) via MCP tool
-- [ ] **EMAIL-07**: Plugin works standalone as Claude Code plugin without orchestrator or daemon
-- [ ] **EMAIL-08**: Plugin exposes `/jarvis-email:inbox` standalone command
-- [ ] **EMAIL-09**: ImapFlow backend uses connection-per-operation pattern (no persistent connections)
-- [ ] **EMAIL-10**: Backend retries on transient errors (ConnectionError, Timeout) with exponential backoff
+- [ ] **GROW-01**: Growth loop runs 01:00-05:00 nightly as a time-bounded Ralph Loop
+- [ ] **GROW-02**: Each round reads MISSION.md, reviews task ledger, reads GROWTH_BACKLOG.md
+- [ ] **GROW-03**: Each round picks ONE improvement from backlog (highest priority) and implements it
+- [ ] **GROW-04**: Growth engine has full access: Read, Write, Edit, Bash, WebSearch, GitHub CLI, all MCP tools
+- [ ] **GROW-05**: Growth engine can edit heartbeat.yaml prompts, skill files, agent files, reference files, and TypeScript source
+- [ ] **GROW-06**: Growth engine runs npm test after any code change, only commits if tests pass
+- [ ] **GROW-07**: Growth engine creates GitHub issues for features too large for a single night
+- [ ] **GROW-08**: Growth session results recorded in GROWTH_LOG.md with reflection, work done, commits
+- [ ] **GROW-09**: Morning summary notification sent after growth session completes
+- [ ] **GROW-10**: Growth backlog is self-maintaining: engine adds new items discovered during work
 
-### Calendar Tool Plugin (CAL)
+### Rule Evolution (RULE)
 
-- [x] **CAL-01**: User can list calendar events for a date range via MCP tool
-- [x] **CAL-02**: User can list pending VTODOs via MCP tool
-- [x] **CAL-03**: User can create calendar events via MCP tool (only when explicitly asked)
-- [x] **CAL-04**: User can complete a VTODO via MCP tool
-- [x] **CAL-05**: Plugin works standalone as Claude Code plugin
-- [x] **CAL-06**: Plugin exposes `/jarvis-calendar:today` standalone command
-- [x] **CAL-07**: tsdav backend authenticates against mailbox.org CalDAV
+- [ ] **RULE-01**: Email rules have confidence scores (0.0-1.0) based on evaluation count and accuracy
+- [ ] **RULE-02**: Budget payee rules have confidence scores based on observation count
+- [ ] **RULE-03**: Each rule has source attribution: user_correction, self_generated, or seeded
+- [ ] **RULE-04**: Rules below confidence threshold (0.8) are flagged for human review
+- [ ] **RULE-05**: Rule files use structured YAML format (not free-form markdown) for programmatic access
+- [ ] **RULE-06**: Rule changes are git-tracked with clear commit messages
 
-### Contacts Tool Plugin (CONT)
+### Regression Detection (REG)
 
-- [x] **CONT-01**: User can search contacts by name, email, or organization via MCP tool
-- [x] **CONT-02**: User can get full contact details via MCP tool
-- [x] **CONT-03**: User can create and update contacts via MCP tool
-- [x] **CONT-04**: Plugin works standalone as Claude Code plugin
-- [x] **CONT-05**: tsdav backend authenticates against mailbox.org CardDAV
+- [ ] **REG-01**: Rolling 7-day correction rate computed per task type after each growth session
+- [ ] **REG-02**: If correction rate increases after a self-modification, the change is auto-reverted (git revert)
+- [ ] **REG-03**: Regression events are logged in GROWTH_LOG.md with the reverted commit hash
+- [ ] **REG-04**: After a regression revert, the backlog item is marked as "reverted" with reason
 
-### Budget Tool Plugin (BUD)
+### Skill Creation (SKILL)
 
-- [x] **BUD-01**: User can view budget categories with balances via MCP tool
-- [x] **BUD-02**: User can view transactions by date range via MCP tool
-- [x] **BUD-03**: User can categorize uncategorized transactions via MCP tool
-- [x] **BUD-04**: User can batch-approve transactions via MCP tool
-- [x] **BUD-05**: Plugin works standalone as Claude Code plugin
-- [x] **BUD-06**: Plugin exposes `/jarvis-budget:summary` standalone command
-- [x] **BUD-07**: YNAB SDK backend handles UUID-to-string conversion (no SQLite binding errors)
+- [ ] **SKILL-01**: Growth engine can detect capability gaps (repeated manual requests, failed tasks with "no tool available")
+- [ ] **SKILL-02**: Growth engine can write new SKILL.md files following the plugin skill pattern
+- [ ] **SKILL-03**: Growth engine can write new TypeScript MCP tools with Zod schemas and tests
+- [ ] **SKILL-04**: New skills are verified: tests pass, build succeeds, tool responds to test invocation
+- [ ] **SKILL-05**: New skills are committed to a staging branch (not main) for human review
+- [ ] **SKILL-06**: Growth engine creates a GitHub PR for new skills with description and test results
 
-### Files Tool Plugin (FILE)
+### Prompt Optimisation (PROMPT)
 
-- [x] **FILE-01**: User can list inbox and outbox files via MCP tool
-- [x] **FILE-02**: User can save files to inbox via MCP tool
-- [x] **FILE-03**: User can move files from inbox to outbox via MCP tool
-- [x] **FILE-04**: User can archive outbox files to archive/YYYY/MM/ via MCP tool
-- [x] **FILE-05**: Plugin works standalone as Claude Code plugin
-- [x] **FILE-06**: rclone sync to mailbox.org WebDAV works from daemon
+- [ ] **PROMPT-01**: Heartbeat task prompts are versioned (version number in heartbeat.yaml comment)
+- [ ] **PROMPT-02**: Growth engine tracks performance per prompt version (success rate, duration, token usage)
+- [ ] **PROMPT-03**: Growth engine proposes prompt mutations based on failure analysis (OPRO pattern)
+- [ ] **PROMPT-04**: Prompt mutations are A/B tested by alternating versions across consecutive runs
+- [ ] **PROMPT-05**: Winning prompt versions are promoted, losing versions are reverted
 
-### Daemon Core (DAEMON)
+### Email Triage Fix (FIX)
 
-- [x] **DAEMON-01**: Daemon starts as systemd service on VPS and stays running
-- [x] **DAEMON-02**: Heartbeat scheduler reads heartbeat.yaml and fires tasks on cron schedule
-- [x] **DAEMON-03**: Dispatcher calls `claude -p` with focused prompts and parses JSON output
-- [x] **DAEMON-04**: Circuit breakers per service (imap, caldav, carddav, ynab) prevent cascading failures
-- [x] **DAEMON-05**: Task ledger records every heartbeat run (task_name, status, duration, error) in SQLite
-- [x] **DAEMON-06**: Health endpoint returns JSON at /health for Uptime Kuma monitoring
-- [x] **DAEMON-07**: Graceful shutdown on SIGTERM (stop scheduler, close DB, close bot)
-- [x] **DAEMON-08**: `claude -p` dispatch uses Max subscription (no ANTHROPIC_API_KEY set)
-- [x] **DAEMON-09**: Dispatcher stagger tasks with jitter to avoid rate limit bursts
+- [ ] **FIX-01**: Email triage succeeds >90% of runs (currently ~50%)
+- [ ] **FIX-02**: Triage prompt references installed plugin MCP tools (not --plugin-dir paths)
+- [ ] **FIX-03**: Triage prompt is scoped: max 10 emails per run, classify then act
+- [ ] **FIX-04**: Triage results are logged with per-email decisions for correction detection
 
-### Orchestrator Plugin (ORCH)
+### Telegram UX (TG-UX)
 
-- [x] **ORCH-01**: `/jarvis:status` shows system health (uptime, breakers, last task)
-- [x] **ORCH-02**: `/jarvis:briefing` produces cross-domain synthesis (calendar + email + budget + todos)
-- [x] **ORCH-03**: `/jarvis:ask` routes free-text through Claude with full context (calendar, recent tasks, KG)
-- [x] **ORCH-04**: Voice reference (`jarvis-voice.md`) defines tone: efficient, polite, slight British humour
-- [x] **ORCH-05**: Email triage skill classifies emails deterministically first, LLM fallback for ambiguous
-- [x] **ORCH-06**: Briefing skill synthesizes cross-domain data into natural language
-- [x] **ORCH-07**: Filing skill extracts PDFs from email, smart-names, files to inbox
-- [x] **ORCH-08**: Model tiering: haiku for simple tasks, sonnet for synthesis, per agent config
+- [ ] **TG-UX-01**: Telegram slash commands return formatted, human-readable responses (not raw JSON)
+- [ ] **TG-UX-02**: Free-text relay works reliably with conversation history context
+- [ ] **TG-UX-03**: Error messages are user-friendly, not stack traces
+- [ ] **TG-UX-04**: Bot sends a brief daily morning greeting with status (not just data dump)
 
-### Telegram + Notifications (TG)
+### Knowledge Graph Growth (KG)
 
-- [ ] **TG-01**: Telegram bot responds to 7 slash commands (/start, /status, /inbox, /today, /budget, /tasks, /history)
-- [ ] **TG-02**: Free-text messages relayed to `claude -p` with conversation history (last 10 messages)
-- [x] **TG-03**: Notifications sent for tasks with autonomy=notify
-- [x] **TG-04**: Quiet hours (23:00-07:00) suppress non-urgent notifications
-- [ ] **TG-05**: Auth middleware drops messages from unauthorized chat IDs
-- [ ] **TG-06**: Long messages split at paragraph boundaries (4000 char Telegram limit)
-- [ ] **TG-07**: Second bot token for shadow mode during migration (avoid 409 Conflict)
+- [ ] **KG-01**: Growth sessions store learned rules and patterns as KG episodes
+- [ ] **KG-02**: Correction events are stored as KG episodes with temporal metadata
+- [ ] **KG-03**: Growth engine queries KG for relevant context before making improvements
 
-### Intelligence (INTEL)
+## Future Requirements (Deferred to v3+)
 
-- [x] **INTEL-01**: Healing agent dispatched when task fails 3+ consecutive times
-- [x] **INTEL-02**: Healing agent diagnoses root cause using MCP tools and escalates if unfixable
-- [x] **INTEL-03**: Nightly self-improvement agent reads ledger, email folder state, YNAB recategorizations
-- [x] **INTEL-04**: Self-improvement agent updates email-rules.md and budget-rules.md with learned patterns
-- [x] **INTEL-05**: Self-improvement produces summary notification of changes made
-- [x] **INTEL-06**: Knowledge graph (Neo4j + Graphiti) stores cross-domain memory
-- [x] **INTEL-07**: Memory consolidation task expires stale edges nightly
-
-### Migration (MIG)
-
-- [x] **MIG-01**: New daemon can run alongside old Python service in shadow mode
-- [x] **MIG-02**: Shadow mode compares outputs without affecting production
-- [x] **MIG-03**: Clean cutover: stop Python service, start TS daemon, verify via health endpoint
-- [x] **MIG-04**: All plugins published to pjschulz3004/claude-plugins marketplace
-
-## v2 Requirements (Deferred)
-
+- DSPy/SIMBA full prompt compilation pipeline
+- Embedding-based email classifier (Wiggins pattern — needs 250+ labeled examples)
 - PWA push notification channel
-- Web dashboard for monitoring
-- Voice message transcription via Claude (replace Voxtral)
-- Contact photo support
-- Calendar recurring event management (RRULE)
-- Budget forecast/projection insights
+- Cross-model verification (different model for review vs execution)
+- Skill deprecation and usage tracking
+- Automated A/B testing framework for all agent outputs
 
 ## Out of Scope
 
-- Email drafting/sending — autonomous email sending is dangerous, read-only only
-- Multi-tenant support — single user, not worth the complexity
-- Mobile app — Telegram is the mobile interface
-- Real-time IMAP IDLE — hourly polling sufficient for personal email
-- Custom LLM fine-tuning — evolving markdown rules achieve same goal
-- Voice interface — text via Telegram, dictation is separate tool
-- n8n-style workflow automation — Jarvis is an assistant, not Zapier
-- Proactive task creation — surface action items in briefings, never auto-create
+- Fine-tuning — evolving rules and prompt optimisation achieve the same goal without infrastructure
+- Full autonomous daemon code modification — growth engine can create new skills and tune prompts but core TypeScript daemon changes need human review
+- Voice interface — text via Telegram
+- Multi-tenant — single user
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| MONO-01 | Phase 1 | Complete |
-| MONO-02 | Phase 1 | Complete |
-| MONO-03 | Phase 1 | Complete |
-| MONO-04 | Phase 1 | Complete |
-| MONO-05 | Phase 1 | Complete |
-| EMAIL-01 | Phase 1 | Pending |
-| EMAIL-02 | Phase 1 | Pending |
-| EMAIL-03 | Phase 1 | Pending |
-| EMAIL-04 | Phase 1 | Pending |
-| EMAIL-05 | Phase 1 | Pending |
-| EMAIL-06 | Phase 1 | Pending |
-| EMAIL-07 | Phase 1 | Pending |
-| EMAIL-08 | Phase 1 | Pending |
-| EMAIL-09 | Phase 1 | Pending |
-| EMAIL-10 | Phase 1 | Pending |
-| DAEMON-01 | Phase 1 | Complete |
-| DAEMON-02 | Phase 1 | Complete |
-| DAEMON-03 | Phase 1 | Complete |
-| DAEMON-04 | Phase 1 | Complete |
-| DAEMON-05 | Phase 1 | Complete |
-| DAEMON-06 | Phase 1 | Complete |
-| DAEMON-07 | Phase 1 | Complete |
-| DAEMON-08 | Phase 1 | Complete |
-| DAEMON-09 | Phase 1 | Complete |
-| CAL-01 | Phase 2 | Complete |
-| CAL-02 | Phase 2 | Complete |
-| CAL-03 | Phase 2 | Complete |
-| CAL-04 | Phase 2 | Complete |
-| CAL-05 | Phase 2 | Complete |
-| CAL-06 | Phase 2 | Complete |
-| CAL-07 | Phase 2 | Complete |
-| CONT-01 | Phase 2 | Complete |
-| CONT-02 | Phase 2 | Complete |
-| CONT-03 | Phase 2 | Complete |
-| CONT-04 | Phase 2 | Complete |
-| CONT-05 | Phase 2 | Complete |
-| BUD-01 | Phase 2 | Complete |
-| BUD-02 | Phase 2 | Complete |
-| BUD-03 | Phase 2 | Complete |
-| BUD-04 | Phase 2 | Complete |
-| BUD-05 | Phase 2 | Complete |
-| BUD-06 | Phase 2 | Complete |
-| BUD-07 | Phase 2 | Complete |
-| FILE-01 | Phase 2 | Complete |
-| FILE-02 | Phase 2 | Complete |
-| FILE-03 | Phase 2 | Complete |
-| FILE-04 | Phase 2 | Complete |
-| FILE-05 | Phase 2 | Complete |
-| FILE-06 | Phase 2 | Complete |
-| ORCH-01 | Phase 3 | Complete |
-| ORCH-02 | Phase 3 | Complete |
-| ORCH-03 | Phase 3 | Complete |
-| ORCH-04 | Phase 3 | Complete |
-| ORCH-05 | Phase 3 | Complete |
-| ORCH-06 | Phase 3 | Complete |
-| ORCH-07 | Phase 3 | Complete |
-| ORCH-08 | Phase 3 | Complete |
-| TG-01 | Phase 4 | Pending |
-| TG-02 | Phase 4 | Pending |
-| TG-03 | Phase 4 | Complete |
-| TG-04 | Phase 4 | Complete |
-| TG-05 | Phase 4 | Pending |
-| TG-06 | Phase 4 | Pending |
-| TG-07 | Phase 4 | Pending |
-| INTEL-01 | Phase 5 | Complete |
-| INTEL-02 | Phase 5 | Complete |
-| INTEL-03 | Phase 5 | Complete |
-| INTEL-04 | Phase 5 | Complete |
-| INTEL-05 | Phase 5 | Complete |
-| INTEL-06 | Phase 5 | Complete |
-| INTEL-07 | Phase 5 | Complete |
-| MIG-01 | Phase 6 | Complete |
-| MIG-02 | Phase 6 | Complete |
-| MIG-03 | Phase 6 | Complete |
-| MIG-04 | Phase 6 | Complete |
-
-**Coverage: 75/75 v1 requirements mapped**
+| Phase | Requirements |
+|-------|-------------|
+| (filled by roadmapper) | |
