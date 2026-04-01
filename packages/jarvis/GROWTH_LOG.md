@@ -26,6 +26,40 @@ What I want to focus on next.
 
 ## Sessions
 
+## 2026-04-01 Growth Session Round 7 (this session)
+
+**Rounds completed:** 7
+**Items addressed:** GB-009
+
+### Reflection
+
+email_triage is stable. The five rounds yesterday fixed the infrastructure. Round 6 added the Claude-dispatched morning_briefing and evening_summary tasks, which is the right architecture.
+
+But there was a silent UX bug: the `autonomy: notify` success handler sends "Task 'morning_briefing' completed successfully.\n\n{result}". Paul would see a system-notification prefix before the AI-written briefing. The mission says the experience should feel like a British assistant, not a system log. Also, Paul was receiving two morning messages — the template-based cron at 07:30 and the Claude briefing at 07:35.
+
+### Work Done
+
+Implemented GB-009: briefing notify format fix.
+
+- Added `notify_raw?: boolean` to `HeartbeatTask` interface in scheduler.ts
+- When `notify_raw: true`, the success notification sends `result.result` directly (no wrapper)
+- Set `notify_raw: true` on `morning_briefing` and `evening_summary` in heartbeat.yaml
+- Removed the hardcoded 07:30 `buildMorningSummary` cron from main.ts (superseded by the morning_briefing heartbeat task)
+- Removed unused `buildMorningSummary` import from main.ts
+- Added test: "notify_raw: sends result directly without task-status wrapper"
+
+333 tests pass. TypeScript build clean.
+
+### Commits
+
+- d6751d4: growth(2026-04-01): fix briefing notify format and retire template morning cron (GB-009)
+
+### Tomorrow
+
+GB-010: email_triage is sending hourly JSON dumps to Telegram (16 messages/day). Once triage quality is confirmed stable, switch autonomy from notify to full. Also watch first morning_briefing run for quality — tune prompt if output is too fragmented or misses cross-domain connections.
+
+---
+
 ## 2026-04-01 Growth Session Round 6
 
 **Rounds completed:** 6

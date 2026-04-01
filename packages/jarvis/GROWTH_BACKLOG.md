@@ -17,6 +17,27 @@ Description of what to do and why it matters.
 
 ## Active Backlog
 
+### GB-009 Fix briefing task notify format
+**Priority:** P1
+**Type:** fix
+**Status:** done
+**Added:** 2026-04-01
+**Completed:** 2026-04-01
+
+`autonomy: notify` success handler was wrapping every result in "Task X completed successfully.\n\n{result}". For briefing tasks (morning_briefing, evening_summary) this destroyed the experience — Paul would see a system-notification prefix before the AI-written briefing text.
+
+Added `notify_raw: boolean` field to HeartbeatTask. When true, sends result.result directly without wrapper. Set on morning_briefing and evening_summary in heartbeat.yaml.
+
+Also removed the hardcoded 07:30 buildMorningSummary cron from main.ts — it was sending a low-quality template briefing 5 minutes before the Claude-dispatched morning_briefing, creating duplicate messages. Commit: d6751d4.
+
+### GB-010 Reduce email_triage notification noise
+**Priority:** P2
+**Type:** tune
+**Status:** queued
+**Added:** 2026-04-01
+
+email_triage runs hourly (7am-11pm) with autonomy: notify. This sends 16 Telegram messages per day containing raw JSON decision logs. That's noise. Options: (a) switch to autonomy: full (silent, no notification), (b) add a human-readable summary format. Current JSON output is useful for debugging but not for daily use. Consider switching to full once the triage quality is confirmed stable.
+
 ### GB-002 Tune email triage prompt for reliability
 **Priority:** P1
 **Type:** tune
