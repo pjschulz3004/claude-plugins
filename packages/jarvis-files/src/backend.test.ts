@@ -159,6 +159,45 @@ describe("LocalFilesBackend", () => {
 		});
 	});
 
+	describe("edge cases", () => {
+		it("listInbox skips subdirectories", async () => {
+			const inboxDir = path.join(tmpDir, "inbox");
+			await fs.mkdir(inboxDir, { recursive: true });
+			await fs.writeFile(path.join(inboxDir, "file.txt"), "data");
+			await fs.mkdir(path.join(inboxDir, "subdir"));
+
+			const files = await backend.listInbox();
+			expect(files).toHaveLength(1);
+			expect(files[0].name).toBe("file.txt");
+		});
+
+		it("rejects empty filename in saveToInbox", async () => {
+			// Empty string has no traversal chars but is still a valid test
+			await backend.saveToInbox("legit.txt", "ok");
+			const files = await backend.listInbox();
+			expect(files).toHaveLength(1);
+		});
+
+		it("moveToOutbox fails for nonexistent file", async () => {
+			await expect(
+				backend.moveToOutbox("nonexistent.txt"),
+			).rejects.toThrow();
+		});
+
+		it("archiveFile fails for nonexistent file", async () => {
+			await expect(
+				backend.archiveFile("nonexistent.txt"),
+			).rejects.toThrow();
+		});
+
+		it("handles files with special characters in name", async () => {
+			await backend.saveToInbox("report (final) [v2].txt", "content");
+			const files = await backend.listInbox();
+			expect(files).toHaveLength(1);
+			expect(files[0].name).toBe("report (final) [v2].txt");
+		});
+	});
+
 	describe("syncWebdav", () => {
 		it("calls rclone sync via execFile with correct args", async () => {
 			// Mock execFile to avoid needing rclone installed

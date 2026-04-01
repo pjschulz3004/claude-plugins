@@ -104,6 +104,17 @@ describe("CircuitBreaker", () => {
 		expect(breaker.state).toBe(BreakerState.OPEN);
 	});
 
+	it("trips immediately with failureThreshold of 1", () => {
+		const breaker = new CircuitBreaker({ failureThreshold: 1, cooldownMs: 1000 });
+		breaker.recordFailure();
+		expect(breaker.state).toBe(BreakerState.OPEN);
+	});
+
+	it("shouldAllow returns true in CLOSED state", () => {
+		const breaker = new CircuitBreaker();
+		expect(breaker.shouldAllow()).toBe(true);
+	});
+
 	it("uses default config of 3 failures and 60s cooldown", () => {
 		let now = 1000;
 		const breaker = new CircuitBreaker(undefined, () => now);

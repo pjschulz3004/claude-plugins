@@ -255,6 +255,67 @@ describe("ImapFlowBackend", () => {
 		});
 	});
 
+	describe("unflagEmail", () => {
+		it("removes flag from message", async () => {
+			await backend.unflagEmail("42", "\\Flagged");
+
+			const inst = mockInstances[0];
+			expect(inst.connect).toHaveBeenCalledOnce();
+			expect(inst.messageFlagsRemove).toHaveBeenCalledWith(
+				"42",
+				["\\Flagged"],
+				{ uid: true },
+			);
+			expect(inst.logout).toHaveBeenCalledOnce();
+		});
+	});
+
+	describe("trashEmail", () => {
+		it("moves message to Trash folder", async () => {
+			await backend.trashEmail("42");
+
+			const inst = mockInstances[0];
+			expect(inst.messageMove).toHaveBeenCalledWith("42", "Trash", {
+				uid: true,
+			});
+		});
+	});
+
+	describe("archiveEmail", () => {
+		it("moves message to Archive folder", async () => {
+			await backend.archiveEmail("42");
+
+			const inst = mockInstances[0];
+			expect(inst.messageMove).toHaveBeenCalledWith("42", "Archive", {
+				uid: true,
+			});
+		});
+	});
+
+	describe("markRead", () => {
+		it("adds \\Seen flag to message", async () => {
+			await backend.markRead("42");
+
+			const inst = mockInstances[0];
+			expect(inst.messageFlagsAdd).toHaveBeenCalledWith(
+				"42",
+				["\\Seen"],
+				{ uid: true },
+			);
+		});
+	});
+
+	describe("markSpam", () => {
+		it("moves message to Junk folder", async () => {
+			await backend.markSpam("42");
+
+			const inst = mockInstances[0];
+			expect(inst.messageMove).toHaveBeenCalledWith("42", "Junk", {
+				uid: true,
+			});
+		});
+	});
+
 	describe("retry logic", () => {
 		it("retries on transient error (ECONNRESET) up to 3 times", async () => {
 			let connectCallCount = 0;
