@@ -20,6 +20,7 @@ import {
 	getTimeOfDay,
 	getDayOfWeek,
 } from "./state/interactions.js";
+import { dispatchStreaming } from "./streaming-dispatch.js";
 import type { ImapFlowBackend } from "@jarvis/email";
 import type { TsdavCalendarBackend } from "@jarvis/calendar";
 import type { YnabBackend } from "@jarvis/budget";
@@ -455,31 +456,65 @@ export function createBot(config: TelegramConfig): Telegraf {
 			// Record user message in chat history
 			config.history.record(chatId, "user", userText);
 
-			// Build prompt with conversation history
-			const recent = config.history.getRecent(chatId, 10);
-			const historyLines = recent.map((m) => `${m.role}: ${m.text}`).join("\n");
+			// Progress message — updated as Claude uses tools
+			let progressMsgId: number | null = null;
+			let lastProgressText = "";
 
+			const onProgress = async (update: string) => {
+				if (update === lastProgressText) return;
+				lastProgressText = update;
+				try {
+					if (progressMsgId) {
+						await ctx.telegram.editMessageText(
+							ctx.chat.id,
+							progressMsgId,
+							undefined,
+							update,
+						);
+					} else {
+						const sent = await ctx.reply(update);
+						progressMsgId = sent.message_id;
+					}
+				} catch {
+					// Edit can fail if message hasn't changed — ignore
+				}
+			};
+
+			// Show typing while working
+			const typingInterval = setInterval(() => {
+				ctx.sendChatAction("typing").catch(() => {});
+			}, 4000);
+
+			// The prompt is just the user's message — session history is maintained by --resume
 			const prompt = `You are Jarvis, Paul's personal AI assistant. Efficient, polite, slight British dry humour. Plain text only, no markdown.
 
-You have MCP tools available for email (list_unread, search, move, flag, trash, archive, list_folders, set_keyword, mark_read), calendar (list_events, list_todos, create_event, complete_todo), budget (get_categories, get_transactions, categorize_transaction, approve_transactions), contacts (search_contacts, get_contact), and files (list_inbox, list_outbox, save_to_inbox, archive_file).
+You have MCP tools available for email, calendar, budget, contacts, and files. Use them to fulfil requests. Act, don't just describe.
 
-Use the tools to fulfil Paul's requests. Act, don't just describe what you could do.
+User: ${userText}`;
 
-Conversation history:
-${historyLines}
-
-Respond to the latest message.`;
-
-			// Dispatch through claude -p
-			const result = await config.dispatcher.dispatch(prompt, {
+			// Streaming dispatch with session resume
+			const result = await dispatchStreaming(prompt, {
+				chatId,
 				maxTurns: 20,
 				timeoutMs: 180_000,
+				onProgress,
 			});
+
+			clearInterval(typingInterval);
+
+			// Delete progress message if we had one
+			if (progressMsgId) {
+				try {
+					await ctx.telegram.deleteMessage(ctx.chat.id, progressMsgId);
+				} catch {
+					// May fail if already deleted — ignore
+				}
+			}
 
 			const responseTimeMs = Date.now() - startMs;
 
 			// Record assistant response in chat history
-			config.history.record(chatId, "assistant", result.result);
+			config.history.record(chatId, "assistant", result.text);
 
 			// Deep interaction logging
 			if (config.interactions) {
@@ -490,12 +525,12 @@ Respond to the latest message.`;
 					intent,
 					topic,
 					entities: "[]",
-					assistant_response: result.result.slice(0, 500),
+					assistant_response: result.text.slice(0, 500),
 					tools_used: "[]",
 					actions_taken: "[]",
 					response_time_ms: responseTimeMs,
 					model_used: "sonnet",
-					tokens_used: (result.usage?.input_tokens ?? 0) + (result.usage?.output_tokens ?? 0),
+					tokens_used: (result.inputTokens ?? 0) + (result.outputTokens ?? 0),
 					follow_up: false,
 					correction: false,
 					explicit_feedback: null,
@@ -507,14 +542,14 @@ Respond to the latest message.`;
 			}
 
 			// Send response
-			await sendSplit(ctx, result.result);
+			await sendSplit(ctx, result.text);
 
 			log.info("free_text_complete", {
 				intent,
 				topic,
 				mood,
 				response_time_ms: responseTimeMs,
-				response_length: result.result.length,
+				response_length: result.text.length,
 			});
 		} catch (err) {
 			const responseTimeMs = Date.now() - startMs;
