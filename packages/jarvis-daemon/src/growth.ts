@@ -211,10 +211,39 @@ YOUR TASK FOR THIS ROUND:
    - GROWTH_BACKLOG.md: Mark the item as done (or update its status)
    - GROWTH_LOG.md: Add an entry for this round
 
-5. If you identify NEW improvement opportunities while working, add them to GROWTH_BACKLOG.md with appropriate priority.
+GITHUB ISSUES (for work too large for one round):
+When you identify an improvement that would take more than 30 minutes or touches
+more than 5 files, DO NOT attempt it. Instead:
 
-6. For improvements too large for a single round (>30 minutes of work), create a GitHub issue:
-   gh issue create --repo pjschulz3004/claude-plugins --title "Jarvis Growth: [title]" --body "[detailed spec]" --label "jarvis,growth"
+1. Create a GitHub issue with a detailed spec:
+   \`\`\`bash
+   gh issue create --repo pjschulz3004/claude-plugins \\
+     --title "Jarvis Growth: [clear, specific title]" \\
+     --body "## What\\n[What needs to change]\\n\\n## Why\\n[What problem this solves]\\n\\n## How\\n[Implementation approach]\\n\\n## Acceptance Criteria\\n- [ ] [Criterion 1]\\n- [ ] [Criterion 2]" \\
+     --label "jarvis,growth"
+   \`\`\`
+
+2. Mark the backlog item as \`filed-as-issue\` with the issue URL in GROWTH_BACKLOG.md
+3. Log the issue creation in GROWTH_LOG.md
+4. Move on to the next backlog item (do NOT attempt partial implementation)
+
+BACKLOG MAINTENANCE:
+Your backlog is a living document. During every round, you will notice things
+that could be better. Add them to GROWTH_BACKLOG.md with:
+- A clear one-line description
+- Priority: P1 (broken/failing), P2 (suboptimal), P3 (nice-to-have), P4 (research)
+- Type: fix, tune, expand, new-tool, or research
+- Source: "discovered during [what you were working on]"
+
+Example entry:
+\`\`\`
+- [ ] P2/tune: Email triage prompt references outdated folder names (discovered during rule review)
+\`\`\`
+
+Do NOT remove items from the backlog. Mark completed items with [x] and a date.
+Mark filed-as-issue items with the issue URL.
+
+5. If you identify NEW improvement opportunities while working, add them to GROWTH_BACKLOG.md following the BACKLOG MAINTENANCE format above.
 
 IMPORTANT: All file paths are relative to the repo root at ${process.cwd()}.
 The jarvis plugin files are at packages/jarvis/.
@@ -222,6 +251,27 @@ The daemon source is at packages/jarvis-daemon/src/.
 The heartbeat config is at packages/jarvis-daemon/heartbeat.yaml.
 
 Be concrete. Be focused. One real improvement per round is better than three half-finished ones.`;
+}
+
+// ---------------------------------------------------------------------------
+// Morning Summary
+// ---------------------------------------------------------------------------
+
+export function compileMorningSummary(result: GrowthSessionResult): string {
+	if (result.roundsExecuted === 0) {
+		return "Nightly growth session: No rounds executed (backlog may be empty or window was too short).";
+	}
+
+	const header = `Nightly growth session complete: ${result.roundsExecuted} round${result.roundsExecuted > 1 ? "s" : ""}.`;
+	const cost = result.totalCostUsd > 0
+		? `\nTotal cost: $${result.totalCostUsd.toFixed(4)}`
+		: "";
+
+	const roundDetails = result.roundSummaries
+		.map((s, i) => `${i + 1}. ${s}`)
+		.join("\n");
+
+	return `${header}${cost}\n\n${roundDetails}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -444,17 +494,19 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 		}
 	}
 
-	// Send morning summary (queued for after quiet hours)
-	if (roundSummaries.length > 0 && cfg.notifyChannels?.length) {
-		const summary = `Nightly growth session complete. ${roundNumber} rounds.\n\n${roundSummaries.join("\n\n")}`;
-		await sendNotification(cfg.notifyChannels, summary, { urgent: false });
-	}
-
-	console.log(`[growth] Session complete. ${roundNumber} rounds executed.`);
-
-	return {
+	// Compile and send morning summary
+	const sessionResult: GrowthSessionResult = {
 		roundsExecuted: roundNumber,
 		roundSummaries,
 		totalCostUsd,
 	};
+
+	if (cfg.notifyChannels?.length) {
+		const morning = compileMorningSummary(sessionResult);
+		await sendNotification(cfg.notifyChannels, morning, { urgent: false });
+	}
+
+	console.log(`[growth] Session complete. ${roundNumber} rounds executed.`);
+
+	return sessionResult;
 }
