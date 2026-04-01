@@ -83,3 +83,33 @@ Also filed GB-004: the three `Command failed` failures at ~120s and ~19s remain 
 
 Investigate GB-004 (Command failed at ~120s): confirm timeout_ms passes through correctly and
 explore retry strategy for transient fast-fail errors. Then tackle GB-002 (tune triage prompt).
+
+---
+
+## 2026-04-01 Night Session
+
+**Window:** Round 2 (growth session)
+**Rounds completed:** 2
+**Items addressed:** GB-002
+
+### Reflection
+
+The `Command failed` errors in the performance data show the old prompt text, confirming they were pre-fix runs. Post-fix success rate is better. The 0% correction rate is early but positive. Key gap: version 2 prompt only knew about 2 noise senders (trustpilot, linkedin), but email-rules.md has 6 senders. GitHub notifications, Cloudflare alerts, DHL tracking were all falling through to READ instead of being tagged for auto-deletion. Also discovered that GB-003 (email_cleanup) can't be implemented yet: the search MCP tool has no keyword filter.
+
+### Work Done
+
+- Upgraded email_triage prompt to version 3:
+  - Expanded known-sender table from 2 to all 6 senders in email-rules.md
+  - Added NOTIFICATION category: call mark_read plus set_keyword with $AutoDelete3d or $AutoDelete7d per sender rule
+  - Fixed tool name: `jarvis_email_list_unread` -> `list_unread` (actual MCP server name)
+- Marked GB-002 done
+- Deferred GB-003 pending GB-005 (keyword search in email MCP)
+- Added GB-005: add `keyword` parameter to ImapFlowBackend.search() to unblock email_cleanup
+
+### Commits
+
+- 394cf69: growth(2026-04-01): expand email triage sender rules and add NOTIFICATION category
+
+### Tomorrow
+
+Address GB-004 (transient Command failed failures at ~120s) or GB-005 (keyword search in email MCP backend, unblocks email_cleanup).

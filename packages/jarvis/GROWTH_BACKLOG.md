@@ -20,18 +20,27 @@ Description of what to do and why it matters.
 ### GB-002 Tune email triage prompt for reliability
 **Priority:** P1
 **Type:** tune
-**Status:** queued
+**Status:** done
 **Added:** 2026-04-01
+**Completed:** 2026-04-01
 
-GB-001 raised max_turns and simplified the prompt to 5 emails + 1 action per email. Next improvement: track correction rate over a week to see if the simplified classification (4 signals) produces accurate results, then tune the LLM fallback instructions for ambiguous emails.
+Upgraded prompt to version 3: expanded known-sender list from 2 to 6 (matching email-rules.md), added NOTIFICATION category with auto-delete keyword tagging ($AutoDelete3d/$AutoDelete7d), fixed tool name (jarvis_email_list_unread -> list_unread). Commit: 394cf69.
 
 ### GB-003 Add email_cleanup task for auto-delete keywords
 **Priority:** P2
 **Type:** new-tool
+**Status:** deferred
+**Added:** 2026-04-01
+
+email-rules.md references $AutoDelete3d and $AutoDelete7d keywords for automated cleanup. Blocked by GB-005: the jarvis-email search tool has no keyword/flag filter. Cannot implement cleanup without that backend capability first. Unblock after GB-005 is done.
+
+### GB-005 Add keyword search to jarvis-email MCP backend
+**Priority:** P2
+**Type:** expand
 **Status:** queued
 **Added:** 2026-04-01
 
-email-rules.md references $AutoDelete3d and $AutoDelete7d keywords for automated cleanup. No email_cleanup heartbeat task exists yet. Add a nightly task that searches for emails with these keywords and trashes ones past their TTL.
+The email MCP search tool filters by: from, subject, since, before, folder, flagged, seen. It has no way to search by custom IMAP keyword ($AutoDelete3d, $AutoDelete7d). This blocks GB-003. Add a `keyword` parameter to ImapFlowBackend.search() and the MCP search tool. Verify ImapFlow supports KEYWORD search criteria.
 
 ### GB-004 Investigate Command failed at ~120s in email_triage
 **Priority:** P1
