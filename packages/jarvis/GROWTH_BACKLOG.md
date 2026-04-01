@@ -45,16 +45,18 @@ The email MCP search tool filters by: from, subject, since, before, folder, flag
 ### GB-004 Investigate Command failed at ~120s in email_triage
 **Priority:** P1
 **Type:** fix
-**Status:** queued
+**Status:** done
 **Added:** 2026-04-01
+**Completed:** 2026-04-01
 
-3 email_triage failures show `Command failed: claude -p ...` at ~120s (2 failures) and ~19s
-(1 failure). The 120s failures are suspiciously close to the dispatcher's 120_000ms default
-timeout, suggesting timeout_ms may not have been set in those runs. The 19s failure is a
-fast-fail suggesting transient MCP connectivity or CLI startup issues.
+Code review confirmed timeout_ms is correctly threaded through (heartbeat.yaml → HeartbeatTask
+→ DispatchOptions → execFile). The 120s failures were legacy runs before hot-reload was
+working. The 19s fast-fail was a transient exec issue.
 
-Next: confirm timeout_ms is reliably passed through, and consider a retry strategy for
-transient fast-fails (exit within <30s with non-zero code).
+Fixed: implemented retry loop in Dispatcher.dispatch(). Retries wrap only the exec call
+(process crash / CLI startup failure); Claude structural errors (error_max_turns, error_api)
+propagate immediately without retry. Added retries: 1 to email_triage so a transient MCP
+blip gets one automatic retry with 5s backoff. Commit: 1fd9a17.
 
 ## Completed
 

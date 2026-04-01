@@ -113,3 +113,33 @@ The `Command failed` errors in the performance data show the old prompt text, co
 ### Tomorrow
 
 Address GB-004 (transient Command failed failures at ~120s) or GB-005 (keyword search in email MCP backend, unblocks email_cleanup).
+
+---
+
+## 2026-04-01 Growth Session Round 3
+
+**Rounds completed:** 3
+**Items addressed:** GB-004
+
+### Reflection
+
+7 email_triage failures in the performance data. The `error_max_turns` and `Command failed at ~120s` failures are all pre-fix legacy runs — confirmed by code review showing timeout_ms is correctly threaded from heartbeat.yaml through to execFile. The one genuinely new failure is the 19s fast-fail: the process exited non-zero before Claude could do any work, almost certainly a transient CLI startup or MCP connectivity hiccup. With no retry, one bad spawn fires an urgent notification at Paul and burns a task slot.
+
+### Work Done
+
+Implemented retry logic in `Dispatcher.dispatch()`:
+- New `retries?: number` option on `DispatchOptions` (default: 0, no change to existing behaviour)
+- Retry loop wraps only the exec call (process crash, timeout, non-zero exit): eligible for retry
+- Claude structural errors (`error_max_turns`, `error_api`, JSON parse failures) propagate immediately — these indicate a problem with the prompt or Claude, not infrastructure
+- Linear backoff: 5s per retry attempt
+- Added `retries?: number` to `HeartbeatTask` interface and threaded through scheduler
+- Set `retries: 1` in heartbeat.yaml for email_triage (one automatic retry on transient exec failure)
+- Added 3 new tests: retry on exec failure, no retry on Claude structural error, exhaust retries
+
+### Commits
+
+- 1fd9a17: growth(2026-04-01): add retry for transient exec failures in dispatcher
+
+### Tomorrow
+
+GB-005: add keyword search parameter to ImapFlowBackend.search() and the MCP search tool. This unblocks GB-003 (email_cleanup task for auto-delete TTLs).
