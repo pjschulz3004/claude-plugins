@@ -70,6 +70,7 @@ Recent decisions affecting current work:
 - [v2.0 Roadmap]: Phase 9 (Growth Engine) depends on Phase 8 -- the engine must have rules and regression detection in place before it modifies anything
 - [v2.0 Roadmap]: Phases 10-12 are independent features that all depend on the growth engine (Phase 9) as execution environment
 - [Phase 07]: CorrectionStore shares TaskLedger database instance via constructor injection
+- [Phase 07-01]: EUR currency for /budget, morning greeting as urgent, decision_summary in ledger
 
 ### Pending Todos
 
