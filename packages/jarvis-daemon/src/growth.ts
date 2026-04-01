@@ -7,18 +7,22 @@
  * 3. Reads GROWTH_BACKLOG.md (what to work on)
  * 4. Picks the highest priority item
  * 5. Dispatches a focused claude -p session to address it
- * 6. Updates GROWTH_LOG.md and GROWTH_BACKLOG.md
- * 7. Loops until 05:00 or backlog is empty
+ * 6. Council reviews the diff; revert on rejection
+ * 7. Regression detector checks correction rates; revert on regression
+ * 8. Updates GROWTH_LOG.md and GROWTH_BACKLOG.md
+ * 9. Loops until 05:00 or backlog is empty
  *
  * Between rounds: 60 second pause to avoid rate limits.
  * Each round gets its own claude -p session (fresh context, no accumulation).
  */
 
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { readFileSync, existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import type { Dispatcher } from "./dispatcher.js";
 import type { TaskLedger } from "./state/ledger.js";
+import type { CorrectionStore } from "./state/telemetry.js";
+import { RegressionDetector } from "./state/regression.js";
 import { sendNotification, type NotifyChannel } from "./notify.js";
 import {
 	assembleCouncil,
@@ -27,9 +31,18 @@ import {
 	type ReviewContext,
 } from "./council.js";
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/** Git exec function signature — uses execFileSync (no shell) for safety. */
+export type GitExecFn = (args: string[], cwd: string) => string;
+
 export interface GrowthConfig {
 	dispatcher: Dispatcher;
 	ledger: TaskLedger;
+	corrections: CorrectionStore;
+	taskNames: string[];
 	notifyChannels?: NotifyChannel[];
 	repoRoot: string;
 	startHour: number; // 1
@@ -37,6 +50,14 @@ export interface GrowthConfig {
 	pauseBetweenRoundsMs: number; // 60_000
 	maxTurnsPerRound: number; // 30
 	timeoutPerRoundMs: number; // 900_000 (15 min)
+	maxRounds?: number; // Optional cap (useful for testing)
+	gitExecFn?: GitExecFn; // Injectable for testing
+}
+
+export interface GrowthSessionResult {
+	roundsExecuted: number;
+	roundSummaries: string[];
+	totalCostUsd: number;
 }
 
 const DEFAULT_CONFIG: Partial<GrowthConfig> = {
@@ -46,6 +67,42 @@ const DEFAULT_CONFIG: Partial<GrowthConfig> = {
 	maxTurnsPerRound: 30,
 	timeoutPerRoundMs: 900_000,
 };
+
+// ---------------------------------------------------------------------------
+// Improve Skill Procedure (embedded to avoid file-path issues inside prompt)
+// ---------------------------------------------------------------------------
+
+const IMPROVE_SKILL_PROCEDURE = `Step 1: Reflect
+Read the performance data provided. Ask yourself:
+- What went well today? (successful tasks, good triage decisions, useful briefings)
+- What fell short? (failures, timeouts, misclassifications, empty results)
+- What's missing entirely? (things Paul asked for that I couldn't do, patterns I should have noticed)
+- What does my mission say I should be doing that I'm not?
+Write 2-3 sentences of honest reflection.
+
+Step 2: Pick
+Read GROWTH_BACKLOG.md. Pick the highest-priority queued item. Priority order:
+1. fix: Something is broken and failing. Fix the root cause.
+2. tune: Something works but could work better. Adjust prompts, config, thresholds.
+3. expand: An existing capability needs broader coverage.
+4. new-tool: A genuinely new capability that serves the mission.
+5. research: Don't know the best approach yet. Use WebSearch first.
+
+Step 3: Act
+Implement the improvement with surgical precision. For TypeScript changes, run npm run build to verify compilation.
+
+Step 4: Commit
+Only commit if tests pass: git add -A && git commit -m "growth(YYYY-MM-DD): [description]"
+
+Step 5: Record
+Update GROWTH_BACKLOG.md (mark item done) and GROWTH_LOG.md (add round entry).
+
+Step 6: Identify Next
+Scan for the next improvement opportunity. Add new items to GROWTH_BACKLOG.md.`;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function isWithinWindow(startHour: number, endHour: number): boolean {
 	const hour = new Date().getHours();
@@ -60,12 +117,31 @@ function readFileOrDefault(path: string, fallback: string): string {
 	}
 }
 
-function buildReflectionPrompt(
+/** Default git exec function — uses execFileSync (no shell) for safety. */
+function defaultGitExec(args: string[], cwd: string): string {
+	return execFileSync("git", args, { cwd, timeout: 30_000 }).toString().trim();
+}
+
+/** Format correction rates for prompt inclusion. */
+function formatCorrectionRates(corrections: CorrectionStore, taskNames: string[]): string {
+	if (taskNames.length === 0) return "No tasks tracked yet.";
+	return taskNames
+		.map((name) => `${name}: ${(corrections.rollingCorrectionRate(name, 7) * 100).toFixed(1)}%`)
+		.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Prompt Builder
+// ---------------------------------------------------------------------------
+
+export function buildReflectionPrompt(
 	mission: string,
 	ledgerSummary: string,
 	backlog: string,
 	growthLog: string,
 	roundNumber: number,
+	correctionRates: string,
+	skillProcedure: string,
 ): string {
 	return `You are Jarvis, running your nightly growth session. Round ${roundNumber}.
 
@@ -93,6 +169,16 @@ Here is the log of previous growth sessions:
 ${growthLog.slice(-3000)}
 </growth_log>
 
+Here are your current 7-day correction rates (lower is better):
+<correction_rates>
+${correctionRates}
+</correction_rates>
+
+Follow this improvement procedure for each round:
+<procedure>
+${skillProcedure}
+</procedure>
+
 YOUR TASK FOR THIS ROUND:
 
 1. REFLECT: Based on your mission and today's performance, what matters most right now? What pattern do you see? What fell short of your mission?
@@ -114,9 +200,12 @@ YOUR TASK FOR THIS ROUND:
    - Create GitHub issues for larger features you can't implement tonight
 
    What you MUST do:
-   - Run tests after any code change
-   - Only commit if tests pass
+   - Run \`npm test\` after any code change (MANDATORY — the daemon will reject your commit if tests fail)
+   - Run \`npm run build\` after TypeScript changes
+   - Only \`git add -A && git commit -m "growth(YYYY-MM-DD): description"\` if BOTH pass
    - Keep changes focused (one improvement per round)
+   - Update GROWTH_LOG.md with: what you reflected on, what you picked, what you did, commit hash
+   - Update GROWTH_BACKLOG.md: mark item done or update status
 
 4. RECORD: After acting, update these files:
    - GROWTH_BACKLOG.md: Mark the item as done (or update its status)
@@ -135,8 +224,13 @@ The heartbeat config is at packages/jarvis-daemon/heartbeat.yaml.
 Be concrete. Be focused. One real improvement per round is better than three half-finished ones.`;
 }
 
-export async function runGrowthLoop(config: GrowthConfig): Promise<void> {
+// ---------------------------------------------------------------------------
+// Main Loop
+// ---------------------------------------------------------------------------
+
+export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSessionResult> {
 	const cfg = { ...DEFAULT_CONFIG, ...config } as Required<GrowthConfig>;
+	const gitExec: GitExecFn = cfg.gitExecFn ?? defaultGitExec;
 	const jarvisDir = join(cfg.repoRoot, "packages", "jarvis");
 
 	console.log("[growth] Starting nightly growth session...");
@@ -146,6 +240,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<void> {
 	const logPath = join(jarvisDir, "GROWTH_LOG.md");
 
 	let roundNumber = 0;
+	let totalCostUsd = 0;
 	const roundSummaries: string[] = [];
 	const council = assembleCouncil();
 	if (council.length > 0) {
@@ -156,7 +251,20 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<void> {
 		console.log("[growth] No council members available (no API keys). Self-review only.");
 	}
 
+	// Build regression detector
+	const detector = new RegressionDetector(
+		{
+			corrections: cfg.corrections,
+			repoRoot: cfg.repoRoot,
+			taskNames: cfg.taskNames,
+		},
+		(args) => gitExec(args, cfg.repoRoot),
+	);
+
 	while (isWithinWindow(cfg.startHour, cfg.endHour)) {
+		// Respect maxRounds cap (useful for testing)
+		if (cfg.maxRounds != null && roundNumber >= cfg.maxRounds) break;
+
 		roundNumber++;
 		console.log(`[growth] Round ${roundNumber} starting...`);
 
@@ -175,34 +283,140 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<void> {
 				.join("\n")
 			: "No task runs in the last 24 hours.";
 
+		// Build correction rates for prompt
+		const correctionRates = formatCorrectionRates(cfg.corrections, cfg.taskNames);
+
 		const prompt = buildReflectionPrompt(
 			mission,
 			ledgerSummary,
 			backlog,
 			growthLog,
 			roundNumber,
+			correctionRates,
+			IMPROVE_SKILL_PROCEDURE,
 		);
 
 		try {
+			// Snapshot correction rates BEFORE dispatch (for regression check later)
+			const snapshot = detector.snapshotRates();
+
+			// Record HEAD before dispatch to detect if a commit was made
+			const headBefore = gitExec(["rev-parse", "HEAD"], cfg.repoRoot);
+
 			const result = await cfg.dispatcher.dispatch(prompt, {
 				model: "sonnet",
 				maxTurns: cfg.maxTurnsPerRound,
 				timeoutMs: cfg.timeoutPerRoundMs,
 			});
 
-			const summary = result.result.slice(0, 500);
-			roundSummaries.push(`Round ${roundNumber}: ${summary}`);
-			console.log(`[growth] Round ${roundNumber} complete: ${summary.slice(0, 100)}`);
+			totalCostUsd += result.total_cost_usd;
 
-			cfg.ledger.record({
-				task_name: "growth_round",
-				status: "success",
-				started_at: new Date().toISOString(),
-				duration_ms: result.duration_ms,
-				cost_usd: result.total_cost_usd,
-				input_tokens: result.usage.input_tokens,
-				output_tokens: result.usage.output_tokens,
-			});
+			// Check if the claude -p session made a commit
+			const headAfter = gitExec(["rev-parse", "HEAD"], cfg.repoRoot);
+			const madeCommit = headBefore !== headAfter;
+
+			if (madeCommit) {
+				// Get diff and test results for council review
+				const diff = gitExec(["diff", "HEAD~1", "HEAD"], cfg.repoRoot);
+				let testResults: string;
+				try {
+					testResults = execFileSync("npm", ["test"], {
+						cwd: cfg.repoRoot,
+						timeout: 60_000,
+					}).toString();
+				} catch (e) {
+					testResults = "TESTS FAILED: " + String(e);
+				}
+
+				// Council review
+				const verdict = await conveneCouncil(council, {
+					improvement: `Growth round ${roundNumber}`,
+					diff,
+					reason: result.result.slice(0, 500),
+					testResults: testResults.slice(0, 300),
+					missionExcerpt: mission.slice(0, 500),
+				});
+
+				if (!verdict.approved) {
+					// Council rejected — revert
+					gitExec(["revert", "--no-edit", "HEAD"], cfg.repoRoot);
+					roundSummaries.push(
+						`Round ${roundNumber}: COUNCIL REJECTED — ${verdict.summary.slice(0, 300)}`,
+					);
+					console.log(`[growth] Round ${roundNumber}: COUNCIL REJECTED`);
+
+					cfg.ledger.record({
+						task_name: "growth_round",
+						status: "failure",
+						started_at: new Date().toISOString(),
+						duration_ms: result.duration_ms,
+						cost_usd: result.total_cost_usd,
+						input_tokens: result.usage.input_tokens,
+						output_tokens: result.usage.output_tokens,
+						error: "council_rejected: " + verdict.summary.slice(0, 200),
+					});
+					// Continue to next round — skip regression check
+				} else {
+					// Council approved — check for regression
+					const regressionResult = detector.checkForRegression(snapshot);
+
+					if (regressionResult.regressed) {
+						const revertHash = detector.revertCommit(headAfter);
+						detector.logRegression(regressionResult, headAfter, revertHash);
+						detector.markBacklogReverted(
+							`growth round ${roundNumber}`,
+							"regression detected",
+						);
+						roundSummaries.push(
+							`Round ${roundNumber}: REGRESSION — reverted ${headAfter.slice(0, 7)}`,
+						);
+						console.log(
+							`[growth] Round ${roundNumber}: REGRESSION detected, reverted ${headAfter.slice(0, 7)}`,
+						);
+
+						cfg.ledger.record({
+							task_name: "growth_round",
+							status: "failure",
+							started_at: new Date().toISOString(),
+							duration_ms: result.duration_ms,
+							cost_usd: result.total_cost_usd,
+							input_tokens: result.usage.input_tokens,
+							output_tokens: result.usage.output_tokens,
+							error: "regression_reverted: " + headAfter.slice(0, 7),
+						});
+					} else {
+						// All clear — commit stands
+						const summary = result.result.slice(0, 500);
+						roundSummaries.push(`Round ${roundNumber}: ${summary}`);
+						console.log(`[growth] Round ${roundNumber} complete: ${summary.slice(0, 100)}`);
+
+						cfg.ledger.record({
+							task_name: "growth_round",
+							status: "success",
+							started_at: new Date().toISOString(),
+							duration_ms: result.duration_ms,
+							cost_usd: result.total_cost_usd,
+							input_tokens: result.usage.input_tokens,
+							output_tokens: result.usage.output_tokens,
+						});
+					}
+				}
+			} else {
+				// No commit was made (analysis-only round)
+				const summary = result.result.slice(0, 500);
+				roundSummaries.push(`Round ${roundNumber}: ${summary}`);
+				console.log(`[growth] Round ${roundNumber} complete (no commit): ${summary.slice(0, 100)}`);
+
+				cfg.ledger.record({
+					task_name: "growth_round",
+					status: "success",
+					started_at: new Date().toISOString(),
+					duration_ms: result.duration_ms,
+					cost_usd: result.total_cost_usd,
+					input_tokens: result.usage.input_tokens,
+					output_tokens: result.usage.output_tokens,
+				});
+			}
 		} catch (err) {
 			const error = err instanceof Error ? err.message : String(err);
 			console.error(`[growth] Round ${roundNumber} failed:`, error);
@@ -237,4 +451,10 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<void> {
 	}
 
 	console.log(`[growth] Session complete. ${roundNumber} rounds executed.`);
+
+	return {
+		roundsExecuted: roundNumber,
+		roundSummaries,
+		totalCostUsd,
+	};
 }
