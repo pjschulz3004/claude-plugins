@@ -8,6 +8,7 @@ tasks:
     max_turns: 15
     timeout_ms: 180000
     prompt: |
+      # version: 1
       You are Jarvis. Use the jarvis-email MCP tools to triage Paul's inbox.
 
       Use /jarvis:triage skill procedure:
@@ -38,6 +39,7 @@ tasks:
     max_turns: 5
     timeout_ms: 120000
     prompt: |
+      # version: 1
       You are Jarvis running nightly memory consolidation.
 
       Connect to the Neo4j knowledge graph at bolt://localhost:7687 (user: neo4j).
