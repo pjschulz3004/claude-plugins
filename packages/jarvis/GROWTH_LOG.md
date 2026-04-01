@@ -143,3 +143,36 @@ Implemented retry logic in `Dispatcher.dispatch()`:
 ### Tomorrow
 
 GB-005: add keyword search parameter to ImapFlowBackend.search() and the MCP search tool. This unblocks GB-003 (email_cleanup task for auto-delete TTLs).
+
+---
+
+## 2026-04-01 Growth Session Round 4 (this session)
+
+**Rounds completed:** 4
+**Items addressed:** GB-005
+
+### Reflection
+
+All failures in today's performance data are pre-fix legacy runs. Post-fix email_triage success rate looks solid. Correction rate at 0% is early but clean. The one remaining structural gap is GB-003 (automated email cleanup): the NOTIFICATION category in the triage prompt correctly tags emails with $AutoDelete3d/$AutoDelete7d, but there's no cleanup task that acts on those tags. The blocker was the search backend having no keyword filter. That's what I fixed tonight.
+
+### Work Done
+
+Implemented GB-005: keyword search in the jarvis-email MCP backend.
+
+- Added `keyword?: string` to `EmailSearchQuery` interface and `EmailSearchQuerySchema` in `types.ts`
+- Added `if (query.keyword) searchCriteria.keyword = query.keyword` to `ImapFlowBackend.search()` in `backend.ts` — passes directly as IMAP KEYWORD criterion
+- Added `keyword` parameter to the MCP `search` tool in `mcp-server.ts`
+- Added test: "passes keyword criterion to IMAP search" — verifies the criterion object contains `{ keyword: "$AutoDelete3d" }` when requested
+
+All 331 tests pass. TypeScript build clean.
+
+### Commits
+
+- 0136fa7: growth(2026-04-01): add keyword search to jarvis-email MCP backend (GB-005)
+
+### Tomorrow
+
+GB-003: implement the email_cleanup task. Now that keyword search exists, the path is:
+1. Add `email_cleanup` task to heartbeat.yaml
+2. Write a Claude prompt that searches for $AutoDelete3d (>3 days old) and $AutoDelete7d (>7 days old), then trashes each match
+3. Run daily, off-peak
