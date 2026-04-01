@@ -112,21 +112,28 @@ tasks:
     autonomy: notify
     notify_raw: true
     model: sonnet
-    max_turns: 15
+    max_turns: 20
     timeout_ms: 120000
     prompt: |
-      # version: 1
+      # version: 2
       You are Jarvis. Paul's day is winding down. Produce a brief end-of-day summary.
 
-      STEP 1: Gather data:
-      - Call get_transactions with startDate = today (ISO 8601) and endDate = today
+      STEP 1: Gather data (if a tool fails, note the gap and continue):
+      - Call get_transactions with startDate = today (ISO 8601 date, e.g. 2026-04-01) and endDate = today
+      - Call get_categories (to compare today's spending against budget limits)
       - Call list_events with startDate = tomorrow 00:00:00 UTC and endDate = tomorrow 23:59:59 UTC
-      - Call list_unread with limit=10 (note flagged/important emails still open)
+      - Call list_unread with limit=10
 
-      STEP 2: Write the summary (5-10 lines):
-      - Today's spending: categories, amounts, anything that exceeded budget
-      - Tomorrow's first event (time and summary)
-      - Any action-required emails still unread
+      STEP 2: Cross-reference before writing:
+      - A calendar attendee tomorrow also sent an unread email today: surface the connection
+      - A transaction category is at or over its budget limit: flag it with the specific amount and limit
+      - A flagged INVOICE email matches a transaction already recorded: note the reconciliation
+
+      STEP 3: Write the summary (5-10 lines):
+      - Lead with today's spending: transaction categories, amounts, and any category that exceeded budget
+      - All of tomorrow's events (times and summaries) -- not just the first one
+      - Any action-required or flagged emails still unread
+      - If cross-domain connections were found in Step 2, surface them as one item
       - If nothing notable, close with one dry observation
 
       Rules: specific names/times/amounts, plain text only, no markdown, no emoji.
