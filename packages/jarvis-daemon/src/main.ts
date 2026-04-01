@@ -147,10 +147,9 @@ async function start() {
 			? (uid: string) => emailBackend.getMessageFlags(uid)
 			: undefined;
 
-		// Build budget lookup stub (TODO: wire to real YNAB getTransaction when available)
 		const budgetBackend = telegramConfig?.budget;
 		const budgetLookup = budgetBackend
-			? undefined // TODO: implement budgetBackend.getTransaction(id) wrapper
+			? (id: string) => budgetBackend.getTransaction(id)
 			: undefined;
 
 		Promise.all([

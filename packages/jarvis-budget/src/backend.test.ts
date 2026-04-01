@@ -92,6 +92,21 @@ function createMockApi(overrides: Record<string, unknown> = {}) {
 			}),
 		},
 		transactions: {
+			getTransactionById: vi.fn().mockResolvedValue({
+				data: {
+					transaction: {
+						id: new FakeUUID("txn-1-uuid"),
+						date: "2026-03-15",
+						amount: -25500,
+						payee_name: "Grocery Store",
+						category_name: "Groceries",
+						category_id: new FakeUUID("cat-4-uuid"),
+						memo: "Weekly shopping",
+						approved: true,
+						cleared: "cleared",
+					},
+				},
+			}),
 			getTransactions: vi.fn().mockResolvedValue({
 				data: {
 					transactions: [
@@ -258,6 +273,46 @@ describe("YnabBackend", () => {
 				"txn-1",
 				{ transaction: { category_id: "cat-1" } },
 			);
+		});
+	});
+
+	describe("getTransaction", () => {
+		it("returns category_name for a known transaction", async () => {
+			const backend = new YnabBackend(mockConfig);
+			const result = await backend.getTransaction("txn-1-uuid");
+
+			expect(result).toEqual({ category_name: "Groceries" });
+			expect(mockApi.transactions.getTransactionById).toHaveBeenCalledWith(
+				"test-budget-id",
+				"txn-1-uuid",
+			);
+		});
+
+		it("returns empty string when category_name is null", async () => {
+			const nullCatApi = createMockApi();
+			nullCatApi.transactions.getTransactionById = vi.fn().mockResolvedValue({
+				data: {
+					transaction: {
+						id: new FakeUUID("txn-2-uuid"),
+						date: "2026-03-20",
+						amount: 1000000,
+						payee_name: "Employer",
+						category_name: null,
+						category_id: null,
+						memo: null,
+						approved: false,
+						cleared: "uncleared",
+					},
+				},
+			});
+			vi.mocked(ynab.API).mockImplementation(function () {
+				return nullCatApi as unknown as ynab.API;
+			});
+
+			const backend = new YnabBackend(mockConfig);
+			const result = await backend.getTransaction("txn-2-uuid");
+
+			expect(result).toEqual({ category_name: "" });
 		});
 	});
 

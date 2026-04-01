@@ -32,6 +32,7 @@ function sleep(ms: number): Promise<void> {
 export interface BudgetBackend {
 	getCategories(): Promise<BudgetCategory[]>;
 	getTransactions(startDate?: string, endDate?: string): Promise<Transaction[]>;
+	getTransaction(id: string): Promise<{ category_name: string }>;
 	categorizeTransaction(transactionId: string, categoryId: string): Promise<void>;
 	approveTransactions(transactionIds: string[]): Promise<void>;
 }
@@ -115,6 +116,16 @@ export class YnabBackend implements BudgetBackend {
 				approved: t.approved,
 				cleared: t.cleared,
 			}));
+		});
+	}
+
+	async getTransaction(id: string): Promise<{ category_name: string }> {
+		return this.withRetry(async (api) => {
+			const response = await api.transactions.getTransactionById(
+				this.config.budgetId,
+				id,
+			);
+			return { category_name: response.data.transaction.category_name ?? "" };
 		});
 	}
 
