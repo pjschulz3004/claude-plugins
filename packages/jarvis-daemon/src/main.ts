@@ -4,9 +4,10 @@ import { ChatHistory } from "./state/history.js";
 import { Dispatcher } from "./dispatcher.js";
 import { Scheduler } from "./scheduler.js";
 import { HealthServer } from "./health.js";
-import { createBot } from "./telegram.js";
-import { TelegramChannel } from "./notify.js";
+import { createBot, buildMorningSummary } from "./telegram.js";
+import { TelegramChannel, sendNotification } from "./notify.js";
 import { runGrowthLoop } from "./growth.js";
+import type { TelegramConfig } from "./telegram.js";
 import { ImapFlowBackend } from "@jarvis/email";
 import { TsdavCalendarBackend } from "@jarvis/calendar";
 import { YnabBackend } from "@jarvis/budget";
@@ -63,8 +64,10 @@ async function start() {
 	const telegramChatId = process.env.JARVIS_TELEGRAM_CHAT_ID;
 	const notifyChannels: import("./notify.js").NotifyChannel[] = [];
 
+	let telegramConfig: TelegramConfig | undefined;
+
 	if (telegramToken && telegramChatId) {
-		bot = createBot({
+		telegramConfig = {
 			token: telegramToken,
 			chatId: telegramChatId,
 			dispatcher,
@@ -74,7 +77,8 @@ async function start() {
 			email: buildEmailBackend(),
 			calendar: buildCalendarBackend(),
 			budget: buildBudgetBackend(),
-		});
+		};
+		bot = createBot(telegramConfig);
 		notifyChannels.push(
 			new TelegramChannel({ bot, chatId: telegramChatId }),
 		);
@@ -122,6 +126,24 @@ async function start() {
 			console.error("[jarvis] Growth loop error:", err);
 		});
 	});
+
+	// Morning greeting cron: 07:30 Europe/Berlin
+	if (telegramConfig && notifyChannels.length > 0) {
+		const morningJob = new Cron(
+			"30 7 * * *",
+			{ timezone: "Europe/Berlin" },
+			() => {
+				buildMorningSummary(telegramConfig!)
+					.then((summary) =>
+						sendNotification(notifyChannels, summary, { urgent: true }),
+					)
+					.catch((err) => {
+						console.error("[jarvis] Morning greeting error:", err);
+					});
+			},
+		);
+		console.log("[jarvis] Morning greeting scheduled at 07:30 Europe/Berlin.");
+	}
 
 	console.log(
 		`[jarvis] Daemon running. Health at :${process.env.JARVIS_HEALTH_PORT || "3333"}/health`,
