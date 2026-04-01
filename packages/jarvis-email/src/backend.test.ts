@@ -169,6 +169,16 @@ describe("ImapFlowBackend", () => {
 			expect(inst.search).toHaveBeenCalled();
 			expect(inst.logout).toHaveBeenCalledOnce();
 		});
+
+		it("passes keyword criterion to IMAP search", async () => {
+			await backend.search({ keyword: "$AutoDelete3d" });
+
+			const inst = mockInstances[0];
+			expect(inst.search).toHaveBeenCalledWith(
+				expect.objectContaining({ keyword: "$AutoDelete3d" }),
+				{ uid: true },
+			);
+		});
 	});
 
 	describe("moveEmail", () => {

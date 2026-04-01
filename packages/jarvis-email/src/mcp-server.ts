@@ -52,6 +52,7 @@ server.tool(
 		folder: z.string().optional().describe("IMAP folder (default INBOX)"),
 		flagged: z.boolean().optional().describe("Filter by flagged status"),
 		seen: z.boolean().optional().describe("Filter by read status"),
+		keyword: z.string().optional().describe("Filter by IMAP keyword flag (e.g. $AutoDelete3d)"),
 	},
 	async (query) => {
 		try {

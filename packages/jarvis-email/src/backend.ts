@@ -128,6 +128,7 @@ export class ImapFlowBackend implements EmailBackend {
 				if (query.before) searchCriteria.before = query.before;
 				if (query.flagged !== undefined) searchCriteria.flagged = query.flagged;
 				if (query.seen !== undefined) searchCriteria.seen = query.seen;
+				if (query.keyword) searchCriteria.keyword = query.keyword;
 
 				const searchResult = await client.search(
 					searchCriteria as Parameters<typeof client.search>[0],

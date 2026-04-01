@@ -36,6 +36,7 @@ export interface EmailSearchQuery {
 	folder?: string;
 	flagged?: boolean;
 	seen?: boolean;
+	keyword?: string; // IMAP keyword flag (e.g. $AutoDelete3d)
 }
 
 // IMAP folder info
@@ -57,6 +58,7 @@ export const EmailSearchQuerySchema = z.object({
 	folder: z.string().optional(),
 	flagged: z.boolean().optional(),
 	seen: z.boolean().optional(),
+	keyword: z.string().optional(),
 });
 
 export const ListUnreadInputSchema = z.object({
