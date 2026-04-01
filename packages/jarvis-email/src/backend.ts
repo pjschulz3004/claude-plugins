@@ -38,6 +38,8 @@ export interface EmailBackend {
 	setKeyword(uid: string, keyword: string): Promise<void>;
 	markRead(uid: string): Promise<void>;
 	markSpam(uid: string): Promise<void>;
+	/** Returns current folder and flags for an email by UID. Throws if not found. */
+	getMessageFlags(uid: string): Promise<{ folder: string; flags: string[] }>;
 }
 
 export class ImapFlowBackend implements EmailBackend {
@@ -236,5 +238,28 @@ export class ImapFlowBackend implements EmailBackend {
 
 	async markSpam(uid: string): Promise<void> {
 		return this.moveEmail(uid, "Junk");
+	}
+
+	async getMessageFlags(
+		uid: string,
+	): Promise<{ folder: string; flags: string[] }> {
+		return this.withConnection(async (client) => {
+			const lock = await client.getMailboxLock("INBOX");
+			try {
+				const results: Array<{ flags: string[] }> = [];
+				for await (const msg of client.fetch(uid, {
+					uid: true,
+					flags: true,
+				})) {
+					results.push({ flags: [...(msg.flags ?? [])] });
+				}
+				if (results.length === 0) {
+					throw new Error(`Email UID ${uid} not found in INBOX`);
+				}
+				return { folder: "INBOX", flags: results[0].flags };
+			} finally {
+				lock.release();
+			}
+		});
 	}
 }

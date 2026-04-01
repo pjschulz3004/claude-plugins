@@ -299,4 +299,40 @@ describe("ImapFlowBackend", () => {
 			expect(results).toEqual([]);
 		});
 	});
+
+	describe("getMessageFlags", () => {
+		it("returns folder and flags for an email in INBOX", async () => {
+			mockBehavior.fetchMessages = [
+				{
+					uid: 42,
+					envelope: {
+						from: [],
+						subject: "",
+						date: new Date(),
+					},
+					flags: new Set(["\\Seen", "\\Flagged"]),
+				},
+			];
+
+			const result = await backend.getMessageFlags("42");
+
+			const inst = mockInstances[0];
+			expect(inst.getMailboxLock).toHaveBeenCalledWith("INBOX");
+			expect(inst.fetch).toHaveBeenCalledWith("42", {
+				uid: true,
+				flags: true,
+			});
+			expect(result.folder).toBe("INBOX");
+			expect(result.flags).toContain("\\Seen");
+			expect(result.flags).toContain("\\Flagged");
+		});
+
+		it("throws if email UID not found in INBOX", async () => {
+			mockBehavior.fetchMessages = [];
+
+			await expect(backend.getMessageFlags("999")).rejects.toThrow(
+				"Email UID 999 not found in INBOX",
+			);
+		});
+	});
 });

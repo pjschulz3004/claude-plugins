@@ -142,10 +142,9 @@ async function start() {
 		const hour = new Date().getHours();
 		if (hour < 7 || hour > 23) return; // Skip overnight
 
-		// Build email lookup stub (TODO: wire to real IMAP getMessageFlags when available)
 		const emailBackend = telegramConfig?.email;
 		const emailLookup = emailBackend
-			? undefined // TODO: implement emailBackend.getMessageFlags(uid) wrapper
+			? (uid: string) => emailBackend.getMessageFlags(uid)
 			: undefined;
 
 		// Build budget lookup stub (TODO: wire to real YNAB getTransaction when available)
