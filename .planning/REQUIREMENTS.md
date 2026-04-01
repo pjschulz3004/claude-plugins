@@ -4,10 +4,10 @@
 
 ### Telemetry Foundation (TEL)
 
-- [ ] **TEL-01**: Every heartbeat task execution logs structured telemetry: task_name, input_features, decision_summary, outcome, duration_ms, cost_usd, tokens
+- [x] **TEL-01**: Every heartbeat task execution logs structured telemetry: task_name, input_features, decision_summary, outcome, duration_ms, cost_usd, tokens
 - [ ] **TEL-02**: User corrections are captured as correction events: when Paul moves an email to a different folder, recategorises a YNAB transaction, or rejects a Telegram response
-- [ ] **TEL-03**: Correction events link to the original Jarvis decision (task_name, timestamp, original_decision, corrected_decision)
-- [ ] **TEL-04**: Telemetry is queryable via SQLite (correction_events table alongside task_runs)
+- [x] **TEL-03**: Correction events link to the original Jarvis decision (task_name, timestamp, original_decision, corrected_decision)
+- [x] **TEL-04**: Telemetry is queryable via SQLite (correction_events table alongside task_runs)
 - [ ] **TEL-05**: 7-day and 30-day rolling correction rates are computable per task type
 
 ### Growth Engine (GROW)
@@ -96,10 +96,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEL-01 | Phase 7 | Pending |
+| TEL-01 | Phase 7 | Complete |
 | TEL-02 | Phase 7 | Pending |
-| TEL-03 | Phase 7 | Pending |
-| TEL-04 | Phase 7 | Pending |
+| TEL-03 | Phase 7 | Complete |
+| TEL-04 | Phase 7 | Complete |
 | TEL-05 | Phase 7 | Pending |
 | FIX-01 | Phase 7 | Pending |
 | FIX-02 | Phase 7 | Pending |
