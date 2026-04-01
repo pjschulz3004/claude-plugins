@@ -87,9 +87,14 @@ export class SkillCreator {
 			);
 			if (!keyword) continue;
 
-			// Use the full (lowercased) error as the group key so that
-			// genuinely different errors are not merged.
-			const normalizedPattern = row.error.toLowerCase().trim();
+			// Normalize: strip file paths, hex values, and numbers to group
+			// semantically identical errors despite variable text.
+			const normalizedPattern = row.error
+				.toLowerCase()
+				.trim()
+				.replace(/\/[\w./-]+/g, "<path>")
+				.replace(/0x[a-f0-9]+/gi, "<hex>")
+				.replace(/\b\d+\b/g, "<n>");
 
 			const group = groups.get(normalizedPattern) ?? {
 				errors: [],

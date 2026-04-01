@@ -90,6 +90,6 @@ export class CorrectionStore {
 			)
 			.get(taskName, cutoff) as { cnt: number };
 
-		return correctionCount.cnt / decisionCount.cnt;
+		return Math.min(correctionCount.cnt / decisionCount.cnt, 1.0);
 	}
 }

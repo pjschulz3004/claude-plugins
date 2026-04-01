@@ -69,23 +69,23 @@ describe("PromptVersioner", () => {
 			expect(selected.version).toBe(1);
 		});
 
-		it("alternates between current and candidate based on run count parity", () => {
+		it("alternates between current and candidate based on candidate run count parity", () => {
 			store.registerVersion("email_triage", 1, "current prompt", "current");
 			store.registerVersion("email_triage", 2, "candidate prompt", "candidate");
 
-			// 0 total runs (even) -> current
+			// candidateRuns=0 (even) -> current
 			const first = versioner.selectPrompt("email_triage");
 			expect(first.prompt).toBe("current prompt");
 
-			// Record 1 metric for current -> 1 total run (odd) -> candidate
+			// Record metric for current (candidateRuns still 0, even) -> current
 			store.recordMetric("email_triage", 1, 1, true, 1000, 100);
 			const second = versioner.selectPrompt("email_triage");
-			expect(second.prompt).toBe("candidate prompt");
+			expect(second.prompt).toBe("current prompt");
 
-			// Record 1 metric for candidate -> 2 total runs (even) -> current
+			// Record metric for candidate -> candidateRuns=1 (odd) -> candidate
 			store.recordMetric("email_triage", 2, 2, true, 1000, 100);
 			const third = versioner.selectPrompt("email_triage");
-			expect(third.prompt).toBe("current prompt");
+			expect(third.prompt).toBe("candidate prompt");
 		});
 	});
 

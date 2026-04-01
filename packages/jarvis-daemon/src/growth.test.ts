@@ -133,14 +133,17 @@ describe("growth engine", () => {
 		it("Test 2: reverts commit when council rejects", async () => {
 			vi.mocked(conveneCouncil).mockResolvedValue(REJECTED_VERDICT);
 			const { fn: gitExec, calls: gitCalls } = makeGitExecFn({});
-			const cfg = makeConfig({ gitExecFn: gitExec } as any);
+			// detector.logRegression writes to GROWTH_LOG.md in repoRoot
+			const tmpRepoDir = mkdtempSync(join(tmpdir(), "growth-council-"));
+			writeFileSync(join(tmpRepoDir, "GROWTH_LOG.md"), "# Growth Log\n");
+			const cfg = makeConfig({ gitExecFn: gitExec, repoRoot: tmpRepoDir } as any);
 
 			const result = await runGrowthLoop(cfg);
 
-			// Should have called git revert
+			// Should have called git revert via detector.revertCommit(headAfter)
 			const revertCall = gitCalls.find((c) => c[0] === "revert");
 			expect(revertCall).toBeDefined();
-			expect(revertCall).toEqual(["revert", "--no-edit", "HEAD"]);
+			expect(revertCall).toEqual(["revert", "--no-edit", "bbb2222"]);
 
 			// Summary should mention rejection
 			expect(result.roundSummaries[0]).toContain("COUNCIL REJECTED");

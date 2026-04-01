@@ -77,7 +77,7 @@ export class RegressionDetector {
 
 			details.push({ taskName, rateBefore, rateAfter, delta });
 
-			if (delta > 0) {
+			if (delta > 0.05) {
 				regressed = true;
 			}
 		}

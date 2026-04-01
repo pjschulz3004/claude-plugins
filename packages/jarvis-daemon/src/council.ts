@@ -222,8 +222,8 @@ function parseReview(raw: string): ReviewResult {
 		return JSON.parse(raw) as ReviewResult;
 	} catch {
 		return {
-			approve: true,
-			concerns: [],
+			approve: false,
+			concerns: ["Failed to parse review response"],
 			suggestions: [],
 			confidence: 0,
 			reasoning: `Failed to parse response: ${raw.slice(0, 200)}`,
@@ -284,7 +284,7 @@ export async function conveneCouncil(
 					concerns: [],
 					suggestions: [],
 					confidence: 0,
-					reasoning: `${member.name} unavailable: ${err}`,
+					reasoning: `${member.name} unavailable: ${err instanceof Error ? err.message : String(err)}`,
 				});
 				history.push({ role: "assistant", content: fallback });
 				return { name: member.name, response: fallback };
@@ -324,7 +324,7 @@ export async function conveneCouncil(
 					concerns: [],
 					suggestions: [],
 					confidence: 0,
-					reasoning: `${member.name} unavailable in round 2: ${err}`,
+					reasoning: `${member.name} unavailable in round 2: ${err instanceof Error ? err.message : String(err)}`,
 				});
 				history.push({ role: "assistant", content: fallback });
 				return { name: member.name, response: fallback };
@@ -365,7 +365,7 @@ export async function conveneCouncil(
 						concerns: [],
 						suggestions: [],
 						confidence: 0,
-						reasoning: `${member.name} unavailable in round 3: ${err}`,
+						reasoning: `${member.name} unavailable in round 3: ${err instanceof Error ? err.message : String(err)}`,
 					}),
 				};
 			}

@@ -80,12 +80,11 @@ export class PromptVersioner {
 			return { prompt: current.prompt_text, version: current.version };
 		}
 
-		// Alternate based on total run count parity across both versions
-		const currentRuns = this.store.getTotalRunCount(taskName, current.version);
+		// Alternate based on candidate run count parity to avoid bias
+		// from pre-existing current runs before the candidate was registered
 		const candidateRuns = this.store.getTotalRunCount(taskName, candidate.version);
-		const totalRuns = currentRuns + candidateRuns;
 
-		if (totalRuns % 2 === 0) {
+		if (candidateRuns % 2 === 0) {
 			return { prompt: current.prompt_text, version: current.version };
 		}
 		return { prompt: candidate.prompt_text, version: candidate.version };

@@ -195,6 +195,7 @@ export function buildReflectionPrompt(
 	kgContext: string = "",
 	promptVersionSummary: string = "",
 	capabilityGaps: string = "",
+	repoRoot: string = process.cwd(),
 ): string {
 	const kgSection = kgContext
 		? `\n<knowledge_graph>
@@ -317,7 +318,7 @@ Mark filed-as-issue items with the issue URL.
 
 5. If you identify NEW improvement opportunities while working, add them to GROWTH_BACKLOG.md following the BACKLOG MAINTENANCE format above.
 
-IMPORTANT: All file paths are relative to the repo root at ${process.cwd()}.
+IMPORTANT: All file paths are relative to the repo root at ${repoRoot}.
 The jarvis plugin files are at packages/jarvis/.
 The daemon source is at packages/jarvis-daemon/src/.
 The heartbeat config is at packages/jarvis-daemon/heartbeat.yaml.
@@ -503,8 +504,10 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 			kgContext,
 			promptVersionSummary,
 			capabilityGaps,
+			cfg.repoRoot,
 		);
 
+		const roundStartMs = Date.now();
 		try {
 			// Snapshot correction rates BEFORE dispatch (for regression check later)
 			const snapshot = detector.snapshotRates();
@@ -547,12 +550,17 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 				});
 
 				if (!verdict.approved) {
-					// Council rejected — revert
-					gitExec(["revert", "--no-edit", "HEAD"], cfg.repoRoot);
+					// Council rejected — revert via detector for audit trail
+					const revertHash = detector.revertCommit(headAfter);
+					detector.logRegression(
+						{ regressed: false, details: [] },
+						headAfter,
+						revertHash,
+					);
 					roundSummaries.push(
 						`Round ${roundNumber}: COUNCIL REJECTED — ${verdict.summary.slice(0, 300)}`,
 					);
-					console.log(`[growth] Round ${roundNumber}: COUNCIL REJECTED`);
+					console.log(`[growth] Round ${roundNumber}: COUNCIL REJECTED, reverted ${headAfter.slice(0, 7)}`);
 
 					cfg.ledger.record({
 						task_name: "growth_round",
@@ -653,7 +661,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 				task_name: "growth_round",
 				status: "failure",
 				started_at: new Date().toISOString(),
-				duration_ms: 0,
+				duration_ms: Date.now() - roundStartMs,
 				error,
 			});
 
