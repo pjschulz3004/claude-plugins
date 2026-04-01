@@ -144,7 +144,10 @@ Plans:
   1. Each heartbeat task prompt carries a version number and telemetry is tracked per version (success rate, duration, token usage)
   2. Growth engine proposes prompt mutations based on failure analysis (OPRO pattern) and A/B tests them by alternating versions across consecutive runs
   3. Winning prompt versions are promoted and losing versions are reverted, with the decision logged
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 10-01-PLAN.md -- PromptVersioner with A/B testing, OPRO growth instructions, scheduler + growth wiring
 
 ### Phase 11: Skill Creation
 **Goal**: Jarvis can detect capability gaps and autonomously create new tools, verified and submitted for human review
@@ -155,7 +158,10 @@ Plans:
   2. New skills are written as TypeScript MCP tools with Zod schemas, tests, and SKILL.md documentation
   3. New skills are verified (tests pass, build succeeds, tool responds to test invocation) before being committed to a staging branch
   4. A GitHub PR is created for each new skill with description and test results, awaiting Paul's review
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 11-01-PLAN.md -- SkillCreator with gap detection, templates, growth prompt instructions for staging + PR
 
 ### Phase 12: Knowledge Graph Growth
 **Goal**: Growth sessions and corrections enrich the knowledge graph, giving Jarvis contextual memory for future improvements
@@ -165,7 +171,10 @@ Plans:
   1. Learned rules and patterns from growth sessions are stored as KG episodes with temporal metadata
   2. Correction events are stored as KG episodes linking the original decision to the correction
   3. Growth engine queries the KG for relevant context before making improvements (verifiable in growth log)
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 12-01-PLAN.md -- KGBridge: store growth/correction episodes, query context for growth prompt
 
 ## Progress
 
@@ -183,6 +192,6 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12
 | 7. Stabilise + Instrument | v2.0 | 2/3 | In Progress|  |
 | 8. Rule Evolution + Regression Safety | v2.0 | 1/2 | In Progress|  |
 | 9. Growth Engine | v2.0 | 0/2 | Not started | - |
-| 10. Prompt Optimisation | v2.0 | 0/? | Not started | - |
-| 11. Skill Creation | v2.0 | 0/? | Not started | - |
-| 12. Knowledge Graph Growth | v2.0 | 0/? | Not started | - |
+| 10. Prompt Optimisation | v2.0 | 0/1 | Not started | - |
+| 11. Skill Creation | v2.0 | 0/1 | Not started | - |
+| 12. Knowledge Graph Growth | v2.0 | 0/1 | Not started | - |
