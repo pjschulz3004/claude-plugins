@@ -5,32 +5,30 @@ tasks:
     service: imap
     autonomy: notify
     model: sonnet
-    max_turns: 15
+    max_turns: 40
     timeout_ms: 180000
     prompt: |
-      # version: 1
+      # version: 2
       You are Jarvis. Use the jarvis-email MCP tools to triage Paul's inbox.
 
-      Use /jarvis:triage skill procedure:
-      1. Call jarvis_email_list_unread to see what's new
-      2. For each email, classify using the deterministic 4-signal chain:
-         - Signal 1: Sender rules (known senders -> fixed category)
-         - Signal 2: List-Unsubscribe header -> newsletter
-         - Signal 3: Invoice keywords + attachment -> invoice
-         - Signal 4: LLM fallback for ambiguous
-      3. Act on classifications:
+      STEP 1: Call jarvis_email_list_unread. If there are more than 5 unread, process only the 5 oldest.
+
+      STEP 2: For each email, classify it using this priority chain (first match wins):
+         - Sender in known-spam list (trustpilot, linkedin spam) -> TRASH
+         - List-Unsubscribe header present -> NEWSLETTER
+         - Subject contains invoice keywords (rechnung, invoice, receipt, order confirmation) -> INVOICE
+         - From a real person with a question -> IMPORTANT
+         - Otherwise -> READ
+
+      STEP 3: Take ONE action per email (no combos):
          - TRASH: call jarvis_email_trash
-         - IMPORTANT: call jarvis_email_flag
          - NEWSLETTER: call jarvis_email_mark_read
-         - INVOICE: call jarvis_email_flag and jarvis_email_set_keyword with $Invoice
-      4. Report a brief summary of what you did.
+         - INVOICE: call jarvis_email_flag
+         - IMPORTANT: call jarvis_email_flag
+         - READ: call jarvis_email_mark_read
 
-      Keep it focused. If there are more than 10 unread, process the 10 most recent.
-
-      After processing, output a JSON block so the daemon can parse your per-email decisions:
-      ```json
-      {"decisions": [{"email_id": "...", "from": "...", "subject": "...", "action": "trash|flag|read|flag+keyword", "reason": "..."}]}
-      ```
+      STEP 4: Output a JSON summary only (no prose):
+      {"decisions": [{"email_id": "...", "from": "...", "subject": "...", "action": "trash|flag|read", "reason": "..."}]}
 
   memory_consolidation:
     schedule: "0 3 * * *"
