@@ -84,7 +84,7 @@ Plans:
 - [ ] **Phase 9: Growth Engine** - Nightly time-bounded loop that reads mission, picks work, implements, tests, commits
 - [ ] **Phase 10: Prompt Optimisation** - OPRO-pattern versioned prompt evolution with A/B testing
 - [ ] **Phase 11: Skill Creation** - VOYAGER/LATM-pattern autonomous tool creation with staging and PR workflow
-- [ ] **Phase 12: Knowledge Graph Growth** - Growth sessions and corrections feed the KG for contextual memory
+- [x] **Phase 12: Knowledge Graph Growth** - Growth sessions and corrections feed the KG for contextual memory (completed 2026-04-01)
 
 ## Phase Details
 
@@ -174,7 +174,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 12-01-PLAN.md -- KGBridge: store growth/correction episodes, query context for growth prompt
+- [x] 12-01-PLAN.md -- KGBridge: store growth/correction episodes, query context for growth prompt
 
 ## Progress
 
@@ -194,4 +194,4 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12
 | 9. Growth Engine | v2.0 | 0/2 | Not started | - |
 | 10. Prompt Optimisation | v2.0 | 0/1 | Not started | - |
 | 11. Skill Creation | v2.0 | 0/1 | Not started | - |
-| 12. Knowledge Graph Growth | v2.0 | 0/1 | Not started | - |
+| 12. Knowledge Graph Growth | v2.0 | 1/1 | Complete   | 2026-04-01 |

@@ -72,9 +72,9 @@
 
 ### Knowledge Graph Growth (KG)
 
-- [ ] **KG-01**: Growth sessions store learned rules and patterns as KG episodes
-- [ ] **KG-02**: Correction events are stored as KG episodes with temporal metadata
-- [ ] **KG-03**: Growth engine queries KG for relevant context before making improvements
+- [x] **KG-01**: Growth sessions store learned rules and patterns as KG episodes
+- [x] **KG-02**: Correction events are stored as KG episodes with temporal metadata
+- [x] **KG-03**: Growth engine queries KG for relevant context before making improvements
 
 ## Future Requirements (Deferred to v3+)
 
@@ -140,6 +140,6 @@
 | SKILL-04 | Phase 11 | Pending |
 | SKILL-05 | Phase 11 | Pending |
 | SKILL-06 | Phase 11 | Pending |
-| KG-01 | Phase 12 | Pending |
-| KG-02 | Phase 12 | Pending |
-| KG-03 | Phase 12 | Pending |
+| KG-01 | Phase 12 | Complete |
+| KG-02 | Phase 12 | Complete |
+| KG-03 | Phase 12 | Complete |
