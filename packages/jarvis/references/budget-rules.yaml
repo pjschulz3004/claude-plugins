@@ -1,0 +1,18 @@
+domain: budget
+version: 1
+description: "Budget categorisation rules for YNAB transactions"
+
+principles:
+  - "Auto-categorise silently when confident"
+  - "Only alert for category overspend or truly uncategorisable transactions"
+  - "Match payee name to historical category assignments"
+  - "When multiple categories could apply, pick most historical matches"
+
+alerts:
+  - "Alert when category reaches 90%+ of budget"
+  - "Alert when uncategorisable transaction exceeds 50 EUR"
+  - "Include payee name, amount, date in alert"
+  - "Do not alert for transactions under 5 EUR that are uncategorisable"
+
+rules: []
+# No payee rules seeded yet - growth engine will populate from YNAB corrections

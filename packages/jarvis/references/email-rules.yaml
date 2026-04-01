@@ -1,0 +1,100 @@
+domain: email
+version: 1
+description: "Email triage rules - deterministic signals checked before LLM fallback"
+
+categories:
+  - action_required
+  - waiting
+  - reference
+  - newsletter
+  - invoice
+  - notification
+  - noise
+
+routing:
+  - pattern: "to/from it@jschulz.org"
+    destination: "INBOX/Business/{category}"
+  - pattern: default
+    destination: "INBOX/Personal/{category}"
+  - pattern: newsletters
+    destination: "INBOX/Personal/Newsletters"
+  - pattern: invoices
+    destination: "INBOX/Business/Invoices"
+  - pattern: noise
+    destination: Trash
+
+auto_delete_keywords:
+  - "$AutoDelete3d: Delete after 3 days"
+  - "$AutoDelete7d: Delete after 7 days"
+
+llm_fallback:
+  - "From a real person with a question or request -> action_required"
+  - "From a real person as a reply in ongoing thread Paul started -> waiting"
+  - "Automated but contains useful reference info -> reference"
+  - "Bulk/marketing from company Paul doesn't interact with -> noise"
+  - "When uncertain, prefer reference over noise (false positive trash is worse)"
+
+rules:
+  - id: email-001
+    text: "noreply@cloudflare.com -> notification, auto-delete 3d"
+    confidence: 1.0
+    source: seeded
+    added: "2026-04-01"
+    evaluations: 0
+    accuracy: 1.0
+
+  - id: email-002
+    text: "noreply@dhl.de -> notification, auto-delete 7d"
+    confidence: 1.0
+    source: seeded
+    added: "2026-04-01"
+    evaluations: 0
+    accuracy: 1.0
+
+  - id: email-003
+    text: "noreply@trustpilot.com -> noise"
+    confidence: 1.0
+    source: seeded
+    added: "2026-04-01"
+    evaluations: 0
+    accuracy: 1.0
+
+  - id: email-004
+    text: "noreply@teamviewer.com -> notification, auto-delete 3d"
+    confidence: 1.0
+    source: seeded
+    added: "2026-04-01"
+    evaluations: 0
+    accuracy: 1.0
+
+  - id: email-005
+    text: "notifications@github.com -> notification"
+    confidence: 1.0
+    source: seeded
+    added: "2026-04-01"
+    evaluations: 0
+    accuracy: 1.0
+
+  - id: email-006
+    text: "messages-noreply@linkedin.com -> noise"
+    confidence: 1.0
+    source: seeded
+    added: "2026-04-01"
+    evaluations: 0
+    accuracy: 1.0
+
+  - id: email-007
+    text: "List-Unsubscribe header present -> newsletter"
+    confidence: 1.0
+    source: seeded
+    added: "2026-04-01"
+    evaluations: 0
+    accuracy: 1.0
+
+  - id: email-008
+    text: "Invoice keywords in subject (rechnung, invoice, faktur, beleg, receipt, order confirmation, quittung, zahlungsbestatigung) + attachment -> invoice"
+    confidence: 1.0
+    source: seeded
+    added: "2026-04-01"
+    evaluations: 0
+    accuracy: 1.0
