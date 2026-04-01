@@ -20,10 +20,11 @@ Description of what to do and why it matters.
 ### GB-014 Scheduler date injection for briefing prompts
 **Priority:** P3
 **Type:** tune
-**Status:** queued
+**Status:** done
 **Added:** 2026-04-01
+**Completed:** 2026-04-01
 
-The morning_briefing and evening_summary prompts say "today (ISO 8601)" and "tomorrow" without injecting an explicit date. Claude infers the date from calendar tool results, which works in practice but is fragile if no calendar events exist. A lightweight `{{date}}` and `{{tomorrow}}` template substitution in the scheduler (before dispatch) would make date context explicit and eliminate the inference dependency. Requires a small change to `scheduler.ts` (`fireTask` replaces template variables before passing to dispatcher) and heartbeat.yaml prompt updates.
+Added `substituteTemplateVars()` private method to `Scheduler`. Replaces `{{date}}` with today's ISO date and `{{tomorrow}}` with tomorrow's before every dispatch call. Updated morning_briefing (v2) and evening_summary (v3) prompts to use template vars instead of prose descriptions. Test pins clock to 2026-04-15 and asserts exact substitution. Commit: 1dce8ce.
 
 ### GB-013 Tune evening_summary prompt for cross-domain synthesis
 **Priority:** P2
@@ -110,6 +111,14 @@ Fixed: implemented retry loop in Dispatcher.dispatch(). Retries wrap only the ex
 (process crash / CLI startup failure); Claude structural errors (error_max_turns, error_api)
 propagate immediately without retry. Added retries: 1 to email_triage so a transient MCP
 blip gets one automatic retry with 5s backoff. Commit: 1fd9a17.
+
+### GB-015 Inject {{date}} into email_cleanup cutoff arithmetic
+**Priority:** P3
+**Type:** tune
+**Status:** queued
+**Added:** 2026-04-01
+
+email_cleanup asks Claude to compute cutoff_3d and cutoff_7d from "today's date (UTC)". Now that the scheduler injects {{date}}, the prompt can receive the base date explicitly and just subtract days — removing another date-inference dependency. Low priority: Claude arithmetic is reliable here, but the pattern is now inconsistent with the briefing prompts.
 
 ## Completed
 

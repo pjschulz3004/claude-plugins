@@ -26,6 +26,38 @@ What I want to focus on next.
 
 ## Sessions
 
+## 2026-04-01 Growth Session Round 13 (this session)
+
+**Rounds completed:** 13
+**Items addressed:** GB-014
+
+### Reflection
+
+All correction rates at 0.0%. No active failures. The backlog had one queued item: GB-014. The fragility it addresses is real — `morning_briefing` asks Claude to call `list_events` for "today 00:00:00 UTC" and `evening_summary` asks for `get_transactions` for "today (ISO 8601 date, e.g. 2026-04-01)". Those prose descriptions rely on Claude knowing today's date from context. On a quiet calendar day with no events, there is no context. The fix is five lines of TypeScript.
+
+### Work Done
+
+Implemented GB-014: template variable substitution in the scheduler.
+
+- Added `private substituteTemplateVars(prompt: string): string` to `Scheduler`
+- Replaces `{{date}}` with today's ISO date and `{{tomorrow}}` with tomorrow's, both computed from `new Date()` at fire time
+- Called on every prompt in `fireTask` before passing to `dispatcher.dispatch`
+- Updated `morning_briefing` (v1 → v2): `list_events` startDate/endDate now use `{{date}}T00:00:00Z` / `{{date}}T23:59:59Z`
+- Updated `evening_summary` (v2 → v3): `get_transactions` dates use `{{date}}`; `list_events` uses `{{tomorrow}}T00:00:00Z` / `{{tomorrow}}T23:59:59Z`
+- Added test: pins clock to 2026-04-15, fires task with `{{date}}` and `{{tomorrow}}` in prompt, asserts dispatcher receives `2026-04-15` and `2026-04-16`
+
+348 tests pass. TypeScript build clean.
+
+### Commits
+
+- 1dce8ce: growth(2026-04-01): inject {{date}} and {{tomorrow}} into briefing prompts (GB-014)
+
+### Tomorrow
+
+Consider GB-015: extend `{{date}}` injection to `email_cleanup` so all prompts that reference "today" use template vars consistently. Low priority — the arithmetic Claude does for cutoff_3d/cutoff_7d is reliable, but the inconsistency is a minor annoyance. Beyond that, the system is in good shape. Monitor whether the `evening_summary` v3 prompt (cross-domain synthesis) produces noticeable improvements when Paul has transactions + calendar events on the same day.
+
+---
+
 ## 2026-04-01 Growth Session Round 12 (this session)
 
 **Rounds completed:** 12
