@@ -114,7 +114,11 @@ Plans:
   2. Rules below 0.8 confidence are flagged for human review (visible in morning summary or growth log)
   3. All rule changes are git-tracked with clear commit messages
   4. After a growth session modifies rules, if the 7-day correction rate increases, the change is auto-reverted and the regression is logged with the reverted commit hash
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md -- Structured YAML rule format + RuleStore + migration of existing rules
+- [ ] 08-02-PLAN.md -- Regression detection with snapshot-compare-revert safety net
 
 ### Phase 9: Growth Engine
 **Goal**: Jarvis autonomously improves himself overnight through a structured reflect-plan-implement-verify loop
@@ -173,7 +177,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12
 | 5. Intelligence | v1.0 | 3/3 | Complete | 2026-03-31 |
 | 6. Cutover | v1.0 | 1/1 | Complete | 2026-03-31 |
 | 7. Stabilise + Instrument | v2.0 | 2/3 | In Progress|  |
-| 8. Rule Evolution + Regression Safety | v2.0 | 0/? | Not started | - |
+| 8. Rule Evolution + Regression Safety | v2.0 | 0/2 | Not started | - |
 | 9. Growth Engine | v2.0 | 0/? | Not started | - |
 | 10. Prompt Optimisation | v2.0 | 0/? | Not started | - |
 | 11. Skill Creation | v2.0 | 0/? | Not started | - |
