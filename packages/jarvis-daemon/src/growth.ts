@@ -19,7 +19,10 @@
 import { readFileSync, existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
+import { createLogger } from "./logger.js";
 import type { Dispatcher } from "./dispatcher.js";
+
+const log = createLogger("growth");
 import type { TaskLedger } from "./state/ledger.js";
 import type { CorrectionStore } from "./state/telemetry.js";
 import { RegressionDetector } from "./state/regression.js";
@@ -384,7 +387,7 @@ export async function syncCorrectionsToKG(
 			}
 		}
 	} catch (err) {
-		console.warn("[growth] syncCorrectionsToKG failed:", (err as Error).message);
+		log.warn("kg_sync_failed", { error: (err as Error).message });
 	}
 }
 
@@ -397,7 +400,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 	const gitExec: GitExecFn = cfg.gitExecFn ?? defaultGitExec;
 	const jarvisDir = join(cfg.repoRoot, "packages", "jarvis");
 
-	console.log("[growth] Starting nightly growth session...");
+	log.info("growth_session_start", { startHour: cfg.startHour, endHour: cfg.endHour });
 
 	const missionPath = join(jarvisDir, "MISSION.md");
 	const backlogPath = join(jarvisDir, "GROWTH_BACKLOG.md");
@@ -407,13 +410,10 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 	let totalCostUsd = 0;
 	const roundSummaries: string[] = [];
 	const council = assembleCouncil();
-	if (council.length > 0) {
-		console.log(
-			`[growth] Council assembled: ${council.map((m) => m.name).join(", ")}`,
-		);
-	} else {
-		console.log("[growth] No council members available (no API keys). Self-review only.");
-	}
+	log.info("growth_council_status", {
+		councilMembers: council.map((m) => m.name),
+		selfReviewOnly: council.length === 0,
+	});
 
 	// Build regression detector
 	const detector = new RegressionDetector(
@@ -428,7 +428,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 	// Sync corrections to KG at session start (KG-02)
 	if (cfg.kgBridge) {
 		await syncCorrectionsToKG(cfg.corrections, cfg.kgBridge, cfg.taskNames);
-		console.log("[growth] Corrections synced to KG.");
+		log.info("kg_corrections_synced", { taskCount: cfg.taskNames.length });
 	}
 
 	while (isWithinWindow(cfg.startHour, cfg.endHour)) {
@@ -436,7 +436,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 		if (cfg.maxRounds != null && roundNumber >= cfg.maxRounds) break;
 
 		roundNumber++;
-		console.log(`[growth] Round ${roundNumber} starting...`);
+		log.info("growth_round_start", { round: roundNumber });
 
 		// Read fresh state each round
 		const mission = readFileOrDefault(missionPath, "No mission statement found.");
@@ -465,7 +465,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 					kgContext = await cfg.kgBridge.searchContext(keywords);
 				}
 			} catch (err) {
-				console.warn("[growth] KG context query failed:", (err as Error).message);
+				log.warn("kg_context_query_failed", { error: (err as Error).message });
 			}
 		}
 
@@ -487,10 +487,10 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 			const gaps = SkillCreator.detectGaps(cfg.ledger.database);
 			if (gaps.length > 0) {
 				capabilityGaps = SkillCreator.formatGapsForPrompt(gaps);
-				console.log(`[growth] Detected ${gaps.length} capability gap(s).`);
+				log.info("capability_gaps_detected", { gapsFound: gaps.length });
 			}
 		} catch (err) {
-			console.warn("[growth] Gap detection failed:", (err as Error).message);
+			log.warn("gap_detection_failed", { error: (err as Error).message });
 		}
 
 		const prompt = buildReflectionPrompt(
@@ -560,7 +560,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 					roundSummaries.push(
 						`Round ${roundNumber}: COUNCIL REJECTED — ${verdict.summary.slice(0, 300)}`,
 					);
-					console.log(`[growth] Round ${roundNumber}: COUNCIL REJECTED, reverted ${headAfter.slice(0, 7)}`);
+					log.info("growth_council_review", { round: roundNumber, approved: false, concerns: verdict.summary.slice(0, 200) });
 
 					cfg.ledger.record({
 						task_name: "growth_round",
@@ -587,9 +587,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 						roundSummaries.push(
 							`Round ${roundNumber}: REGRESSION — reverted ${headAfter.slice(0, 7)}`,
 						);
-						console.log(
-							`[growth] Round ${roundNumber}: REGRESSION detected, reverted ${headAfter.slice(0, 7)}`,
-						);
+						log.warn("growth_round_regression", { round: roundNumber, revertedCommit: headAfter.slice(0, 7) });
 
 						cfg.ledger.record({
 							task_name: "growth_round",
@@ -605,7 +603,12 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 						// All clear — commit stands
 						const summary = result.result.slice(0, 500);
 						roundSummaries.push(`Round ${roundNumber}: ${summary}`);
-						console.log(`[growth] Round ${roundNumber} complete: ${summary.slice(0, 100)}`);
+						log.info("growth_round_complete", {
+							round: roundNumber,
+							duration_ms: Date.now() - roundStartMs,
+							cost_usd: result.total_cost_usd,
+							summary_preview: summary.slice(0, 100),
+						});
 
 						// Store growth episode in KG (KG-01)
 						if (cfg.kgBridge) {
@@ -621,7 +624,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 									changedFiles,
 								);
 							} catch (err) {
-								console.warn("[growth] KG episode store failed:", (err as Error).message);
+								log.warn("kg_episode_store_failed", { error: (err as Error).message });
 							}
 						}
 
@@ -640,7 +643,13 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 				// No commit was made (analysis-only round)
 				const summary = result.result.slice(0, 500);
 				roundSummaries.push(`Round ${roundNumber}: ${summary}`);
-				console.log(`[growth] Round ${roundNumber} complete (no commit): ${summary.slice(0, 100)}`);
+				log.info("growth_round_complete", {
+					round: roundNumber,
+					duration_ms: Date.now() - roundStartMs,
+					cost_usd: result.total_cost_usd,
+					summary_preview: summary.slice(0, 100),
+					committed: false,
+				});
 
 				cfg.ledger.record({
 					task_name: "growth_round",
@@ -654,7 +663,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 			}
 		} catch (err) {
 			const error = err instanceof Error ? err.message : String(err);
-			console.error(`[growth] Round ${roundNumber} failed:`, error);
+			log.warn("growth_round_failed", { round: roundNumber, error });
 			roundSummaries.push(`Round ${roundNumber}: FAILED - ${error.slice(0, 200)}`);
 
 			cfg.ledger.record({
@@ -667,14 +676,14 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 
 			// If auth expired or similar fatal error, stop the loop
 			if (error.includes("authentication") || error.includes("OAuth")) {
-				console.error("[growth] Auth error — stopping growth loop.");
+				log.error("growth_auth_error", { error });
 				break;
 			}
 		}
 
 		// Pause between rounds (rate limit protection)
 		if (isWithinWindow(cfg.startHour, cfg.endHour)) {
-			console.log(`[growth] Pausing ${cfg.pauseBetweenRoundsMs / 1000}s before next round...`);
+			log.debug("growth_pause", { pause_seconds: cfg.pauseBetweenRoundsMs / 1000 });
 			await new Promise((resolve) => setTimeout(resolve, cfg.pauseBetweenRoundsMs));
 		}
 	}
@@ -691,7 +700,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 		await sendNotification(cfg.notifyChannels, morning, { urgent: false });
 	}
 
-	console.log(`[growth] Session complete. ${roundNumber} rounds executed.`);
+	log.info("growth_session_complete", { rounds: roundNumber, totalCost: totalCostUsd });
 
 	return sessionResult;
 }

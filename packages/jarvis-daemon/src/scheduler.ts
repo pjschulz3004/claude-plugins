@@ -8,6 +8,9 @@ import type { BreakerManager } from "./state/breakers.js";
 import { sendNotification, type NotifyChannel } from "./notify.js";
 import { dispatchHealing } from "./healing.js";
 import type { PromptVersioner } from "./prompt-versioner.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger("scheduler");
 
 interface HeartbeatTask {
 	schedule: string;
@@ -59,7 +62,7 @@ export class Scheduler {
 				const jitterMs = addJitter(0, 60_000);
 				setTimeout(() => {
 					this.fireTask(name).catch((err) => {
-						console.error(`[jarvis] Scheduler error for ${name}:`, err);
+						log.error("task_error", { task: name, error: err instanceof Error ? err.message : String(err) });
 					});
 				}, jitterMs);
 			});
@@ -98,10 +101,10 @@ export class Scheduler {
 			}
 
 			this.yamlMtime = mtimeMs;
-			console.log("[jarvis] Reloaded heartbeat.yaml (config updated)");
+			log.info("config_reloaded", { taskCount: Object.keys(parsed.tasks).length });
 		} catch (err) {
 			// Non-fatal: keep running with existing config
-			console.warn("[jarvis] heartbeat.yaml reload failed:", (err as Error).message);
+			log.warn("config_reload_failed", { error: (err as Error).message });
 		}
 	}
 
@@ -118,13 +121,13 @@ export class Scheduler {
 
 			if (result.winner === "candidate") {
 				promptVersioner.promote(taskName);
-				console.log(`[jarvis] Prompt A/B: promoted candidate for ${taskName} (${result.reason})`);
+				log.info("prompt_promoted", { task: taskName, reason: result.reason });
 			} else {
 				promptVersioner.revert(taskName);
-				console.log(`[jarvis] Prompt A/B: reverted candidate for ${taskName} (${result.reason})`);
+				log.warn("prompt_reverted", { task: taskName, reason: result.reason });
 			}
 		} catch (err) {
-			console.error(`[jarvis] Prompt A/B evaluate error for ${taskName}:`, err);
+			log.error("prompt_evaluate_error", { task: taskName, error: (err as Error).message });
 		}
 	}
 
@@ -145,7 +148,8 @@ export class Scheduler {
 			const [startHour, endHour] = task.hours.split("-").map(Number);
 			const currentHour = new Date().getHours();
 			if (currentHour < startHour || currentHour > endHour) {
-				return; // Outside hours window, skip silently
+				log.warn("task_skipped_hours", { task: taskName, currentHour, allowedHours: task.hours });
+				return;
 			}
 		}
 
@@ -154,6 +158,7 @@ export class Scheduler {
 		// Check breaker
 		const service = task.service ?? taskName;
 		if (!breakers.shouldAllow(service)) {
+			log.warn("task_skipped_breaker", { task: taskName, service });
 			ledger.record({
 				task_name: taskName,
 				status: "skipped",
@@ -164,6 +169,7 @@ export class Scheduler {
 			return;
 		}
 
+		log.info("task_fired", { task: taskName, model: task.model ?? "default", maxTurns: task.max_turns ?? 0 });
 		const startedAt = new Date().toISOString();
 		const startTime = Date.now();
 
@@ -212,6 +218,7 @@ export class Scheduler {
 				decision_summary: decisionSummary,
 			});
 			breakers.recordSuccess(service);
+			log.info("task_complete", { task: taskName, status: "success", duration_ms: Date.now() - startTime });
 
 			// Record per-version metrics (PROMPT-02)
 			if (promptVersioner && promptVersion > 0) {
@@ -239,6 +246,7 @@ export class Scheduler {
 				error,
 			});
 			breakers.recordFailure(service);
+			log.error("task_failed", { task: taskName, error, duration_ms: Date.now() - startTime });
 
 			// Record per-version failure metric (PROMPT-02)
 			if (promptVersioner && promptVersion > 0) {
@@ -263,7 +271,7 @@ export class Scheduler {
 					dispatcher,
 					notifyChannels: this.config.notifyChannels,
 				}).catch((healErr) => {
-					console.error(`[jarvis] Healing dispatch error for ${taskName}:`, healErr);
+					log.error("healing_dispatch_error", { task: taskName, error: healErr instanceof Error ? healErr.message : String(healErr) });
 				});
 			}
 		}

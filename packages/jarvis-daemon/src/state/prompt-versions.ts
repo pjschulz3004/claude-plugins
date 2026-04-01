@@ -1,4 +1,7 @@
 import type Database from "better-sqlite3";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("prompt-versions");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,6 +80,7 @@ export class PromptVersionStore {
 				"INSERT INTO prompt_versions (task_name, version, prompt_text, status) VALUES (?, ?, ?, ?)",
 			)
 			.run(taskName, version, promptText, status);
+		log.debug("version_registered", { task: taskName, version, role: status });
 		return Number(result.lastInsertRowid);
 	}
 
@@ -101,6 +105,7 @@ export class PromptVersionStore {
 				"INSERT INTO prompt_version_metrics (prompt_version_id, run_id, success, duration_ms, tokens) VALUES (?, ?, ?, ?, ?)",
 			)
 			.run(versionRow.id, runId, success ? 1 : 0, durationMs, tokens);
+		log.debug("metric_recorded", { task: taskName, version, success, duration_ms: durationMs });
 	}
 
 	getMetrics(taskName: string, version: number): VersionMetrics {

@@ -1,4 +1,7 @@
 import type Database from "better-sqlite3";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("history");
 
 export interface ChatMessage {
 	role: "user" | "assistant";
@@ -31,6 +34,7 @@ export class ChatHistory {
 			INSERT INTO chat_messages (chat_id, role, text)
 			VALUES (?, ?, ?)
 		`).run(chatId, role, text);
+		log.debug("chat_stored", { role, content_preview: text.slice(0, 50) });
 	}
 
 	getRecent(chatId: string, limit = 10): ChatMessage[] {

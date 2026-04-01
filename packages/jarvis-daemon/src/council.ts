@@ -1,3 +1,7 @@
+import { createLogger } from "./logger.js";
+
+const log = createLogger("council");
+
 /**
  * The Nightly Council — Multi-model deliberation for Jarvis's self-improvements.
  *
@@ -201,15 +205,14 @@ export function assembleCouncil(): CouncilMember[] {
 	const mistralKey = process.env.MISTRAL_API_KEY;
 	if (mistralKey) {
 		members.push(new MistralMember(mistralKey));
-		console.log("[council] Mistral (mistral-medium-latest) joined.");
 	}
 
 	const openaiKey = process.env.OPENAI_API_KEY;
 	if (openaiKey) {
 		members.push(new OpenAIMember(openaiKey));
-		console.log("[council] OpenAI (gpt-5-mini) joined.");
 	}
 
+	log.info("council_assembled", { members: members.map((m) => m.name) });
 	return members;
 }
 
@@ -262,7 +265,6 @@ export async function conveneCouncil(
 	}
 
 	// ------ Round 1: Independent Review ------
-	console.log("[council] Round 1: Independent reviews...");
 	const round1 = new Map<string, string>();
 
 	const round1Results = await Promise.all(
@@ -277,8 +279,11 @@ export async function conveneCouncil(
 			try {
 				const response = await member.chat(history);
 				history.push({ role: "assistant", content: response });
+				const parsed = parseReview(response);
+				log.info("council_round", { round: 1, member: member.name, approve: parsed.approve, confidence: parsed.confidence });
 				return { name: member.name, response };
 			} catch (err) {
+				log.warn("council_member_failed", { member: member.name, round: 1, error: err instanceof Error ? err.message : String(err) });
 				const fallback = JSON.stringify({
 					approve: true,
 					concerns: [],
@@ -298,7 +303,6 @@ export async function conveneCouncil(
 	rounds.push({ roundNumber: 1, responses: round1 });
 
 	// ------ Round 2: Cross-Critique ------
-	console.log("[council] Round 2: Cross-critique...");
 	const round2 = new Map<string, string>();
 
 	const round2Results = await Promise.all(
@@ -317,8 +321,11 @@ export async function conveneCouncil(
 			try {
 				const response = await member.chat(history);
 				history.push({ role: "assistant", content: response });
+				const parsed = parseReview(response);
+				log.info("council_round", { round: 2, member: member.name, approve: parsed.approve, confidence: parsed.confidence });
 				return { name: member.name, response };
 			} catch (err) {
+				log.warn("council_member_failed", { member: member.name, round: 2, error: err instanceof Error ? err.message : String(err) });
 				const fallback = JSON.stringify({
 					approve: true,
 					concerns: [],
@@ -338,7 +345,6 @@ export async function conveneCouncil(
 	rounds.push({ roundNumber: 2, responses: round2 });
 
 	// ------ Round 3: Final Verdict ------
-	console.log("[council] Round 3: Final verdicts...");
 	const round3 = new Map<string, string>();
 
 	const round3Results = await Promise.all(
@@ -356,8 +362,11 @@ export async function conveneCouncil(
 
 			try {
 				const response = await member.chat(history);
+				const parsed = parseReview(response);
+				log.info("council_round", { round: 3, member: member.name, approve: parsed.approve, confidence: parsed.confidence });
 				return { name: member.name, response };
 			} catch (err) {
+				log.warn("council_member_failed", { member: member.name, round: 3, error: err instanceof Error ? err.message : String(err) });
 				return {
 					name: member.name,
 					response: JSON.stringify({
@@ -402,7 +411,7 @@ export async function conveneCouncil(
 		summary = `Council REJECTED (${approvals}/${members.length}).\nConcerns:\n${allConcerns.join("\n")}\nSuggestions:\n${allSuggestions.join("\n")}`;
 	}
 
-	console.log(`[council] Verdict: ${approved ? "APPROVED" : "REJECTED"} (${approvals}/${members.length})`);
+	log.info("council_verdict", { approved, approvalCount: approvals, totalMembers: members.length });
 
 	return {
 		approved,

@@ -1,6 +1,9 @@
 import { createServer, type Server, type IncomingMessage, type ServerResponse } from "node:http";
 import type { BreakerManager } from "./state/breakers.js";
 import type { TaskLedger } from "./state/ledger.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger("health");
 
 export interface HealthServerConfig {
 	breakers: BreakerManager;
@@ -28,6 +31,7 @@ export class HealthServer {
 
 			this.server.on("error", reject);
 			this.server.listen(port, () => {
+				log.info("health_started", { port });
 				resolve();
 			});
 		});
@@ -81,6 +85,7 @@ export class HealthServer {
 			last_runs: lastRuns,
 		};
 
+		log.debug("health_request", { status: "ok", uptime_seconds: uptimeSeconds });
 		res.writeHead(200, { "Content-Type": "application/json" });
 		res.end(JSON.stringify(body));
 	}

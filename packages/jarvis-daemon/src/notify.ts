@@ -1,5 +1,8 @@
 import type { Telegraf } from "telegraf";
 import { splitMessage } from "./telegram.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger("notify");
 
 /**
  * Pluggable notification channel interface.
@@ -31,10 +34,10 @@ export class TelegramChannel implements NotifyChannel {
 			try {
 				await this.bot.telegram.sendMessage(this.chatId, chunk);
 			} catch (err) {
-				console.error(
-					`[notify] TelegramChannel send error:`,
-					err instanceof Error ? err.message : err,
-				);
+				log.error("notification_failed", {
+					channel: "telegram",
+					error: err instanceof Error ? err.message : String(err),
+				});
 			}
 		}
 	}
@@ -78,9 +81,14 @@ export async function sendNotification(
 	if (channels.length === 0) return;
 
 	if (!opts?.urgent && isQuietHours(opts?.now, opts?.timezone)) {
-		console.debug("[notify] Suppressed non-urgent during quiet hours");
+		log.info("notification_suppressed_quiet_hours", { text_preview: text.slice(0, 80) });
 		return;
 	}
 
+	log.info("notification_sent", {
+		channel: channels.map((ch) => ch.name).join(","),
+		urgent: opts?.urgent ?? false,
+		text_preview: text.slice(0, 80),
+	});
 	await Promise.allSettled(channels.map((ch) => ch.send(text)));
 }

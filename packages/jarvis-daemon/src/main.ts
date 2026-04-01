@@ -1,4 +1,7 @@
+import { createLogger } from "./logger.js";
 import { TaskLedger } from "./state/ledger.js";
+
+const log = createLogger("main");
 import { BreakerManager } from "./state/breakers.js";
 import { ChatHistory } from "./state/history.js";
 import { CorrectionStore } from "./state/telemetry.js";
@@ -64,7 +67,7 @@ function buildBudgetBackend(): YnabBackend | undefined {
 let bot: Telegraf | undefined;
 
 async function start() {
-	console.log("[jarvis] Starting daemon...");
+	log.info("daemon_starting");
 
 	// Telegram bot (optional -- skip if no token)
 	const telegramToken = process.env.JARVIS_TELEGRAM_BOT_TOKEN;
@@ -91,11 +94,9 @@ async function start() {
 			new TelegramChannel({ bot, chatId: telegramChatId }),
 		);
 		bot.launch({ dropPendingUpdates: true });
-		console.log("[jarvis] Telegram bot started.");
+		log.info("telegram_started", { chatId: telegramChatId });
 	} else {
-		console.log(
-			"[jarvis] No TELEGRAM_BOT_TOKEN, skipping Telegram bot",
-		);
+		log.warn("telegram_skipped", { reason: "no TELEGRAM_BOT_TOKEN" });
 	}
 
 	// Create scheduler with notification channels (empty if no Telegram)
@@ -119,7 +120,7 @@ async function start() {
 	// Nightly growth loop: 01:00-05:00, runs as a time-bounded loop
 	const repoRoot = join(__dirname, "..", "..");
 	const growthJob = new Cron("0 1 * * *", () => {
-		console.log("[jarvis] Starting nightly growth session...");
+		log.info("growth_cron_triggered");
 		runGrowthLoop({
 			dispatcher,
 			ledger,
@@ -133,7 +134,7 @@ async function start() {
 			maxTurnsPerRound: 30,
 			timeoutPerRoundMs: 900_000,
 		}).catch((err) => {
-			console.error("[jarvis] Growth loop error:", err);
+			log.error("growth_loop_error", { error: err instanceof Error ? err.message : String(err) });
 		});
 	});
 
@@ -166,16 +167,14 @@ async function start() {
 		])
 			.then(([emailCount, budgetCount]) => {
 				if (emailCount > 0 || budgetCount > 0) {
-					console.log(
-						`[jarvis] Corrections detected: ${emailCount} email, ${budgetCount} budget`,
-					);
+					log.info("corrections_detected", { emailCorrections: emailCount, budgetCorrections: budgetCount });
 				}
 			})
 			.catch((err) => {
-				console.error("[jarvis] Correction detection error:", err);
+				log.error("correction_detection_error", { error: err instanceof Error ? err.message : String(err) });
 			});
 	});
-	console.log("[jarvis] Correction detection scheduled every 2h (07:00-23:00).");
+	log.info("correction_detection_scheduled", { interval: "2h", hours: "07:00-23:00" });
 
 	// Weekly triage digest: Sunday 20:00 — native query, no Claude dispatch
 	const weeklyDigestJob = new Cron("0 20 * * 0", () => {
@@ -183,29 +182,27 @@ async function start() {
 			const stats = collectWeeklyDigest(ledger);
 			const message = formatWeeklyDigest(stats);
 			sendNotification(notifyChannels, message, { urgent: false }).catch(
-				(err) => console.error("[jarvis] Weekly digest notify error:", err),
+				(err) => log.error("weekly_digest_notify_error", { error: err instanceof Error ? err.message : String(err) }),
 			);
-			console.log("[jarvis] Weekly digest sent.");
+			log.info("weekly_digest_sent");
 		} catch (err) {
-			console.error("[jarvis] Weekly digest error:", err);
+			log.error("weekly_digest_error", { error: err instanceof Error ? err.message : String(err) });
 		}
 	});
-	console.log("[jarvis] Weekly triage digest scheduled Sundays at 20:00.");
+	log.info("weekly_digest_scheduled", { schedule: "Sundays 20:00" });
 
-	console.log(
-		`[jarvis] Daemon running. Health at :${process.env.JARVIS_HEALTH_PORT || "3333"}/health`,
-	);
+	log.info("daemon_ready", { healthPort: process.env.JARVIS_HEALTH_PORT || "3333" });
 }
 
 async function shutdown(signal: string) {
-	console.log(`[jarvis] Received ${signal}, shutting down...`);
+	log.info("shutdown_started", { signal });
 	if (bot) {
 		bot.stop(signal);
 	}
 	scheduler.stop();
 	await health.stop();
 	ledger.close();
-	console.log("[jarvis] Shutdown complete.");
+	log.info("shutdown_complete");
 	process.exit(0);
 }
 
@@ -213,6 +210,6 @@ process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
 start().catch((err) => {
-	console.error("[jarvis] Fatal:", err);
+	log.error("fatal", { error: err instanceof Error ? err.message : String(err) });
 	process.exit(1);
 });

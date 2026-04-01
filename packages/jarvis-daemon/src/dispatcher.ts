@@ -1,7 +1,9 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { createLogger } from "./logger.js";
 
 const execFileAsync = promisify(execFile);
+const log = createLogger("dispatcher");
 
 export interface ClaudeResult {
 	type: "result";
@@ -87,15 +89,25 @@ export class Dispatcher {
 		const maxAttempts = 1 + (opts.retries ?? 0);
 		let lastError: Error | undefined;
 
+		log.info("dispatch_start", {
+			prompt_preview: prompt.slice(0, 100),
+			model: opts.model ?? "default",
+			maxTurns: opts.maxTurns ?? 0,
+			timeoutMs: execOpts.timeout,
+		});
+		const dispatchStartMs = Date.now();
+
 		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 			if (attempt > 1) {
 				// Linear backoff: 5s per retry (handles transient MCP blips without long waits)
 				await new Promise<void>((resolve) =>
 					setTimeout(resolve, (attempt - 1) * 5_000),
 				);
-				console.warn(
-					`[jarvis] Dispatcher retry ${attempt - 1}/${opts.retries} after exec failure`,
-				);
+				log.warn("dispatch_retry", {
+					attempt: attempt - 1,
+					maxRetries: opts.retries ?? 0,
+					reason: lastError?.message ?? "unknown",
+				});
 			}
 
 			let stdout: string;
@@ -112,9 +124,22 @@ export class Dispatcher {
 			// Parse errors and Claude structural errors (error_max_turns, error_api) propagate
 			// immediately without retry — they indicate a problem with the prompt or Claude,
 			// not a transient infrastructure issue.
-			return this.parseOutput(stdout);
+			const parsed = this.parseOutput(stdout);
+			log.info("dispatch_complete", {
+				model: opts.model ?? "default",
+				duration_ms: Date.now() - dispatchStartMs,
+				cost_usd: parsed.total_cost_usd,
+				input_tokens: parsed.usage.input_tokens,
+				output_tokens: parsed.usage.output_tokens,
+				result_preview: parsed.result.slice(0, 100),
+			});
+			return parsed;
 		}
 
+		log.error("dispatch_failed", {
+			error: lastError?.message ?? "unknown",
+			duration_ms: Date.now() - dispatchStartMs,
+		});
 		throw lastError!;
 	}
 

@@ -1,5 +1,8 @@
 import Database from "better-sqlite3";
 import type { LedgerEntry } from "@jarvis/shared";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("ledger");
 
 const CREATE_TABLE_SQL = `
 	CREATE TABLE IF NOT EXISTS task_runs (
@@ -67,6 +70,7 @@ export class TaskLedger {
 			entry.output_tokens ?? null,
 			entry.decision_summary ?? null,
 		);
+		log.debug("task_recorded", { task: entry.task_name, status: entry.status, duration_ms: entry.duration_ms });
 		return Number(result.lastInsertRowid);
 	}
 

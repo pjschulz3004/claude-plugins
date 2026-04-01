@@ -1,4 +1,7 @@
 import type Database from "better-sqlite3";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("telemetry");
 
 export interface CorrectionEvent {
 	id?: number;
@@ -46,6 +49,7 @@ export class CorrectionStore {
 			event.decided_at,
 			event.corrected_at,
 		);
+		log.info("correction_recorded", { task: event.task_name, original: event.original_decision, corrected: event.corrected_decision });
 		return Number(result.lastInsertRowid);
 	}
 
@@ -90,6 +94,8 @@ export class CorrectionStore {
 			)
 			.get(taskName, cutoff) as { cnt: number };
 
-		return Math.min(correctionCount.cnt / decisionCount.cnt, 1.0);
+		const rate = Math.min(correctionCount.cnt / decisionCount.cnt, 1.0);
+		log.debug("correction_rate", { task: taskName, days, rate, corrections: correctionCount.cnt, decisions: decisionCount.cnt });
+		return rate;
 	}
 }

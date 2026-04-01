@@ -11,6 +11,9 @@
  */
 
 import type Database from "better-sqlite3";
+import { createLogger } from "./logger.js";
+
+const log = createLogger("skill-creator");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,6 +59,7 @@ export class SkillCreator {
 		db: Database.Database,
 		minOccurrences = 3,
 	): GapDetectionResult[] {
+		log.info("gap_detection_start", { minOccurrences });
 		const thirtyDaysAgo = new Date(
 			Date.now() - 30 * 24 * 60 * 60 * 1000,
 		).toISOString();
@@ -125,6 +129,11 @@ export class SkillCreator {
 
 		// Sort by occurrences descending
 		results.sort((a, b) => b.occurrences - a.occurrences);
+
+		for (const gap of results) {
+			log.info("gap_detected", { pattern: gap.pattern, occurrences: gap.occurrences });
+		}
+		log.info("gap_detection_complete", { gapsFound: results.length });
 
 		return results;
 	}

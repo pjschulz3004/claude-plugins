@@ -2,6 +2,9 @@ import { execFileSync } from "node:child_process";
 import { appendFileSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import type { CorrectionStore } from "./telemetry.js";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("regression");
 
 /** Dependency injection for git operations (testable). */
 export type ExecFn = (args: string[]) => string;
@@ -79,8 +82,13 @@ export class RegressionDetector {
 
 			if (delta > 0.05) {
 				regressed = true;
+				log.warn("regression_detected", { task: taskName, before: rateBefore, after: rateAfter, delta });
 			}
 		}
+
+		const rates: Record<string, number> = {};
+		for (const d of details) { rates[d.taskName] = d.rateAfter; }
+		log.info("regression_snapshot", { taskCount: details.length, rates });
 
 		return { regressed, details };
 	}
@@ -94,7 +102,9 @@ export class RegressionDetector {
 		}
 
 		this.exec(["revert", "--no-edit", commitHash]);
-		return this.exec(["rev-parse", "HEAD"]);
+		const revertHash = this.exec(["rev-parse", "HEAD"]);
+		log.info("regression_reverted", { commitHash, revertHash });
+		return revertHash;
 	}
 
 	/** Append regression details to GROWTH_LOG.md. */
@@ -131,9 +141,7 @@ ${affectedLines}
 		const backlogPath = join(this.deps.repoRoot, "GROWTH_BACKLOG.md");
 
 		if (!existsSync(backlogPath)) {
-			console.warn(
-				`[regression] GROWTH_BACKLOG.md not found at ${backlogPath}`,
-			);
+			log.warn("backlog_not_found", { path: backlogPath });
 			return;
 		}
 
@@ -152,15 +160,13 @@ ${affectedLines}
 			}
 
 			if (!found) {
-				console.warn(
-					`[regression] Item "${itemDescription}" not found in GROWTH_BACKLOG.md`,
-				);
+				log.warn("backlog_item_not_found", { item: itemDescription });
 				return;
 			}
 
 			writeFileSync(backlogPath, lines.join("\n"), "utf8");
 		} catch (err) {
-			console.warn(`[regression] Failed to update GROWTH_BACKLOG.md:`, err);
+			log.warn("backlog_update_failed", { error: (err as Error).message });
 		}
 	}
 }

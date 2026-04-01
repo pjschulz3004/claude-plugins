@@ -1,5 +1,8 @@
 import type { TaskLedger } from "./ledger.js";
 import type { CorrectionStore } from "./telemetry.js";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("corrections");
 
 /**
  * Dependency injection interface for correction detection.
@@ -135,6 +138,12 @@ export async function detectEmailCorrections(
 					current.folder,
 					current.flags,
 				);
+				log.info("correction_detected", {
+					type: "email",
+					task: "email_triage",
+					original: decision.action,
+					corrected: correctedAction,
+				});
 				deps.corrections.recordCorrection({
 					task_name: "email_triage",
 					original_decision: decision.action,
@@ -147,6 +156,7 @@ export async function detectEmailCorrections(
 		}
 	}
 
+	log.info("correction_scan_complete", { type: "email", correctionsFound: count });
 	return count;
 }
 
@@ -191,6 +201,12 @@ export async function detectBudgetCorrections(
 			}
 
 			if (current.category_name !== decision.assigned_category) {
+				log.info("correction_detected", {
+					type: "budget",
+					task: "budget",
+					original: decision.assigned_category,
+					corrected: current.category_name,
+				});
 				deps.corrections.recordCorrection({
 					task_name: "budget",
 					original_decision: decision.assigned_category,
@@ -203,5 +219,6 @@ export async function detectBudgetCorrections(
 		}
 	}
 
+	log.info("correction_scan_complete", { type: "budget", correctionsFound: count });
 	return count;
 }

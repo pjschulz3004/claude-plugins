@@ -10,6 +10,9 @@
 
 import type { KnowledgeGraphClient, Episode, SearchResult } from "@jarvis/kg";
 import type { CorrectionEvent } from "./state/telemetry.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger("kg-bridge");
 
 export class KGBridge {
 	constructor(private readonly kg: KnowledgeGraphClient | null) {}
@@ -52,11 +55,9 @@ export class KGBridge {
 
 		try {
 			await this.kg.addEpisode(episode);
+			log.info("kg_episode_stored", { type: "growth", subject: `growth_session_${date}`, round: roundNumber });
 		} catch (err) {
-			console.warn(
-				"[kg-bridge] storeGrowthEpisode failed:",
-				(err as Error).message,
-			);
+			log.warn("kg_unavailable", { operation: "storeGrowthEpisode", error: (err as Error).message });
 		}
 	}
 
@@ -91,11 +92,9 @@ export class KGBridge {
 
 		try {
 			await this.kg.addEpisode(episode);
+			log.info("kg_episode_stored", { type: "correction", subject: correction.task_name });
 		} catch (err) {
-			console.warn(
-				"[kg-bridge] storeCorrectionEpisode failed:",
-				(err as Error).message,
-			);
+			log.warn("kg_unavailable", { operation: "storeCorrectionEpisode", error: (err as Error).message });
 		}
 	}
 
@@ -137,10 +136,7 @@ export class KGBridge {
 
 			return lines.join("\n");
 		} catch (err) {
-			console.warn(
-				"[kg-bridge] searchContext failed:",
-				(err as Error).message,
-			);
+			log.warn("kg_unavailable", { operation: "searchContext", error: (err as Error).message });
 			return "";
 		}
 	}

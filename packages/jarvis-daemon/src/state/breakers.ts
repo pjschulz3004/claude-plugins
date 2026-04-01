@@ -1,4 +1,7 @@
 import { CircuitBreaker, BreakerState } from "@jarvis/shared";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("breakers");
 
 export class BreakerManager {
 	private readonly breakers = new Map<string, CircuitBreaker>();
@@ -17,11 +20,24 @@ export class BreakerManager {
 	}
 
 	recordSuccess(service: string): void {
-		this.getOrCreate(service).recordSuccess();
+		const breaker = this.getOrCreate(service);
+		const prevState = breaker.state;
+		breaker.recordSuccess();
+		if (prevState !== breaker.state) {
+			log.info("breaker_state_change", { service, from: prevState, to: breaker.state });
+		}
 	}
 
 	recordFailure(service: string): void {
-		this.getOrCreate(service).recordFailure();
+		const breaker = this.getOrCreate(service);
+		const prevState = breaker.state;
+		breaker.recordFailure();
+		if (prevState !== breaker.state) {
+			log.info("breaker_state_change", { service, from: prevState, to: breaker.state });
+			if (breaker.state === "open") {
+				log.warn("breaker_opened", { service });
+			}
+		}
 	}
 
 	getStates(): Record<string, BreakerState> {

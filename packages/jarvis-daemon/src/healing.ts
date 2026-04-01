@@ -1,6 +1,9 @@
 import type { Dispatcher, DispatchOptions } from "./dispatcher.js";
 import type { TaskLedger } from "./state/ledger.js";
 import { sendNotification, type NotifyChannel } from "./notify.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger("healing");
 
 /** Set of task names currently undergoing healing -- prevents duplicate dispatch. */
 const healingInProgress = new Set<string>();
@@ -39,6 +42,7 @@ export async function dispatchHealing(opts: HealingOpts): Promise<void> {
 	if (healingInProgress.has(taskName)) return;
 
 	healingInProgress.add(taskName);
+	log.info("healing_triggered", { task: taskName, consecutiveFailures });
 	try {
 		// Collect recent errors for context
 		const recentEntries = ledger.getRecent(taskName, 5);
@@ -82,6 +86,7 @@ export async function dispatchHealing(opts: HealingOpts): Promise<void> {
 		};
 
 		const result = await dispatcher.dispatch(prompt, dispatchOpts);
+		log.info("healing_complete", { task: taskName, result_preview: result.result.slice(0, 100) });
 
 		// Notify with healing result (non-urgent)
 		if (notifyChannels?.length) {
@@ -91,10 +96,7 @@ export async function dispatchHealing(opts: HealingOpts): Promise<void> {
 	} catch (err) {
 		// Healing itself failed -- notify urgently, never throw
 		const error = err instanceof Error ? err.message : String(err);
-		console.error(
-			`[jarvis] Healing agent failed for ${taskName}:`,
-			error,
-		);
+		log.error("healing_failed", { task: taskName, error });
 
 		if (notifyChannels?.length) {
 			await sendNotification(

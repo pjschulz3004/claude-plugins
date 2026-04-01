@@ -1,5 +1,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import YAML from "yaml";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("rules");
 
 export type RuleSource = "seeded" | "user_correction" | "self_generated";
 
@@ -30,6 +33,7 @@ export class RuleStore {
 		if (!parsed.rules) {
 			parsed.rules = [];
 		}
+		log.info("rules_loaded", { file: filePath, ruleCount: parsed.rules.length });
 		return parsed;
 	}
 
@@ -64,7 +68,9 @@ export class RuleStore {
 		if (!rule) {
 			throw new Error(`Rule ${ruleId} not found`);
 		}
+		const oldConfidence = rule.confidence;
 		rule.confidence = newConfidence;
+		log.info("rule_updated", { id: ruleId, field: "confidence", oldValue: oldConfidence, newValue: newConfidence });
 	}
 
 	static flaggedForReview(ruleFile: RuleFile): Rule[] {

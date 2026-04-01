@@ -1,6 +1,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import type { PromptVersionStore } from "./state/prompt-versions.js";
+import { createLogger } from "./logger.js";
+
+const log = createLogger("prompt-versioner");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,6 +80,7 @@ export class PromptVersioner {
 		}
 
 		if (!candidate) {
+			log.info("prompt_selected", { task: taskName, version: current.version, role: "current" });
 			return { prompt: current.prompt_text, version: current.version };
 		}
 
@@ -85,8 +89,10 @@ export class PromptVersioner {
 		const candidateRuns = this.store.getTotalRunCount(taskName, candidate.version);
 
 		if (candidateRuns % 2 === 0) {
+			log.info("prompt_selected", { task: taskName, version: current.version, role: "current" });
 			return { prompt: current.prompt_text, version: current.version };
 		}
+		log.info("prompt_selected", { task: taskName, version: candidate.version, role: "candidate" });
 		return { prompt: candidate.prompt_text, version: candidate.version };
 	}
 
@@ -120,17 +126,21 @@ export class PromptVersioner {
 		const EPSILON = 0.001;
 
 		if (successDiff > EPSILON) {
-			return {
-				winner: "candidate",
+			const result = {
+				winner: "candidate" as const,
 				reason: `Higher success rate: ${(candidateMetrics.successRate * 100).toFixed(1)}% vs ${(currentMetrics.successRate * 100).toFixed(1)}%`,
 			};
+			log.info("prompt_evaluated", { task: taskName, winner: "candidate", currentRate: currentMetrics.successRate, candidateRate: candidateMetrics.successRate });
+			return result;
 		}
 
 		if (successDiff < -EPSILON) {
-			return {
-				winner: "current",
+			const result = {
+				winner: "current" as const,
 				reason: `Higher success rate: ${(currentMetrics.successRate * 100).toFixed(1)}% vs ${(candidateMetrics.successRate * 100).toFixed(1)}%`,
 			};
+			log.info("prompt_evaluated", { task: taskName, winner: "current", currentRate: currentMetrics.successRate, candidateRate: candidateMetrics.successRate });
+			return result;
 		}
 
 		// Success rates equal -- use token efficiency as tiebreak
@@ -180,6 +190,7 @@ export class PromptVersioner {
 			task.prompt = candidate.prompt_text;
 			writeFileSync(this.yamlPath, stringifyYaml(parsed, { lineWidth: 0 }));
 		}
+		log.info("prompt_promoted", { task: taskName, version: candidate.version });
 	}
 
 	/**
@@ -189,6 +200,7 @@ export class PromptVersioner {
 		const candidate = this.store.getCandidateVersion(taskName);
 		if (candidate) {
 			this.store.updateStatus(taskName, candidate.version, "retired");
+			log.warn("prompt_reverted", { task: taskName, version: candidate.version, reason: "evaluation_lost" });
 		}
 	}
 
