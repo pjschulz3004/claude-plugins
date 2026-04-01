@@ -31,6 +31,7 @@ import {
 	type ReviewContext,
 } from "./council.js";
 import { KGBridge } from "./kg-bridge.js";
+import type { PromptVersioner } from "./prompt-versioner.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,6 +55,7 @@ export interface GrowthConfig {
 	maxRounds?: number; // Optional cap (useful for testing)
 	gitExecFn?: GitExecFn; // Injectable for testing
 	kgBridge?: KGBridge; // Optional KG bridge for contextual memory
+	promptVersioner?: PromptVersioner; // Optional A/B prompt versioner (PROMPT-01)
 }
 
 export interface GrowthSessionResult {
@@ -145,6 +147,7 @@ export function buildReflectionPrompt(
 	correctionRates: string,
 	skillProcedure: string,
 	kgContext: string = "",
+	promptVersionSummary: string = "",
 ): string {
 	const kgSection = kgContext
 		? `\n<knowledge_graph>
@@ -166,6 +169,7 @@ Here is today's task performance from the ledger:
 
 <performance>
 ${ledgerSummary}
+${promptVersionSummary ? `\nPrompt A/B Testing Status:\n${promptVersionSummary}` : ""}
 </performance>
 
 Here is your current growth backlog (items to improve):
@@ -189,6 +193,15 @@ Follow this improvement procedure for each round:
 <procedure>
 ${skillProcedure}
 </procedure>
+
+<opro_prompt_mutation>
+When picking a 'tune' type backlog item that involves prompt improvement, use the OPRO pattern:
+1. Analyse the last N failures for the target task (look at error messages, decision_summary in the performance data above)
+2. Identify what the current prompt does wrong or misses
+3. Write an improved version of the prompt
+4. Save it as a candidate by editing heartbeat.yaml with an incremented version comment (# version: N+1)
+5. The scheduler will automatically A/B test your candidate against the current version and promote winners
+</opro_prompt_mutation>
 
 YOUR TASK FOR THIS ROUND:
 
@@ -407,6 +420,18 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 			}
 		}
 
+		// Build prompt version summary for OPRO context (PROMPT-03)
+		let promptVersionSummary = "";
+		if (cfg.promptVersioner) {
+			try {
+				promptVersionSummary = cfg.taskNames
+					.map((name) => cfg.promptVersioner!.getPerformanceSummary(name))
+					.join("\n");
+			} catch {
+				// Non-critical — continue without version data
+			}
+		}
+
 		const prompt = buildReflectionPrompt(
 			mission,
 			ledgerSummary,
@@ -416,6 +441,7 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<GrowthSession
 			correctionRates,
 			IMPROVE_SKILL_PROCEDURE,
 			kgContext,
+			promptVersionSummary,
 		);
 
 		try {

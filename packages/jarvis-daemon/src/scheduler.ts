@@ -7,6 +7,7 @@ import type { TaskLedger } from "./state/ledger.js";
 import type { BreakerManager } from "./state/breakers.js";
 import { sendNotification, type NotifyChannel } from "./notify.js";
 import { dispatchHealing } from "./healing.js";
+import type { PromptVersioner } from "./prompt-versioner.js";
 
 interface HeartbeatTask {
 	schedule: string;
@@ -30,6 +31,7 @@ export interface SchedulerConfig {
 	ledger: TaskLedger;
 	breakers: BreakerManager;
 	notifyChannels?: NotifyChannel[];
+	promptVersioner?: PromptVersioner;
 }
 
 export class Scheduler {
@@ -73,6 +75,29 @@ export class Scheduler {
 	}
 
 	/**
+	 * Evaluate prompt A/B test and promote/revert if conclusive (PROMPT-05).
+	 */
+	private maybeEvaluatePrompt(taskName: string): void {
+		const { promptVersioner } = this.config;
+		if (!promptVersioner) return;
+
+		try {
+			const result = promptVersioner.evaluate(taskName);
+			if (!result) return; // Not enough runs yet
+
+			if (result.winner === "candidate") {
+				promptVersioner.promote(taskName);
+				console.log(`[jarvis] Prompt A/B: promoted candidate for ${taskName} (${result.reason})`);
+			} else {
+				promptVersioner.revert(taskName);
+				console.log(`[jarvis] Prompt A/B: reverted candidate for ${taskName} (${result.reason})`);
+			}
+		} catch (err) {
+			console.error(`[jarvis] Prompt A/B evaluate error for ${taskName}:`, err);
+		}
+	}
+
+	/**
 	 * Manually fire a task (used by tests and for on-demand dispatch).
 	 * Checks breaker, dispatches, records outcome.
 	 */
@@ -109,6 +134,20 @@ export class Scheduler {
 		const startedAt = new Date().toISOString();
 		const startTime = Date.now();
 
+		// Select prompt version (A/B testing via PromptVersioner)
+		const { promptVersioner } = this.config;
+		let promptToUse = task.prompt;
+		let promptVersion = 0;
+		if (promptVersioner) {
+			try {
+				const selection = promptVersioner.selectPrompt(taskName);
+				promptToUse = selection.prompt;
+				promptVersion = selection.version;
+			} catch {
+				// Fall back to task.prompt on any error
+			}
+		}
+
 		try {
 			const opts: DispatchOptions = {
 				model: task.model,
@@ -117,7 +156,7 @@ export class Scheduler {
 				pluginDirs: task.plugin_dirs,
 			};
 
-			const result = await dispatcher.dispatch(task.prompt, opts);
+			const result = await dispatcher.dispatch(promptToUse, opts);
 
 			// Extract JSON decision block from result (email triage outputs ```json{decisions:...}```)
 			let decisionSummary: string | undefined;
@@ -128,7 +167,7 @@ export class Scheduler {
 				decisionSummary = jsonMatch[1].trim();
 			}
 
-			ledger.record({
+			const runId = ledger.record({
 				task_name: taskName,
 				status: "success",
 				started_at: startedAt,
@@ -140,6 +179,13 @@ export class Scheduler {
 			});
 			breakers.recordSuccess(service);
 
+			// Record per-version metrics (PROMPT-02)
+			if (promptVersioner && promptVersion > 0) {
+				const totalTokens = (result.usage.input_tokens ?? 0) + (result.usage.output_tokens ?? 0);
+				promptVersioner.store.recordMetric(taskName, promptVersion, runId, true, Date.now() - startTime, totalTokens);
+				this.maybeEvaluatePrompt(taskName);
+			}
+
 			// Notify on success (non-urgent -- suppressed during quiet hours)
 			if (task.autonomy === "notify" && this.config.notifyChannels?.length) {
 				const summary = `Task "${taskName}" completed successfully.\n\n${result.result.slice(0, 500)}`;
@@ -149,7 +195,7 @@ export class Scheduler {
 			}
 		} catch (err) {
 			const error = err instanceof Error ? err.message : String(err);
-			ledger.record({
+			const runId = ledger.record({
 				task_name: taskName,
 				status: "failure",
 				started_at: startedAt,
@@ -157,6 +203,12 @@ export class Scheduler {
 				error,
 			});
 			breakers.recordFailure(service);
+
+			// Record per-version failure metric (PROMPT-02)
+			if (promptVersioner && promptVersion > 0) {
+				promptVersioner.store.recordMetric(taskName, promptVersion, runId, false, Date.now() - startTime, 0);
+				this.maybeEvaluatePrompt(taskName);
+			}
 
 			// Notify on failure (urgent -- bypasses quiet hours)
 			if (task.autonomy === "notify" && this.config.notifyChannels?.length) {
