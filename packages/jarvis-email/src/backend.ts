@@ -124,8 +124,8 @@ export class ImapFlowBackend implements EmailBackend {
 				const searchCriteria: Record<string, unknown> = {};
 				if (query.from) searchCriteria.from = query.from;
 				if (query.subject) searchCriteria.subject = query.subject;
-				if (query.since) searchCriteria.since = query.since;
-				if (query.before) searchCriteria.before = query.before;
+				if (query.since) searchCriteria.since = new Date(query.since);
+				if (query.before) searchCriteria.before = new Date(query.before);
 				if (query.flagged !== undefined) searchCriteria.flagged = query.flagged;
 				if (query.seen !== undefined) searchCriteria.seen = query.seen;
 				if (query.keyword) searchCriteria.keyword = query.keyword;

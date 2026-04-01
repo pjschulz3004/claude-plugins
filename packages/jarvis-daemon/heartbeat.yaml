@@ -41,6 +41,36 @@ tasks:
       STEP 4: Output JSON only (no prose):
       {"decisions": [{"email_id": "...", "from": "...", "subject": "...", "action": "trash|flag|read|notify", "reason": "..."}]}
 
+  email_cleanup:
+    schedule: "0 4 * * *"
+    service: imap
+    autonomy: full
+    model: haiku
+    max_turns: 30
+    timeout_ms: 120000
+    retries: 1
+    prompt: |
+      # version: 1
+      You are Jarvis running automated email cleanup.
+
+      STEP 1: Compute cutoff dates from today's date (UTC):
+        - cutoff_3d: today minus 3 days, formatted as YYYY-MM-DD
+        - cutoff_7d: today minus 7 days, formatted as YYYY-MM-DD
+
+      STEP 2: Search for expired short-TTL emails:
+        call search with keyword="$AutoDelete3d" and before=cutoff_3d
+
+      STEP 3: Search for expired long-TTL emails:
+        call search with keyword="$AutoDelete7d" and before=cutoff_7d
+
+      STEP 4: For every email returned in steps 2 and 3, call trash with its uid.
+        Process all matches. Do not skip any.
+
+      STEP 5: Output JSON only (no prose):
+      {"trashed": N, "ids": ["uid1", "uid2", ...]}
+
+      If no emails match: {"trashed": 0, "ids": []}
+
   memory_consolidation:
     schedule: "0 3 * * *"
     autonomy: full

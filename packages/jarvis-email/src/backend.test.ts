@@ -179,6 +179,19 @@ describe("ImapFlowBackend", () => {
 				{ uid: true },
 			);
 		});
+
+		it("converts before/since ISO strings to Date objects", async () => {
+			await backend.search({ before: "2026-03-29", since: "2026-03-01" });
+
+			const inst = mockInstances[0];
+			expect(inst.search).toHaveBeenCalledWith(
+				expect.objectContaining({
+					before: new Date("2026-03-29"),
+					since: new Date("2026-03-01"),
+				}),
+				{ uid: true },
+			);
+		});
 	});
 
 	describe("moveEmail", () => {
