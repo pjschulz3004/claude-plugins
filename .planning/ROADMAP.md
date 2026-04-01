@@ -103,7 +103,7 @@ Plans:
 Plans:
 - [x] 07-01-PLAN.md -- Email triage fix + Telegram UX polish
 - [x] 07-02-PLAN.md -- Telemetry foundation: correction_events table + CorrectionStore
-- [ ] 07-03-PLAN.md -- Correction detection: email + budget correction capture + rolling rates
+- [x] 07-03-PLAN.md -- Correction detection: email + budget correction capture + rolling rates
 
 ### Phase 8: Rule Evolution + Regression Safety
 **Goal**: Jarvis's email and budget rules are structured, scored, and automatically protected against regression
