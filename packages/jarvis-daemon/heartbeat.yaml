@@ -26,6 +26,11 @@ tasks:
 
       Keep it focused. If there are more than 10 unread, process the 10 most recent.
 
+      After processing, output a JSON block so the daemon can parse your per-email decisions:
+      ```json
+      {"decisions": [{"email_id": "...", "from": "...", "subject": "...", "action": "trash|flag|read|flag+keyword", "reason": "..."}]}
+      ```
+
   memory_consolidation:
     schedule: "0 3 * * *"
     autonomy: full

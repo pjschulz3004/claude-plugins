@@ -11,7 +11,8 @@ const CREATE_TABLE_SQL = `
 		error TEXT,
 		cost_usd REAL,
 		input_tokens INTEGER,
-		output_tokens INTEGER
+		output_tokens INTEGER,
+		decision_summary TEXT
 	)
 `;
 
@@ -28,6 +29,15 @@ export class TaskLedger {
 		this.db.pragma("journal_mode = WAL");
 		this.db.exec(CREATE_TABLE_SQL);
 		this.db.exec(CREATE_INDEX_SQL);
+
+		// Migration: add decision_summary column if missing (existing DBs)
+		try {
+			this.db.exec(
+				"ALTER TABLE task_runs ADD COLUMN decision_summary TEXT",
+			);
+		} catch {
+			// Column already exists -- ignore
+		}
 	}
 
 	/** Expose the underlying SQLite database for sharing with ChatHistory. */
@@ -37,8 +47,8 @@ export class TaskLedger {
 
 	record(entry: LedgerEntry): number {
 		const stmt = this.db.prepare(`
-			INSERT INTO task_runs (task_name, status, started_at, duration_ms, error, cost_usd, input_tokens, output_tokens)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+			INSERT INTO task_runs (task_name, status, started_at, duration_ms, error, cost_usd, input_tokens, output_tokens, decision_summary)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		`);
 		const result = stmt.run(
 			entry.task_name,
@@ -49,13 +59,14 @@ export class TaskLedger {
 			entry.cost_usd ?? null,
 			entry.input_tokens ?? null,
 			entry.output_tokens ?? null,
+			entry.decision_summary ?? null,
 		);
 		return Number(result.lastInsertRowid);
 	}
 
 	getRecent(taskName: string, limit = 10): LedgerEntry[] {
 		const stmt = this.db.prepare(`
-			SELECT id, task_name, status, started_at, duration_ms, error, cost_usd, input_tokens, output_tokens
+			SELECT id, task_name, status, started_at, duration_ms, error, cost_usd, input_tokens, output_tokens, decision_summary
 			FROM task_runs
 			WHERE task_name = ?
 			ORDER BY started_at DESC
@@ -84,7 +95,7 @@ export class TaskLedger {
 
 	getRecentAll(limit = 10): LedgerEntry[] {
 		const stmt = this.db.prepare(`
-			SELECT id, task_name, status, started_at, duration_ms, error, cost_usd, input_tokens, output_tokens
+			SELECT id, task_name, status, started_at, duration_ms, error, cost_usd, input_tokens, output_tokens, decision_summary
 			FROM task_runs
 			ORDER BY started_at DESC
 			LIMIT ?

@@ -119,6 +119,15 @@ export class Scheduler {
 
 			const result = await dispatcher.dispatch(task.prompt, opts);
 
+			// Extract JSON decision block from result (email triage outputs ```json{decisions:...}```)
+			let decisionSummary: string | undefined;
+			const jsonMatch = result.result.match(
+				/```json\s*\n?([\s\S]*?)\n?\s*```/,
+			);
+			if (jsonMatch?.[1]) {
+				decisionSummary = jsonMatch[1].trim();
+			}
+
 			ledger.record({
 				task_name: taskName,
 				status: "success",
@@ -127,6 +136,7 @@ export class Scheduler {
 				cost_usd: result.total_cost_usd,
 				input_tokens: result.usage.input_tokens,
 				output_tokens: result.usage.output_tokens,
+				decision_summary: decisionSummary,
 			});
 			breakers.recordSuccess(service);
 

@@ -29,6 +29,7 @@ export interface LedgerEntry {
 	cost_usd?: number;
 	input_tokens?: number;
 	output_tokens?: number;
+	decision_summary?: string;
 }
 
 // Breaker configuration
@@ -52,4 +53,5 @@ export const LedgerEntrySchema = z.object({
 	cost_usd: z.number().optional(),
 	input_tokens: z.number().optional(),
 	output_tokens: z.number().optional(),
+	decision_summary: z.string().optional(),
 });
