@@ -98,7 +98,12 @@ Plans:
   3. Every heartbeat task execution writes a structured telemetry row (task_name, outcome, duration_ms, tokens) to SQLite
   4. When Paul moves an email or recategorises a YNAB transaction, a correction event is captured linking back to the original Jarvis decision
   5. 7-day and 30-day rolling correction rates are queryable per task type
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 07-01-PLAN.md -- Email triage fix + Telegram UX polish
+- [ ] 07-02-PLAN.md -- Telemetry foundation: correction_events table + CorrectionStore
+- [ ] 07-03-PLAN.md -- Correction detection: email + budget correction capture + rolling rates
 
 ### Phase 8: Rule Evolution + Regression Safety
 **Goal**: Jarvis's email and budget rules are structured, scored, and automatically protected against regression
@@ -167,7 +172,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12
 | 4. Telegram + Notifications | v1.0 | 2/2 | Complete | 2026-03-31 |
 | 5. Intelligence | v1.0 | 3/3 | Complete | 2026-03-31 |
 | 6. Cutover | v1.0 | 1/1 | Complete | 2026-03-31 |
-| 7. Stabilise + Instrument | v2.0 | 0/? | Not started | - |
+| 7. Stabilise + Instrument | v2.0 | 0/3 | Planning | - |
 | 8. Rule Evolution + Regression Safety | v2.0 | 0/? | Not started | - |
 | 9. Growth Engine | v2.0 | 0/? | Not started | - |
 | 10. Prompt Optimisation | v2.0 | 0/? | Not started | - |
