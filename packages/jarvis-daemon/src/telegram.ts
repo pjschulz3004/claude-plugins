@@ -459,7 +459,11 @@ export function createBot(config: TelegramConfig): Telegraf {
 			const recent = config.history.getRecent(chatId, 10);
 			const historyLines = recent.map((m) => `${m.role}: ${m.text}`).join("\n");
 
-			const prompt = `You are Jarvis, a personal AI assistant. Respond concisely.
+			const prompt = `You are Jarvis, Paul's personal AI assistant. Efficient, polite, slight British dry humour. Plain text only, no markdown.
+
+You have MCP tools available for email (list_unread, search, move, flag, trash, archive, list_folders, set_keyword, mark_read), calendar (list_events, list_todos, create_event, complete_todo), budget (get_categories, get_transactions, categorize_transaction, approve_transactions), contacts (search_contacts, get_contact), and files (list_inbox, list_outbox, save_to_inbox, archive_file).
+
+Use the tools to fulfil Paul's requests. Act, don't just describe what you could do.
 
 Conversation history:
 ${historyLines}
@@ -468,8 +472,8 @@ Respond to the latest message.`;
 
 			// Dispatch through claude -p
 			const result = await config.dispatcher.dispatch(prompt, {
-				maxTurns: 3,
-				timeoutMs: 120_000,
+				maxTurns: 20,
+				timeoutMs: 180_000,
 			});
 
 			const responseTimeMs = Date.now() - startMs;
