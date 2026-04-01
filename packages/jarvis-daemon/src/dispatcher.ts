@@ -22,6 +22,8 @@ export interface DispatchOptions {
 	pluginDirs?: string[];
 	maxTurns?: number;
 	timeoutMs?: number;
+	/** Number of retries on transient exec failure (e.g. CLI startup crash, MCP blip). Default: 0. */
+	retries?: number;
 }
 
 type ExecFn = (
@@ -76,13 +78,44 @@ export class Dispatcher {
 		const env = { ...process.env };
 		delete env.ANTHROPIC_API_KEY;
 
-		const { stdout } = await this.runCommand("claude", args, {
+		const execOpts = {
 			timeout: opts.timeoutMs ?? 120_000,
 			maxBuffer: 10 * 1024 * 1024,
 			env,
-		});
+		};
 
-		return this.parseOutput(stdout);
+		const maxAttempts = 1 + (opts.retries ?? 0);
+		let lastError: Error | undefined;
+
+		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+			if (attempt > 1) {
+				// Linear backoff: 5s per retry (handles transient MCP blips without long waits)
+				await new Promise<void>((resolve) =>
+					setTimeout(resolve, (attempt - 1) * 5_000),
+				);
+				console.warn(
+					`[jarvis] Dispatcher retry ${attempt - 1}/${opts.retries} after exec failure`,
+				);
+			}
+
+			let stdout: string;
+			try {
+				const result = await this.runCommand("claude", args, execOpts);
+				stdout = result.stdout;
+			} catch (execErr) {
+				// Exec failure (process crash, timeout, non-zero exit): eligible for retry
+				lastError =
+					execErr instanceof Error ? execErr : new Error(String(execErr));
+				continue;
+			}
+
+			// Parse errors and Claude structural errors (error_max_turns, error_api) propagate
+			// immediately without retry — they indicate a problem with the prompt or Claude,
+			// not a transient infrastructure issue.
+			return this.parseOutput(stdout);
+		}
+
+		throw lastError!;
 	}
 
 	private parseOutput(stdout: string): ClaudeResult {

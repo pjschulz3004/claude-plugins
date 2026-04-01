@@ -156,6 +156,69 @@ describe("Dispatcher", () => {
 		);
 	});
 
+	it("retries on exec failure when retries > 0", async () => {
+		vi.useFakeTimers();
+
+		mockExec
+			.mockRejectedValueOnce(new Error("spawn claude ENOENT"))
+			.mockResolvedValueOnce({
+				stdout: JSON.stringify(SUCCESSFUL_RESULT),
+				stderr: "",
+			});
+
+		const dispatchPromise = dispatcher.dispatch("Hello", { retries: 1 });
+		await vi.runAllTimersAsync();
+		const result = await dispatchPromise;
+
+		expect(mockExec).toHaveBeenCalledTimes(2);
+		expect(result.subtype).toBe("success");
+
+		vi.useRealTimers();
+	});
+
+	it("does not retry on Claude structural error (error_max_turns)", async () => {
+		const errorResult = {
+			...SUCCESSFUL_RESULT,
+			subtype: "error_max_turns",
+			result: "Ran out of turns",
+		};
+		mockExec.mockResolvedValue({
+			stdout: JSON.stringify(errorResult),
+			stderr: "",
+		});
+
+		await expect(
+			dispatcher.dispatch("Hello", { retries: 2 }),
+		).rejects.toThrow(/error_max_turns/);
+
+		// Only called once — no retry for Claude structural errors
+		expect(mockExec).toHaveBeenCalledTimes(1);
+	});
+
+	it("exhausts all retries then throws the last exec error", async () => {
+		vi.useFakeTimers();
+
+		const execError = new Error("Command timed out after 180000ms");
+		// Use Once for each attempt to avoid unhandled rejection warnings
+		mockExec
+			.mockRejectedValueOnce(execError)
+			.mockRejectedValueOnce(execError)
+			.mockRejectedValueOnce(execError);
+
+		const dispatchPromise = dispatcher.dispatch("Hello", { retries: 2 });
+		// Attach rejection handler before advancing timers
+		const caught = dispatchPromise.catch((e: Error) => e);
+
+		await vi.runAllTimersAsync();
+
+		const err = await caught;
+		expect(err.message).toMatch(/Command timed out after 180000ms/);
+		// 1 initial attempt + 2 retries = 3 total calls
+		expect(mockExec).toHaveBeenCalledTimes(3);
+
+		vi.useRealTimers();
+	});
+
 	it("does not set ANTHROPIC_API_KEY in env", async () => {
 		mockExec.mockResolvedValue({
 			stdout: JSON.stringify(SUCCESSFUL_RESULT),

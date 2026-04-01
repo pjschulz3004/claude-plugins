@@ -17,6 +17,7 @@ interface HeartbeatTask {
 	model?: string;
 	max_turns?: number;
 	timeout_ms?: number;
+	retries?: number;
 	plugin_dirs?: string[];
 	prompt: string;
 }
@@ -183,6 +184,7 @@ export class Scheduler {
 				model: task.model,
 				maxTurns: task.max_turns,
 				timeoutMs: task.timeout_ms,
+				retries: task.retries,
 				pluginDirs: task.plugin_dirs,
 			};
 
