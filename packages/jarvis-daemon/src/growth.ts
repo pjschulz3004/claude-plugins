@@ -15,10 +15,17 @@
  */
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { join } from "node:path";
 import type { Dispatcher } from "./dispatcher.js";
 import type { TaskLedger } from "./state/ledger.js";
 import { sendNotification, type NotifyChannel } from "./notify.js";
+import {
+	assembleCouncil,
+	conveneCouncil,
+	type CouncilMember,
+	type ReviewContext,
+} from "./council.js";
 
 export interface GrowthConfig {
 	dispatcher: Dispatcher;
@@ -140,6 +147,14 @@ export async function runGrowthLoop(config: GrowthConfig): Promise<void> {
 
 	let roundNumber = 0;
 	const roundSummaries: string[] = [];
+	const council = assembleCouncil();
+	if (council.length > 0) {
+		console.log(
+			`[growth] Council assembled: ${council.map((m) => m.name).join(", ")}`,
+		);
+	} else {
+		console.log("[growth] No council members available (no API keys). Self-review only.");
+	}
 
 	while (isWithinWindow(cfg.startHour, cfg.endHour)) {
 		roundNumber++;
