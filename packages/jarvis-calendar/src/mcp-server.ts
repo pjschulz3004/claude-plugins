@@ -18,7 +18,7 @@ const config: CalDAVConfig = {
 const backend = new TsdavCalendarBackend(config);
 const server = new McpServer({ name: "jarvis-calendar", version: "0.1.0" });
 
-function textResult(text: string) {
+function textResult(text: string): { content: Array<{ type: "text"; text: string }> } {
 	return { content: [{ type: "text" as const, text }] };
 }
 

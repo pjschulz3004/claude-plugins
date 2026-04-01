@@ -108,7 +108,7 @@ export class ImapFlowBackend implements EmailBackend {
 						},
 						subject: msg.envelope?.subject ?? "",
 						date: msg.envelope?.date?.toISOString() ?? "",
-						flags: [...(msg.flags ?? [])],
+						flags: msg.flags ? Array.from(msg.flags) : [],
 						folder: "INBOX",
 					});
 				}
@@ -156,7 +156,7 @@ export class ImapFlowBackend implements EmailBackend {
 						},
 						subject: msg.envelope?.subject ?? "",
 						date: msg.envelope?.date?.toISOString() ?? "",
-						flags: [...(msg.flags ?? [])],
+						flags: msg.flags ? Array.from(msg.flags) : [],
 						folder,
 					});
 				}
@@ -252,7 +252,7 @@ export class ImapFlowBackend implements EmailBackend {
 					uid: true,
 					flags: true,
 				})) {
-					results.push({ flags: [...(msg.flags ?? [])] });
+					results.push({ flags: msg.flags ? Array.from(msg.flags) : [] });
 				}
 				if (results.length === 0) {
 					throw new Error(`Email UID ${uid} not found in INBOX`);

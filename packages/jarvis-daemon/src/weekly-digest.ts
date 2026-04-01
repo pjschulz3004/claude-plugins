@@ -37,8 +37,8 @@ function parseTriageActions(
 				const action = d.action as keyof typeof counts;
 				if (action in counts) counts[action]++;
 			}
-		} catch {
-			// Malformed JSON — skip
+		} catch (err) {
+			console.warn("[weekly-digest] Malformed decision_summary JSON:", (err as Error).message);
 		}
 	}
 	return counts;
@@ -53,8 +53,8 @@ function sumCleanupTrashed(entries: LedgerEntry[]): number {
 				trashed?: number;
 			};
 			total += parsed.trashed ?? 0;
-		} catch {
-			// Skip
+		} catch (err) {
+			console.warn("[weekly-digest] Malformed cleanup JSON:", (err as Error).message);
 		}
 	}
 	return total;

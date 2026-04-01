@@ -17,7 +17,7 @@ const config: YNABConfig = {
 const backend = new YnabBackend(config);
 const server = new McpServer({ name: "jarvis-budget", version: "0.1.0" });
 
-function textResult(text: string) {
+function textResult(text: string): { content: Array<{ type: "text"; text: string }> } {
 	return { content: [{ type: "text" as const, text }] };
 }
 
