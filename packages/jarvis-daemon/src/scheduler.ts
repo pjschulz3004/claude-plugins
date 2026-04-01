@@ -190,7 +190,7 @@ export class Scheduler {
 				pluginDirs: task.plugin_dirs,
 			};
 
-			const result = await dispatcher.dispatch(promptToUse, opts);
+			const result = await dispatcher.dispatch(this.substituteTemplateVars(promptToUse), opts);
 
 			// Extract JSON decision block from result (email triage outputs ```json{decisions:...}```)
 			let decisionSummary: string | undefined;
@@ -267,5 +267,20 @@ export class Scheduler {
 				});
 			}
 		}
+	}
+
+	/**
+	 * Replace {{date}} and {{tomorrow}} with concrete ISO 8601 dates (YYYY-MM-DD).
+	 * Applied to every prompt before dispatch so briefing tasks never have to infer
+	 * the calendar date from tool results.
+	 */
+	private substituteTemplateVars(prompt: string): string {
+		const now = new Date();
+		const toISODate = (d: Date): string => d.toISOString().slice(0, 10);
+		const date = toISODate(now);
+		const tomorrow = toISODate(new Date(now.getTime() + 86_400_000));
+		return prompt
+			.replace(/\{\{date\}\}/g, date)
+			.replace(/\{\{tomorrow\}\}/g, tomorrow);
 	}
 }

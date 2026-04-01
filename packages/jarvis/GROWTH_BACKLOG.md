@@ -17,6 +17,23 @@ Description of what to do and why it matters.
 
 ## Active Backlog
 
+### GB-014 Scheduler date injection for briefing prompts
+**Priority:** P3
+**Type:** tune
+**Status:** queued
+**Added:** 2026-04-01
+
+The morning_briefing and evening_summary prompts say "today (ISO 8601)" and "tomorrow" without injecting an explicit date. Claude infers the date from calendar tool results, which works in practice but is fragile if no calendar events exist. A lightweight `{{date}}` and `{{tomorrow}}` template substitution in the scheduler (before dispatch) would make date context explicit and eliminate the inference dependency. Requires a small change to `scheduler.ts` (`fireTask` replaces template variables before passing to dispatcher) and heartbeat.yaml prompt updates.
+
+### GB-013 Tune evening_summary prompt for cross-domain synthesis
+**Priority:** P2
+**Type:** tune
+**Status:** done
+**Added:** 2026-04-01
+**Completed:** 2026-04-01
+
+The v1 prompt listed data linearly without connecting it. Added `get_categories` call so budget limits are available for comparison, added Step 2 cross-reference instructions (calendar attendee who emailed, category over budget, INVOICE email matching a transaction), and changed "tomorrow's first event" to all tomorrow's events. Raised max_turns from 15 to 20 for the extra tool call. Prompt structure now matches morning_briefing's gather→cross-reference→write pattern. Commit: 04f4433.
+
 ### GB-009 Fix briefing task notify format
 **Priority:** P1
 **Type:** fix

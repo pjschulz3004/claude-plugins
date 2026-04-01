@@ -79,12 +79,12 @@ tasks:
     max_turns: 20
     timeout_ms: 150000
     prompt: |
-      # version: 1
+      # version: 2
       You are Jarvis. Paul is starting his day. Produce a morning briefing by gathering
       data from all available domains.
 
       STEP 1: Gather data (if a tool fails, note the gap and continue):
-      - Call list_events with startDate = today 00:00:00 UTC and endDate = today 23:59:59 UTC
+      - Call list_events with startDate = {{date}}T00:00:00Z and endDate = {{date}}T23:59:59Z
       - Call list_todos
       - Call list_unread with limit=10
       - Call get_categories
@@ -115,13 +115,13 @@ tasks:
     max_turns: 20
     timeout_ms: 120000
     prompt: |
-      # version: 2
+      # version: 3
       You are Jarvis. Paul's day is winding down. Produce a brief end-of-day summary.
 
       STEP 1: Gather data (if a tool fails, note the gap and continue):
-      - Call get_transactions with startDate = today (ISO 8601 date, e.g. 2026-04-01) and endDate = today
+      - Call get_transactions with startDate = {{date}} and endDate = {{date}}
       - Call get_categories (to compare today's spending against budget limits)
-      - Call list_events with startDate = tomorrow 00:00:00 UTC and endDate = tomorrow 23:59:59 UTC
+      - Call list_events with startDate = {{tomorrow}}T00:00:00Z and endDate = {{tomorrow}}T23:59:59Z
       - Call list_unread with limit=10
 
       STEP 2: Cross-reference before writing:

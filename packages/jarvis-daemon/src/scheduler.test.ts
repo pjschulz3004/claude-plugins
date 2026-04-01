@@ -199,6 +199,34 @@ describe("Scheduler", () => {
 		expect(sent[0]).not.toContain("completed successfully");
 	});
 
+	it("substitutes {{date}} and {{tomorrow}} in prompts before dispatch", async () => {
+		// Pin time to a known date so we can assert exact substitution
+		vi.setSystemTime(new Date("2026-04-15T10:00:00Z"));
+
+		const templateYaml = YAML_CONTENT.replace(
+			'prompt: "Summarize today"',
+			'prompt: "Get events for {{date}} through {{tomorrow}}"',
+		);
+		writeFileSync(yamlPath, templateYaml);
+
+		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
+
+		const templateScheduler = new Scheduler({
+			yamlPath,
+			dispatcher: mockDispatcher,
+			ledger,
+			breakers,
+		});
+		templateScheduler.start();
+		await templateScheduler.fireTask("daily_summary");
+		templateScheduler.stop();
+
+		expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
+			"Get events for 2026-04-15 through 2026-04-16",
+			expect.any(Object),
+		);
+	});
+
 	it("hot-reloads task config when heartbeat.yaml changes on disk", async () => {
 		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
 

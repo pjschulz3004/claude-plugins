@@ -26,6 +26,37 @@ What I want to focus on next.
 
 ## Sessions
 
+## 2026-04-01 Growth Session Round 12 (this session)
+
+**Rounds completed:** 12
+**Items addressed:** GB-013
+
+### Reflection
+
+Backlog is clear of all queued items. Correction rates are all 0.0%. The remaining failures in the performance data are legacy runs from pre-fix prompt versions. Core infrastructure is solid. The gap that stands out: the evening summary (v1) lacks the cross-domain synthesis that makes the morning briefing valuable. It calls `get_transactions` but not `get_categories`, so it can describe spending but not evaluate it against budget limits. It lists "tomorrow's first event" instead of all events. The mission says "connect the dots" — the evening summary was only listing them.
+
+### Work Done
+
+Implemented GB-013: tuned evening_summary prompt from version 1 to version 2.
+
+- Added `get_categories` to STEP 1 gather list, giving the model budget context alongside transactions
+- Added STEP 2 cross-reference instructions (matching morning_briefing's pattern): calendar attendee who also emailed today, transaction category over budget, INVOICE email matching a transaction
+- Changed "tomorrow's first event" to "all of tomorrow's events" in STEP 3
+- Raised max_turns from 15 to 20 (one extra tool call added)
+- Prompt structure now matches the morning_briefing's gather→cross-reference→write pattern
+
+347 tests pass. No TypeScript changes.
+
+### Commits
+
+- 04f4433: growth(2026-04-01): tune evening_summary prompt v2 with cross-domain synthesis (GB-013)
+
+### Tomorrow
+
+Consider GB-014 (scheduler date injection): prompts that say "today (ISO 8601)" rely on Claude inferring the date from tool results. A lightweight `{{date}}` template variable in the scheduler would make this explicit. Also monitor whether the new evening_summary v2 generates better cross-domain connections in practice — if it fires at 21:00 and Paul has calendar events + transactions, the synthesis step should surface something useful.
+
+---
+
 ## 2026-04-01 Growth Session Round 11 (this session)
 
 **Rounds completed:** 11
