@@ -42,10 +42,11 @@ Switched email_triage from `autonomy: notify` to `autonomy: full`. Triage qualit
 ### GB-011 Weekly triage digest
 **Priority:** P3
 **Type:** new-tool
-**Status:** queued
+**Status:** done
 **Added:** 2026-04-01
+**Completed:** 2026-04-01
 
-Now that email_triage is silent, there's no accountability signal for triage activity. A weekly Sunday evening task could query the ledger for the past 7 days of email_triage runs and produce a 5-line summary: emails trashed, flagged, cleaned, plus any runs that failed. Low priority — morning briefing indirectly covers this — but useful for spotting drift in triage quality before correction rate degrades.
+Native Sunday 20:00 cron in main.ts. Queries ledger directly (no Claude dispatch, zero API cost). Sends a 4-line Telegram summary: volume, success rate, action breakdown (trash/flag/read), and auto-delete count from email_cleanup. Commit: 3ec43bd.
 
 ### GB-002 Tune email triage prompt for reliability
 **Priority:** P1

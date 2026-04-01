@@ -26,6 +26,35 @@ What I want to focus on next.
 
 ## Sessions
 
+## 2026-04-01 Growth Session Round 9
+
+**Rounds completed:** 9
+**Items addressed:** GB-011
+
+### Reflection
+
+All failures in today's performance data are pre-fix legacy runs. Post-fix triage runs clean at 0.0% correction rate. The system's operational foundation is solid. The one gap: email_triage runs silently 16x/day with no accountability signal unless something actually breaks. Growth session rounds 1-8 fixed the infrastructure; round 9 adds observability so drift can be spotted before correction rates degrade.
+
+### Work Done
+
+Implemented GB-011: weekly triage digest.
+
+- Added `packages/jarvis-daemon/src/weekly-digest.ts`: `collectWeeklyDigest()` queries the ledger for the past 7 days of email_triage and email_cleanup runs, parses action counts from decision_summary JSON, and returns structured stats. `formatWeeklyDigest()` renders a 4-line Telegram message: volume, success rate, action breakdown, auto-delete count.
+- Added `packages/jarvis-daemon/src/weekly-digest.test.ts`: 10 tests covering empty ledger, date filtering, failure counting, action parsing, cleanup summation, malformed JSON resilience, and output format.
+- Added native cron in `main.ts`: Sunday 20:00, no Claude dispatch. Zero API cost. Calls `collectWeeklyDigest(ledger)` directly and sends via existing notifyChannels.
+
+343 tests pass. TypeScript build clean.
+
+### Commits
+
+- 3ec43bd: growth(2026-04-01): add weekly triage digest task (GB-011)
+
+### Tomorrow
+
+Active backlog is now down to GB-007 (correction signal for email_cleanup, P3/research). Both remaining items are P3. The system is operationally healthy. Next session should consider whether to research GB-007 or look outward: are there new patterns worth tracking? Morning briefing quality after the first real run would be worth reviewing.
+
+---
+
 ## 2026-04-01 Growth Session Round 8 (this session)
 
 **Rounds completed:** 8
