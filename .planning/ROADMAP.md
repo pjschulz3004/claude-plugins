@@ -118,7 +118,7 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md -- Structured YAML rule format + RuleStore + migration of existing rules
-- [ ] 08-02-PLAN.md -- Regression detection with snapshot-compare-revert safety net
+- [x] 08-02-PLAN.md -- Regression detection with snapshot-compare-revert safety net
 
 ### Phase 9: Growth Engine
 **Goal**: Jarvis autonomously improves himself overnight through a structured reflect-plan-implement-verify loop

@@ -34,10 +34,10 @@
 
 ### Regression Detection (REG)
 
-- [ ] **REG-01**: Rolling 7-day correction rate computed per task type after each growth session
-- [ ] **REG-02**: If correction rate increases after a self-modification, the change is auto-reverted (git revert)
-- [ ] **REG-03**: Regression events are logged in GROWTH_LOG.md with the reverted commit hash
-- [ ] **REG-04**: After a regression revert, the backlog item is marked as "reverted" with reason
+- [x] **REG-01**: Rolling 7-day correction rate computed per task type after each growth session
+- [x] **REG-02**: If correction rate increases after a self-modification, the change is auto-reverted (git revert)
+- [x] **REG-03**: Regression events are logged in GROWTH_LOG.md with the reverted commit hash
+- [x] **REG-04**: After a regression revert, the backlog item is marked as "reverted" with reason
 
 ### Skill Creation (SKILL)
 
@@ -115,10 +115,10 @@
 | RULE-04 | Phase 8 | Complete |
 | RULE-05 | Phase 8 | Complete |
 | RULE-06 | Phase 8 | Complete |
-| REG-01 | Phase 8 | Pending |
-| REG-02 | Phase 8 | Pending |
-| REG-03 | Phase 8 | Pending |
-| REG-04 | Phase 8 | Pending |
+| REG-01 | Phase 8 | Complete |
+| REG-02 | Phase 8 | Complete |
+| REG-03 | Phase 8 | Complete |
+| REG-04 | Phase 8 | Complete |
 | GROW-01 | Phase 9 | Pending |
 | GROW-02 | Phase 9 | Pending |
 | GROW-03 | Phase 9 | Pending |
