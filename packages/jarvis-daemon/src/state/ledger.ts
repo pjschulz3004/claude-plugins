@@ -21,6 +21,11 @@ const CREATE_INDEX_SQL = `
 		ON task_runs(task_name, started_at DESC)
 `;
 
+const CREATE_INDEX_STARTED_SQL = `
+	CREATE INDEX IF NOT EXISTS idx_task_runs_started
+		ON task_runs(started_at DESC)
+`;
+
 export class TaskLedger {
 	private readonly db: Database.Database;
 
@@ -29,6 +34,7 @@ export class TaskLedger {
 		this.db.pragma("journal_mode = WAL");
 		this.db.exec(CREATE_TABLE_SQL);
 		this.db.exec(CREATE_INDEX_SQL);
+		this.db.exec(CREATE_INDEX_STARTED_SQL);
 
 		// Migration: add decision_summary column if missing (existing DBs)
 		try {
@@ -76,11 +82,16 @@ export class TaskLedger {
 	}
 
 	getConsecutiveFailures(taskName: string): number {
-		const rows = this.db.prepare(`
-			SELECT status FROM task_runs
+		// Use a reasonable LIMIT to avoid scanning entire history.
+		// In practice, consecutive failures beyond 100 indicate a systemic issue.
+		const rows = this.db
+			.prepare(
+				`SELECT status FROM task_runs
 			WHERE task_name = ?
 			ORDER BY started_at DESC
-		`).all(taskName) as Array<{ status: string }>;
+			LIMIT 100`,
+			)
+			.all(taskName) as Array<{ status: string }>;
 
 		let count = 0;
 		for (const row of rows) {
