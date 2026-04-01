@@ -20,10 +20,25 @@ import {
 	getTimeOfDay,
 	getDayOfWeek,
 } from "./state/interactions.js";
-import { dispatchStreaming } from "./streaming-dispatch.js";
+import { ClaudeAPI, type StreamDelta } from "./claude-api.js";
 import type { ImapFlowBackend } from "@jarvis/email";
 import type { TsdavCalendarBackend } from "@jarvis/calendar";
 import type { YnabBackend } from "@jarvis/budget";
+
+const TOOL_DESCRIPTIONS: Record<string, string> = {
+	list_unread: "Checking your inbox...",
+	search: "Searching emails...",
+	move: "Moving email...",
+	flag: "Flagging...",
+	trash: "Trashing...",
+	list_events: "Checking your calendar...",
+	list_todos: "Looking at your tasks...",
+	get_categories: "Checking budget...",
+	get_transactions: "Looking at transactions...",
+	categorize_transaction: "Categorising...",
+	approve_transactions: "Approving transactions...",
+	search_contacts: "Looking up contacts...",
+};
 
 export interface TelegramConfig {
 	token: string;
@@ -425,10 +440,16 @@ export function createBot(config: TelegramConfig): Telegraf {
 		}
 	});
 
-	// Free-text relay (TG-02) -- runs after command handlers
-	// Track last interaction ID for follow-up detection
+	// Free-text relay — direct Claude API with streaming
+	const claude = new ClaudeAPI();
 	let lastInteractionId: number | null = null;
 	let lastInteractionTopic: string | null = null;
+
+	const SYSTEM_PROMPT = `You are Jarvis, Paul's personal AI assistant. You run on a VPS in Germany, 24/7.
+
+Personality: Efficient, polite, slight British dry humour. Lead with what matters. Skip filler.
+Format: Plain text only. No markdown. No bullet points unless listing items.
+Behaviour: Act on requests, don't just describe what you could do. Be concise.`;
 
 	bot.on("text", async (ctx) => {
 		const startMs = Date.now();
@@ -440,7 +461,7 @@ export function createBot(config: TelegramConfig): Telegraf {
 		const topic = classifyTopic(userText);
 		const mood = classifyMood(userText);
 
-		// Detect follow-up on same topic (possible dissatisfaction)
+		// Detect follow-up on same topic
 		const isFollowUp = lastInteractionTopic !== null && lastInteractionTopic === topic;
 		if (isFollowUp && lastInteractionId !== null && config.interactions) {
 			config.interactions.markFollowUp(lastInteractionId);
@@ -453,67 +474,66 @@ export function createBot(config: TelegramConfig): Telegraf {
 		}
 
 		try {
-			// Record user message in chat history
+			// Record user message in chat history (for telemetry — API maintains its own context)
 			config.history.record(chatId, "user", userText);
 
-			// Progress message — updated as Claude uses tools
+			// Progress message — updated as Claude streams text
 			let progressMsgId: number | null = null;
-			let lastProgressText = "";
+			let accumulatedText = "";
+			let lastEditTime = 0;
+			const EDIT_DEBOUNCE_MS = 800; // Don't edit faster than this
 
-			const onProgress = async (update: string) => {
-				if (update === lastProgressText) return;
-				lastProgressText = update;
-				try {
-					if (progressMsgId) {
-						await ctx.telegram.editMessageText(
-							ctx.chat.id,
-							progressMsgId,
-							undefined,
-							update,
-						);
+			const onDelta = (delta: StreamDelta) => {
+				if (delta.type === "tool_use_start" && delta.toolName) {
+					// Show tool activity
+					const desc = TOOL_DESCRIPTIONS[delta.toolName] ?? `Using ${delta.toolName}...`;
+					if (!progressMsgId) {
+						ctx.reply(desc).then((msg) => {
+							progressMsgId = msg.message_id;
+						}).catch(() => {});
 					} else {
-						const sent = await ctx.reply(update);
-						progressMsgId = sent.message_id;
+						ctx.telegram.editMessageText(ctx.chat.id, progressMsgId, undefined, desc).catch(() => {});
 					}
-				} catch {
-					// Edit can fail if message hasn't changed — ignore
+				} else if (delta.type === "text" && delta.text) {
+					accumulatedText += delta.text;
+					// Debounced edit — stream partial text to Telegram
+					const now = Date.now();
+					if (now - lastEditTime > EDIT_DEBOUNCE_MS && accumulatedText.length > 20) {
+						lastEditTime = now;
+						const preview = accumulatedText.slice(0, 4000);
+						if (progressMsgId) {
+							ctx.telegram.editMessageText(ctx.chat.id, progressMsgId, undefined, preview).catch(() => {});
+						} else {
+							ctx.reply(preview).then((msg) => {
+								progressMsgId = msg.message_id;
+							}).catch(() => {});
+						}
+					}
 				}
 			};
 
-			// Show typing while working
-			const typingInterval = setInterval(() => {
-				ctx.sendChatAction("typing").catch(() => {});
-			}, 4000);
-
-			// The prompt is just the user's message — session history is maintained by --resume
-			const prompt = `You are Jarvis, Paul's personal AI assistant. Efficient, polite, slight British dry humour. Plain text only, no markdown.
-
-You have MCP tools available for email, calendar, budget, contacts, and files. Use them to fulfil requests. Act, don't just describe.
-
-User: ${userText}`;
-
-			// Streaming dispatch with session resume
-			const result = await dispatchStreaming(prompt, {
-				chatId,
-				maxTurns: 20,
-				timeoutMs: 180_000,
-				onProgress,
+			// Direct API call with streaming — conversation context maintained automatically
+			const result = await claude.sendStreaming(chatId, userText, {
+				model: "sonnet",
+				system: SYSTEM_PROMPT,
+				onDelta,
 			});
-
-			clearInterval(typingInterval);
-
-			// Delete progress message if we had one
-			if (progressMsgId) {
-				try {
-					await ctx.telegram.deleteMessage(ctx.chat.id, progressMsgId);
-				} catch {
-					// May fail if already deleted — ignore
-				}
-			}
 
 			const responseTimeMs = Date.now() - startMs;
 
-			// Record assistant response in chat history
+			// Send or update final response
+			const finalText = result.text || "Done.";
+			if (progressMsgId) {
+				try {
+					await ctx.telegram.editMessageText(ctx.chat.id, progressMsgId, undefined, finalText.slice(0, 4000));
+				} catch {
+					await sendSplit(ctx, finalText);
+				}
+			} else {
+				await sendSplit(ctx, finalText);
+			}
+
+			// Record in chat history
 			config.history.record(chatId, "assistant", result.text);
 
 			// Deep interaction logging
