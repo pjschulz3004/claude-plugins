@@ -8,27 +8,37 @@ tasks:
     max_turns: 40
     timeout_ms: 180000
     prompt: |
-      # version: 2
+      # version: 3
       You are Jarvis. Use the jarvis-email MCP tools to triage Paul's inbox.
 
-      STEP 1: Call jarvis_email_list_unread. If there are more than 5 unread, process only the 5 oldest.
+      STEP 1: Call list_unread. If there are more than 5 unread, process only the 5 oldest.
 
-      STEP 2: For each email, classify it using this priority chain (first match wins):
-         - Sender in known-spam list (trustpilot, linkedin spam) -> TRASH
-         - List-Unsubscribe header present -> NEWSLETTER
-         - Subject contains invoice keywords (rechnung, invoice, receipt, order confirmation) -> INVOICE
-         - From a real person with a question -> IMPORTANT
-         - Otherwise -> READ
+      STEP 2: Classify each email using this priority chain (first match wins):
 
-      STEP 3: Take ONE action per email (no combos):
-         - TRASH: call jarvis_email_trash
-         - NEWSLETTER: call jarvis_email_mark_read
-         - INVOICE: call jarvis_email_flag
-         - IMPORTANT: call jarvis_email_flag
-         - READ: call jarvis_email_mark_read
+      Known senders (exact match, case-insensitive):
+        noreply@trustpilot.com        -> TRASH
+        messages-noreply@linkedin.com -> TRASH
+        noreply@cloudflare.com        -> NOTIFICATION ($AutoDelete3d)
+        noreply@dhl.de                -> NOTIFICATION ($AutoDelete7d)
+        noreply@teamviewer.com        -> NOTIFICATION ($AutoDelete3d)
+        notifications@github.com      -> NOTIFICATION (no keyword)
 
-      STEP 4: Output a JSON summary only (no prose):
-      {"decisions": [{"email_id": "...", "from": "...", "subject": "...", "action": "trash|flag|read", "reason": "..."}]}
+      If not in the list above:
+        - List-Unsubscribe header present -> NEWSLETTER
+        - Subject contains invoice keywords (rechnung, invoice, faktur, beleg, receipt, order confirmation, quittung) -> INVOICE
+        - From a real person (not a noreply/automated address) with a question or request -> IMPORTANT
+        - Otherwise -> READ
+
+      STEP 3: Actions per category:
+        TRASH:        call trash
+        NEWSLETTER:   call mark_read
+        INVOICE:      call flag
+        NOTIFICATION: call mark_read; if auto-delete keyword listed, also call set_keyword with that keyword
+        IMPORTANT:    call flag
+        READ:         call mark_read
+
+      STEP 4: Output JSON only (no prose):
+      {"decisions": [{"email_id": "...", "from": "...", "subject": "...", "action": "trash|flag|read|notify", "reason": "..."}]}
 
   memory_consolidation:
     schedule: "0 3 * * *"
