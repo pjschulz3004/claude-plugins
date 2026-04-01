@@ -25,12 +25,12 @@
 
 ### Rule Evolution (RULE)
 
-- [ ] **RULE-01**: Email rules have confidence scores (0.0-1.0) based on evaluation count and accuracy
-- [ ] **RULE-02**: Budget payee rules have confidence scores based on observation count
-- [ ] **RULE-03**: Each rule has source attribution: user_correction, self_generated, or seeded
-- [ ] **RULE-04**: Rules below confidence threshold (0.8) are flagged for human review
-- [ ] **RULE-05**: Rule files use structured YAML format (not free-form markdown) for programmatic access
-- [ ] **RULE-06**: Rule changes are git-tracked with clear commit messages
+- [x] **RULE-01**: Email rules have confidence scores (0.0-1.0) based on evaluation count and accuracy
+- [x] **RULE-02**: Budget payee rules have confidence scores based on observation count
+- [x] **RULE-03**: Each rule has source attribution: user_correction, self_generated, or seeded
+- [x] **RULE-04**: Rules below confidence threshold (0.8) are flagged for human review
+- [x] **RULE-05**: Rule files use structured YAML format (not free-form markdown) for programmatic access
+- [x] **RULE-06**: Rule changes are git-tracked with clear commit messages
 
 ### Regression Detection (REG)
 
@@ -109,12 +109,12 @@
 | TG-UX-02 | Phase 7 | Pending |
 | TG-UX-03 | Phase 7 | Pending |
 | TG-UX-04 | Phase 7 | Pending |
-| RULE-01 | Phase 8 | Pending |
-| RULE-02 | Phase 8 | Pending |
-| RULE-03 | Phase 8 | Pending |
-| RULE-04 | Phase 8 | Pending |
-| RULE-05 | Phase 8 | Pending |
-| RULE-06 | Phase 8 | Pending |
+| RULE-01 | Phase 8 | Complete |
+| RULE-02 | Phase 8 | Complete |
+| RULE-03 | Phase 8 | Complete |
+| RULE-04 | Phase 8 | Complete |
+| RULE-05 | Phase 8 | Complete |
+| RULE-06 | Phase 8 | Complete |
 | REG-01 | Phase 8 | Pending |
 | REG-02 | Phase 8 | Pending |
 | REG-03 | Phase 8 | Pending |

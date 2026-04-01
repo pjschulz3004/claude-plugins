@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Jarvis Growth Intelligence
 status: executing
-stopped_at: Completed 07-03-PLAN.md
-last_updated: "2026-04-01T07:51:30.686Z"
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-04-01T08:02:29.386Z"
 last_activity: 2026-04-01
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
   percent: 67
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** A personal assistant that works when you're not looking (daemon) and when you are (plugin), with every tool independently reusable. Jarvis should be better tomorrow than he was today.
-**Current focus:** Phase 7: Stabilise + Instrument
+**Current focus:** Phase 8: Rule Evolution + Regression Safety
 
 ## Current Position
 
-Phase: 7 of 12 (Stabilise + Instrument)
-Plan: 3 of 3 in current phase
-Status: Ready to execute
+Phase: 8 of 12 (Rule Evolution + Regression Safety)
+Plan: 1 of 2 in current phase
+Status: Executing
 Last activity: 2026-04-01
 
 Progress: [███████░░░] 67%
@@ -58,6 +58,7 @@ Progress: [███████░░░] 67%
 
 | Phase 07 P02 | 3min | 2 tasks | 2 files |
 | Phase 07 P03 | 3min | 2 tasks | 4 files |
+| Phase 08 P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase 07]: CorrectionStore shares TaskLedger database instance via constructor injection
 - [Phase 07-01]: EUR currency for /budget, morning greeting as urgent, decision_summary in ledger
 - [Phase 07]: Correction detection uses callback injection for email/budget lookups, stubs until backends support per-item queries
+- [Phase 08-01]: RuleStore is static (no instance state) -- pure functions on RuleFile objects
+- [Phase 08-01]: Extra YAML fields (llm_fallback, auto_delete_keywords, principles, alerts) preserved via index signature
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T07:51:30.684Z
-Stopped at: Completed 07-03-PLAN.md
+Last session: 2026-04-01T08:01:39Z
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None
