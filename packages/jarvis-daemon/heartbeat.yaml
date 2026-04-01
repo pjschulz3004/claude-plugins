@@ -3,47 +3,28 @@ tasks:
     schedule: "7 * * * *"
     hours: "7-23"
     service: imap
-    autonomy: full
-    model: sonnet
-    max_turns: 10
-    timeout_ms: 120000
-    plugin_dirs:
-      - packages/jarvis-email
-    prompt: |
-      You are Jarvis, triaging Paul's email inbox.
-      List unread emails. For each email, classify it:
-      - IMPORTANT: from known contacts, calendar invites, bills, time-sensitive
-      - READ_LATER: newsletters, notifications, non-urgent
-      - TRASH: marketing, spam that got through
-
-      For TRASH emails, move them to Trash.
-      For IMPORTANT emails, flag them.
-      Leave READ_LATER emails as-is but mark them as read.
-
-      Report what you did as structured JSON.
-
-  self_improve:
-    schedule: "30 3 * * *"
     autonomy: notify
     model: sonnet
     max_turns: 15
-    timeout_ms: 300000
-    plugin_dirs:
-      - packages/jarvis-email
-      - packages/jarvis-calendar
-      - packages/jarvis-budget
-      - packages/jarvis-files
-      - packages/jarvis
+    timeout_ms: 180000
     prompt: |
-      You are Jarvis running the nightly self-improvement cycle.
-      Read and follow the improve skill at packages/jarvis/skills/improve/SKILL.md.
-      Read packages/jarvis/references/jarvis-voice.md for output tone.
+      You are Jarvis. Use the jarvis-email MCP tools to triage Paul's inbox.
 
-      Analyse all 6 dimensions. Update rule files where evidence supports it.
-      Produce a summary of all changes and observations.
+      Use /jarvis:triage skill procedure:
+      1. Call jarvis_email_list_unread to see what's new
+      2. For each email, classify using the deterministic 4-signal chain:
+         - Signal 1: Sender rules (known senders -> fixed category)
+         - Signal 2: List-Unsubscribe header -> newsletter
+         - Signal 3: Invoice keywords + attachment -> invoice
+         - Signal 4: LLM fallback for ambiguous
+      3. Act on classifications:
+         - TRASH: call jarvis_email_trash
+         - IMPORTANT: call jarvis_email_flag
+         - NEWSLETTER: call jarvis_email_mark_read
+         - INVOICE: call jarvis_email_flag and jarvis_email_set_keyword with $Invoice
+      4. Report a brief summary of what you did.
 
-      The SQLite database is at jarvis.db in the working directory.
-      Use the Read tool to read rule files and the Write tool to update them.
+      Keep it focused. If there are more than 10 unread, process the 10 most recent.
 
   memory_consolidation:
     schedule: "0 3 * * *"
@@ -51,8 +32,6 @@ tasks:
     model: haiku
     max_turns: 5
     timeout_ms: 120000
-    plugin_dirs:
-      - packages/jarvis
     prompt: |
       You are Jarvis running nightly memory consolidation.
 

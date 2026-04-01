@@ -6,9 +6,11 @@ import { Scheduler } from "./scheduler.js";
 import { HealthServer } from "./health.js";
 import { createBot } from "./telegram.js";
 import { TelegramChannel } from "./notify.js";
+import { runGrowthLoop } from "./growth.js";
 import { ImapFlowBackend } from "@jarvis/email";
 import { TsdavCalendarBackend } from "@jarvis/calendar";
 import { YnabBackend } from "@jarvis/budget";
+import { Cron } from "croner";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { Telegraf } from "telegraf";
@@ -101,6 +103,25 @@ async function start() {
 
 	await health.start();
 	scheduler.start();
+
+	// Nightly growth loop: 01:00-05:00, runs as a time-bounded loop
+	const repoRoot = join(__dirname, "..", "..");
+	const growthJob = new Cron("0 1 * * *", () => {
+		console.log("[jarvis] Starting nightly growth session...");
+		runGrowthLoop({
+			dispatcher,
+			ledger,
+			notifyChannels,
+			repoRoot,
+			startHour: 1,
+			endHour: 5,
+			pauseBetweenRoundsMs: 60_000,
+			maxTurnsPerRound: 30,
+			timeoutPerRoundMs: 900_000,
+		}).catch((err) => {
+			console.error("[jarvis] Growth loop error:", err);
+		});
+	});
 
 	console.log(
 		`[jarvis] Daemon running. Health at :${process.env.JARVIS_HEALTH_PORT || "3333"}/health`,
