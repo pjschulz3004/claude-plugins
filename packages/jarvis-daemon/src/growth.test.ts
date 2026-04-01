@@ -12,6 +12,7 @@ vi.mock("./council.js", () => ({
 import {
 	runGrowthLoop,
 	buildReflectionPrompt,
+	compileMorningSummary,
 	type GrowthConfig,
 	type GrowthSessionResult,
 } from "./growth.js";
@@ -266,6 +267,88 @@ describe("growth engine", () => {
 			expect(prompt).toContain("npm test");
 			expect(prompt).toContain("npm run build");
 			expect(prompt).toContain("MANDATORY");
+		});
+	});
+
+	describe("GitHub issue + backlog instructions in prompt", () => {
+		it("Test 1: buildReflectionPrompt contains gh issue create with --repo, --title, --body, --label", () => {
+			const prompt = buildReflectionPrompt(
+				"mission",
+				"ledger",
+				"backlog",
+				"log",
+				1,
+				"rates",
+				"procedure",
+			);
+
+			expect(prompt).toContain("gh issue create");
+			expect(prompt).toContain("--repo pjschulz3004/claude-plugins");
+			expect(prompt).toContain("--title");
+			expect(prompt).toContain("--body");
+			expect(prompt).toContain('--label "jarvis,growth"');
+		});
+
+		it("Test 2: buildReflectionPrompt contains explicit backlog self-maintenance instructions", () => {
+			const prompt = buildReflectionPrompt(
+				"mission",
+				"ledger",
+				"backlog",
+				"log",
+				1,
+				"rates",
+				"procedure",
+			);
+
+			expect(prompt).toContain("BACKLOG MAINTENANCE");
+			expect(prompt).toContain("P1");
+			expect(prompt).toContain("P2");
+			expect(prompt).toContain("P3");
+			expect(prompt).toContain("P4");
+			expect(prompt).toContain("fix, tune, expand, new-tool");
+		});
+
+		it("Test 3: buildReflectionPrompt contains filed-as-issue instruction", () => {
+			const prompt = buildReflectionPrompt(
+				"mission",
+				"ledger",
+				"backlog",
+				"log",
+				1,
+				"rates",
+				"procedure",
+			);
+
+			expect(prompt).toContain("filed-as-issue");
+		});
+	});
+
+	describe("compileMorningSummary", () => {
+		it("Test 4: formats round summaries into readable message with count, cost, details", () => {
+			const result: GrowthSessionResult = {
+				roundsExecuted: 2,
+				roundSummaries: ["Round 1: Improved email triage", "Round 2: Fixed budget parser"],
+				totalCostUsd: 0.1234,
+			};
+
+			const summary = compileMorningSummary(result);
+
+			expect(summary).toContain("2 rounds");
+			expect(summary).toContain("$0.1234");
+			expect(summary).toContain("1. Round 1: Improved email triage");
+			expect(summary).toContain("2. Round 2: Fixed budget parser");
+		});
+
+		it("Test 5: handles zero rounds gracefully", () => {
+			const result: GrowthSessionResult = {
+				roundsExecuted: 0,
+				roundSummaries: [],
+				totalCostUsd: 0,
+			};
+
+			const summary = compileMorningSummary(result);
+
+			expect(summary).toContain("No rounds executed");
 		});
 	});
 
