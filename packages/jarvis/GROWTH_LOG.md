@@ -52,3 +52,34 @@ email_triage was failing roughly half the time. Two distinct error signatures: `
 ### Tomorrow
 
 Monitor email_triage success rate over the next day. If it stabilises above 90%, address GB-002 (tune classification accuracy). If still failing, investigate whether the `error_max_turns` is coming from a different bottleneck.
+
+---
+
+## 2026-04-01 Growth Session Round 2
+
+**Rounds completed:** 2
+**Items addressed:** structural gap in GB-001, new GB-004 (identified)
+
+### Reflection
+
+The Round 1 fix updated heartbeat.yaml correctly, but post-fix failures continued in the performance data. The config change never reached the running daemon: `Scheduler.start()` loads heartbeat.yaml exactly once at startup. Any edit made at runtime (including by a growth session) is silently ignored until the process restarts. This means every growth improvement to prompts or task config requires a manual daemon restart — making the growth loop partially ineffective.
+
+### Work Done
+
+Implemented config hot-reload in `packages/jarvis-daemon/src/scheduler.ts`:
+- `Scheduler` tracks heartbeat.yaml `mtime` on `start()`
+- `reloadIfChanged()` re-reads and re-parses the YAML if mtime has advanced, updating `this.tasks`
+- Called lazily at the start of each `fireTask()` — zero overhead when nothing has changed
+- Cron schedules are preserved; only task configs (prompt, model, max_turns, timeout_ms) are updated
+- Added test: "hot-reloads task config when heartbeat.yaml changes on disk"
+
+Also filed GB-004: the three `Command failed` failures at ~120s and ~19s remain unexplained and warrant investigation next session.
+
+### Commits
+
+- 969129f: growth(2026-04-01): hot-reload heartbeat.yaml so config changes apply without restart
+
+### Tomorrow
+
+Investigate GB-004 (Command failed at ~120s): confirm timeout_ms passes through correctly and
+explore retry strategy for transient fast-fail errors. Then tackle GB-002 (tune triage prompt).
