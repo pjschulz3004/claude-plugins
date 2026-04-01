@@ -130,7 +130,11 @@ Plans:
   3. Features too large for a single night result in a GitHub issue with scope description
   4. Each growth session produces a GROWTH_LOG.md entry with reflection, work done, and commit hashes
   5. Paul receives a morning summary notification after growth session completes
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 09-01-PLAN.md -- Council + regression wiring, enriched growth prompt with skill procedure and telemetry
+- [ ] 09-02-PLAN.md -- GitHub issue creation, backlog self-maintenance, morning summary compilation
 
 ### Phase 10: Prompt Optimisation
 **Goal**: Heartbeat task prompts evolve based on measured performance, with losing versions automatically reverted
@@ -178,7 +182,7 @@ Phases execute in numeric order: 7 -> 8 -> 9 -> 10 -> 11 -> 12
 | 6. Cutover | v1.0 | 1/1 | Complete | 2026-03-31 |
 | 7. Stabilise + Instrument | v2.0 | 2/3 | In Progress|  |
 | 8. Rule Evolution + Regression Safety | v2.0 | 1/2 | In Progress|  |
-| 9. Growth Engine | v2.0 | 0/? | Not started | - |
+| 9. Growth Engine | v2.0 | 0/2 | Not started | - |
 | 10. Prompt Optimisation | v2.0 | 0/? | Not started | - |
 | 11. Skill Creation | v2.0 | 0/? | Not started | - |
 | 12. Knowledge Graph Growth | v2.0 | 0/? | Not started | - |
