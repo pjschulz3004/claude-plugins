@@ -94,6 +94,52 @@
 
 ## Traceability
 
-| Phase | Requirements |
-|-------|-------------|
-| (filled by roadmapper) | |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| TEL-01 | Phase 7 | Pending |
+| TEL-02 | Phase 7 | Pending |
+| TEL-03 | Phase 7 | Pending |
+| TEL-04 | Phase 7 | Pending |
+| TEL-05 | Phase 7 | Pending |
+| FIX-01 | Phase 7 | Pending |
+| FIX-02 | Phase 7 | Pending |
+| FIX-03 | Phase 7 | Pending |
+| FIX-04 | Phase 7 | Pending |
+| TG-UX-01 | Phase 7 | Pending |
+| TG-UX-02 | Phase 7 | Pending |
+| TG-UX-03 | Phase 7 | Pending |
+| TG-UX-04 | Phase 7 | Pending |
+| RULE-01 | Phase 8 | Pending |
+| RULE-02 | Phase 8 | Pending |
+| RULE-03 | Phase 8 | Pending |
+| RULE-04 | Phase 8 | Pending |
+| RULE-05 | Phase 8 | Pending |
+| RULE-06 | Phase 8 | Pending |
+| REG-01 | Phase 8 | Pending |
+| REG-02 | Phase 8 | Pending |
+| REG-03 | Phase 8 | Pending |
+| REG-04 | Phase 8 | Pending |
+| GROW-01 | Phase 9 | Pending |
+| GROW-02 | Phase 9 | Pending |
+| GROW-03 | Phase 9 | Pending |
+| GROW-04 | Phase 9 | Pending |
+| GROW-05 | Phase 9 | Pending |
+| GROW-06 | Phase 9 | Pending |
+| GROW-07 | Phase 9 | Pending |
+| GROW-08 | Phase 9 | Pending |
+| GROW-09 | Phase 9 | Pending |
+| GROW-10 | Phase 9 | Pending |
+| PROMPT-01 | Phase 10 | Pending |
+| PROMPT-02 | Phase 10 | Pending |
+| PROMPT-03 | Phase 10 | Pending |
+| PROMPT-04 | Phase 10 | Pending |
+| PROMPT-05 | Phase 10 | Pending |
+| SKILL-01 | Phase 11 | Pending |
+| SKILL-02 | Phase 11 | Pending |
+| SKILL-03 | Phase 11 | Pending |
+| SKILL-04 | Phase 11 | Pending |
+| SKILL-05 | Phase 11 | Pending |
+| SKILL-06 | Phase 11 | Pending |
+| KG-01 | Phase 12 | Pending |
+| KG-02 | Phase 12 | Pending |
+| KG-03 | Phase 12 | Pending |
