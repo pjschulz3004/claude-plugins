@@ -21,8 +21,9 @@ export function requireCredentials(
 	const missing = required.filter((key) => !creds[key.toLowerCase()]);
 
 	if (missing.length > 0) {
-		const varNames = missing.map((k) => `${fullPrefix}${k.toUpperCase()}`);
-		throw new Error(`Missing required credentials: ${varNames.join(", ")}`);
+		throw new Error(
+			`Missing ${missing.length} required credential(s) for ${prefix}`,
+		);
 	}
 
 	return creds;

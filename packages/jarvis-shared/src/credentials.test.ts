@@ -84,17 +84,17 @@ describe("requireCredentials", () => {
 		expect(creds.password).toBe("secret");
 	});
 
-	it("throws error naming missing vars when required key is absent", () => {
+	it("throws error with count when required key is absent", () => {
 		process.env.JARVIS_MAILBOX_EMAIL = "paul@example.com";
 
 		expect(() => requireCredentials("MAILBOX", ["EMAIL", "PASSWORD"])).toThrow(
-			"JARVIS_MAILBOX_PASSWORD",
+			"Missing 1 required credential(s) for MAILBOX",
 		);
 	});
 
-	it("throws error listing all missing vars", () => {
+	it("throws error with count when all required keys are absent", () => {
 		expect(() => requireCredentials("MAILBOX", ["EMAIL", "PASSWORD"])).toThrow(
-			"JARVIS_MAILBOX_EMAIL",
+			"Missing 2 required credential(s) for MAILBOX",
 		);
 	});
 });

@@ -62,6 +62,7 @@ export class ImapFlowBackend implements EmailBackend {
 				secure: this.config.secure,
 				auth: this.config.auth,
 				logger: false,
+				tls: { minVersion: "TLSv1.2", rejectUnauthorized: true },
 			});
 			try {
 				await client.connect();
