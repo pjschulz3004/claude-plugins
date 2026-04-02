@@ -122,7 +122,7 @@ class MistralMember implements CouncilMember {
 	private apiKey: string;
 	private model: string;
 
-	constructor(apiKey: string, model = "mistral-medium-latest") {
+	constructor(apiKey: string, model = "mistral-large-latest") {
 		this.apiKey = apiKey;
 		this.model = model;
 	}
@@ -161,7 +161,7 @@ class OpenAIMember implements CouncilMember {
 	private apiKey: string;
 	private model: string;
 
-	constructor(apiKey: string, model = "gpt-5-mini") {
+	constructor(apiKey: string, model = "o3") {
 		this.apiKey = apiKey;
 		this.model = model;
 	}
@@ -205,11 +205,13 @@ export function assembleCouncil(): CouncilMember[] {
 	const mistralKey = process.env.MISTRAL_API_KEY;
 	if (mistralKey) {
 		members.push(new MistralMember(mistralKey));
+		log.info("council_member_joined", { name: "Mistral", model: "mistral-large-latest" });
 	}
 
 	const openaiKey = process.env.OPENAI_API_KEY;
 	if (openaiKey) {
 		members.push(new OpenAIMember(openaiKey));
+		log.info("council_member_joined", { name: "OpenAI", model: "o3" });
 	}
 
 	log.info("council_assembled", { members: members.map((m) => m.name) });
