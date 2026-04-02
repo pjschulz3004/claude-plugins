@@ -20,7 +20,7 @@ import {
 	getTimeOfDay,
 	getDayOfWeek,
 } from "./state/interactions.js";
-import { ClaudeAPI, type StreamDelta } from "./claude-api.js";
+import { ClaudeAPI, RateLimitError, AuthError, type StreamDelta } from "./claude-api.js";
 import type { ImapFlowBackend } from "@jarvis/email";
 import type { TsdavCalendarBackend } from "@jarvis/calendar";
 import type { YnabBackend } from "@jarvis/budget";

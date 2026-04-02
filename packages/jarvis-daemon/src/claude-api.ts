@@ -22,6 +22,20 @@ const log = createLogger("claude-api");
 // Types
 // ---------------------------------------------------------------------------
 
+export class RateLimitError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "RateLimitError";
+	}
+}
+
+export class AuthError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "AuthError";
+	}
+}
+
 export interface Message {
 	role: "user" | "assistant";
 	content: string | ContentBlock[];
@@ -153,6 +167,13 @@ export const MODELS = {
 	haiku: "claude-haiku-4-5",
 } as const;
 
+/** Fallback chain: try preferred model, then fall back to cheaper models */
+const FALLBACK_CHAIN: Record<string, string[]> = {
+	"claude-opus-4-5": ["claude-sonnet-4-5", "claude-haiku-4-5"],
+	"claude-sonnet-4-5": ["claude-haiku-4-5"],
+	"claude-haiku-4-5": [],
+};
+
 export type ModelName = keyof typeof MODELS;
 
 export class ClaudeAPI {
@@ -245,11 +266,54 @@ export class ClaudeAPI {
 
 		if (!response.ok) {
 			const errorText = await response.text();
-			log.error("api_error", {
-				status: response.status,
-				error: errorText.slice(0, 200),
-			});
-			// Remove the user message we just added (failed)
+
+			// Try fallback models on rate limit
+			if (response.status === 429) {
+				const fallbacks = FALLBACK_CHAIN[model] ?? [];
+				for (const fallbackModel of fallbacks) {
+					log.warn("api_rate_limited_fallback", { from: model, to: fallbackModel });
+					const fallbackBody = { ...body, model: fallbackModel };
+					const fallbackResponse = await fetch(API_URL, {
+						method: "POST",
+						headers: this.headers(token),
+						body: JSON.stringify(fallbackBody),
+					});
+					if (fallbackResponse.ok) {
+						const fbData = (await fallbackResponse.json()) as {
+							content: ContentBlock[];
+							usage: { input_tokens: number; output_tokens: number };
+							stop_reason: string;
+						};
+						let fbText = "";
+						const fbToolCalls: ApiResponse["toolCalls"] = [];
+						for (const block of fbData.content) {
+							if (block.type === "text" && block.text) fbText += block.text;
+							else if (block.type === "tool_use" && block.name && block.id)
+								fbToolCalls.push({ name: block.name, input: block.input ?? {}, id: block.id });
+						}
+						messages.push({ role: "assistant", content: fbData.content });
+						log.info("api_fallback_success", { model: fallbackModel });
+						return {
+							text: fbText,
+							toolCalls: fbToolCalls,
+							inputTokens: fbData.usage.input_tokens,
+							outputTokens: fbData.usage.output_tokens,
+							stopReason: fbData.stop_reason,
+						};
+					}
+					// This fallback also rate limited, try next
+				}
+				// All fallbacks exhausted
+				messages.pop();
+				throw new RateLimitError("All models are currently rate limited. Try again in a few minutes.");
+			}
+
+			if (response.status === 401) {
+				messages.pop();
+				throw new AuthError("OAuth token expired. Run 'claude login' on the VPS to refresh.");
+			}
+
+			log.error("api_error", { status: response.status, error: errorText.slice(0, 200) });
 			messages.pop();
 			throw new Error(`Claude API ${response.status}: ${errorText.slice(0, 200)}`);
 		}
@@ -344,6 +408,49 @@ export class ClaudeAPI {
 
 		if (!response.ok) {
 			const errorText = await response.text();
+			if (response.status === 429) {
+				// Try fallback models
+				const fallbacks = FALLBACK_CHAIN[model] ?? [];
+				for (const fb of fallbacks) {
+					log.warn("api_stream_rate_limited_fallback", { from: model, to: fb });
+					const fbBody = { ...body, model: fb };
+					const fbResponse = await fetch(API_URL, {
+						method: "POST",
+						headers: this.headers(token),
+						body: JSON.stringify(fbBody),
+					});
+					if (fbResponse.ok) {
+						// Replace response variable and continue with streaming parse below
+						// Can't easily swap — just do non-streaming fallback
+						const fbData = (await fbResponse.json()) as {
+							content: ContentBlock[];
+							usage: { input_tokens: number; output_tokens: number };
+							stop_reason: string;
+						};
+						let fbText = "";
+						const fbToolCalls: ApiResponse["toolCalls"] = [];
+						for (const block of fbData.content) {
+							if (block.type === "text" && block.text) fbText += block.text;
+							else if (block.type === "tool_use" && block.name && block.id)
+								fbToolCalls.push({ name: block.name, input: block.input ?? {}, id: block.id });
+						}
+						messages.push({ role: "assistant", content: fbData.content });
+						opts.onDelta?.({ type: "text", text: fbText });
+						opts.onDelta?.({ type: "done" });
+						return {
+							text: fbText, toolCalls: fbToolCalls,
+							inputTokens: fbData.usage.input_tokens, outputTokens: fbData.usage.output_tokens,
+							stopReason: fbData.stop_reason,
+						};
+					}
+				}
+				messages.pop();
+				throw new RateLimitError("All models are currently rate limited. Try again in a few minutes.");
+			}
+			if (response.status === 401) {
+				messages.pop();
+				throw new AuthError("OAuth token expired. Run 'claude login' on the VPS to refresh.");
+			}
 			messages.pop();
 			throw new Error(`Claude API ${response.status}: ${errorText.slice(0, 200)}`);
 		}
