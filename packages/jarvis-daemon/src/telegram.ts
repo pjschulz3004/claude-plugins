@@ -442,7 +442,7 @@ export function createBot(config: TelegramConfig): Telegraf {
 	});
 
 	// Free-text relay — direct Claude API with tool loop
-	const claude = new ClaudeAPI();
+	const claude = new ClaudeAPI(config.ledger.database);
 	const tools = buildToolDefinitions({
 		email: config.email,
 		calendar: config.calendar,

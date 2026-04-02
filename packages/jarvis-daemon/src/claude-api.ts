@@ -13,6 +13,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import type Database from "better-sqlite3";
 import { createLogger } from "./logger.js";
 
 const log = createLogger("claude-api");
@@ -155,10 +156,33 @@ export type ModelName = keyof typeof MODELS;
 export class ClaudeAPI {
 	private creds: OAuthCreds;
 	private conversations = new Map<string, Message[]>();
+	private db: Database.Database | null;
 
-	constructor() {
+	constructor(db?: Database.Database) {
 		this.creds = loadOAuthCreds();
-		log.info("api_initialized", { expires: new Date(this.creds.expiresAt).toISOString() });
+		this.db = db ?? null;
+		if (this.db) {
+			this.db.exec(`
+				CREATE TABLE IF NOT EXISTS conversations (
+					chat_id TEXT NOT NULL,
+					messages TEXT NOT NULL,
+					updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+					PRIMARY KEY (chat_id)
+				)
+			`);
+			const rows = this.db.prepare("SELECT chat_id, messages FROM conversations").all() as Array<{ chat_id: string; messages: string }>;
+			for (const row of rows) {
+				try {
+					this.conversations.set(row.chat_id, JSON.parse(row.messages));
+				} catch { /* corrupt row, skip */ }
+			}
+			log.info("api_initialized", {
+				expires: new Date(this.creds.expiresAt).toISOString(),
+				restored_conversations: rows.length,
+			});
+		} else {
+			log.info("api_initialized", { expires: new Date(this.creds.expiresAt).toISOString() });
+		}
 	}
 
 	private async token(): Promise<string> {
@@ -183,8 +207,20 @@ export class ClaudeAPI {
 		return this.conversations.get(chatId)!;
 	}
 
+	private persistConversation(chatId: string): void {
+		if (!this.db) return;
+		const messages = this.conversations.get(chatId);
+		if (!messages) return;
+		this.db.prepare(
+			"INSERT OR REPLACE INTO conversations (chat_id, messages, updated_at) VALUES (?, ?, datetime('now'))",
+		).run(chatId, JSON.stringify(messages));
+	}
+
 	clearConversation(chatId: string): void {
 		this.conversations.delete(chatId);
+		if (this.db) {
+			this.db.prepare("DELETE FROM conversations WHERE chat_id = ?").run(chatId);
+		}
 	}
 
 	/**
@@ -278,8 +314,9 @@ export class ClaudeAPI {
 			totalInputTokens += data.usage.input_tokens;
 			totalOutputTokens += data.usage.output_tokens;
 
-			// Add assistant response to history
+			// Add assistant response to history and persist
 			messages.push({ role: "assistant", content: data.content });
+			this.persistConversation(chatId);
 
 			// Extract text blocks
 			for (const block of data.content) {
@@ -337,8 +374,9 @@ export class ClaudeAPI {
 				}
 			}
 
-			// Send tool results back as user message
+			// Send tool results back as user message and persist
 			messages.push({ role: "user", content: toolResults });
+			this.persistConversation(chatId);
 		}
 
 		log.info("api_complete", {
