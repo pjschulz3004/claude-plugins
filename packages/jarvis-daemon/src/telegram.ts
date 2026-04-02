@@ -24,6 +24,7 @@ import { ClaudeAPI, RateLimitError, AuthError, type StreamDelta } from "./claude
 import { buildToolDefinitions, buildToolExecutor } from "./tool-bridge.js";
 import type { ImapFlowBackend } from "@jarvis/email";
 import type { TsdavCalendarBackend } from "@jarvis/calendar";
+import type { TsdavContactsBackend } from "@jarvis/contacts";
 import type { YnabBackend } from "@jarvis/budget";
 
 const TOOL_DESCRIPTIONS: Record<string, string> = {
@@ -50,6 +51,7 @@ export interface TelegramConfig {
 	history: ChatHistory;
 	email?: ImapFlowBackend;
 	calendar?: TsdavCalendarBackend;
+	contacts?: TsdavContactsBackend;
 	budget?: YnabBackend;
 	corrections?: CorrectionStore;
 	interactions?: InteractionStore;
@@ -446,11 +448,13 @@ export function createBot(config: TelegramConfig): Telegraf {
 	const tools = buildToolDefinitions({
 		email: config.email,
 		calendar: config.calendar,
+		contacts: config.contacts,
 		budget: config.budget,
 	});
 	const executor = buildToolExecutor({
 		email: config.email,
 		calendar: config.calendar,
+		contacts: config.contacts,
 		budget: config.budget,
 	});
 

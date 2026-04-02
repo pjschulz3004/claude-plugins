@@ -9,6 +9,7 @@ import { createLogger } from "./logger.js";
 import type { ToolDefinition, ToolExecutor } from "./claude-api.js";
 import type { ImapFlowBackend } from "@jarvis/email";
 import type { TsdavCalendarBackend } from "@jarvis/calendar";
+import type { TsdavContactsBackend } from "@jarvis/contacts";
 import type { YnabBackend } from "@jarvis/budget";
 
 const log = createLogger("tools");
@@ -20,6 +21,7 @@ const log = createLogger("tools");
 export function buildToolDefinitions(backends: {
 	email?: ImapFlowBackend;
 	calendar?: TsdavCalendarBackend;
+	contacts?: TsdavContactsBackend;
 	budget?: YnabBackend;
 }): ToolDefinition[] {
 	const tools: ToolDefinition[] = [];
@@ -132,6 +134,29 @@ export function buildToolDefinitions(backends: {
 		);
 	}
 
+	if (backends.contacts) {
+		tools.push(
+			{
+				name: "contacts_search",
+				description: "Search contacts by name, email, or organisation.",
+				input_schema: {
+					type: "object",
+					properties: { query: { type: "string", description: "Search term" } },
+					required: ["query"],
+				},
+			},
+			{
+				name: "contacts_get",
+				description: "Get full details of a specific contact by ID.",
+				input_schema: {
+					type: "object",
+					properties: { id: { type: "string" } },
+					required: ["id"],
+				},
+			},
+		);
+	}
+
 	if (backends.budget) {
 		tools.push(
 			{
@@ -187,6 +212,7 @@ export function buildToolDefinitions(backends: {
 export function buildToolExecutor(backends: {
 	email?: ImapFlowBackend;
 	calendar?: TsdavCalendarBackend;
+	contacts?: TsdavContactsBackend;
 	budget?: YnabBackend;
 }): ToolExecutor {
 	return async (name: string, input: Record<string, unknown>): Promise<string> => {
@@ -209,10 +235,11 @@ async function executeToolImpl(
 	backends: {
 		email?: ImapFlowBackend;
 		calendar?: TsdavCalendarBackend;
+		contacts?: TsdavContactsBackend;
 		budget?: YnabBackend;
 	},
 ): Promise<string> {
-	const { email, calendar, budget } = backends;
+	const { email, calendar, contacts, budget } = backends;
 
 	switch (name) {
 		// --- Email ---
@@ -300,6 +327,18 @@ async function executeToolImpl(
 			const ids = input.transactionIds as string[];
 			await budget.approveTransactions(ids);
 			return `Approved ${ids.length} transaction(s)`;
+		}
+
+		// --- Contacts ---
+		case "contacts_search": {
+			if (!contacts) return "Contacts not configured.";
+			const results = await contacts.searchContacts(String(input.query));
+			return JSON.stringify(results);
+		}
+		case "contacts_get": {
+			if (!contacts) return "Contacts not configured.";
+			const contact = await contacts.getContact(String(input.id));
+			return JSON.stringify(contact);
 		}
 
 		default:

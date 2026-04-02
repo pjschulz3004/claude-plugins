@@ -20,6 +20,7 @@ import { collectWeeklyDigest, formatWeeklyDigest } from "./weekly-digest.js";
 import type { TelegramConfig } from "./telegram.js";
 import { ImapFlowBackend } from "@jarvis/email";
 import { TsdavCalendarBackend } from "@jarvis/calendar";
+import { TsdavContactsBackend } from "@jarvis/contacts";
 import { YnabBackend } from "@jarvis/budget";
 import { Cron } from "croner";
 import { fileURLToPath } from "node:url";
@@ -59,6 +60,14 @@ function buildCalendarBackend(): TsdavCalendarBackend | undefined {
 	return new TsdavCalendarBackend({ serverUrl, username, password });
 }
 
+function buildContactsBackend(): TsdavContactsBackend | undefined {
+	const serverUrl = process.env.MAILBOX_CALDAV_URL?.replace("/caldav/", "/carddav/") ?? "https://dav.mailbox.org/carddav/";
+	const username = process.env.MAILBOX_USER;
+	const password = process.env.MAILBOX_PASS;
+	if (!username || !password) return undefined;
+	return new TsdavContactsBackend({ serverUrl, username, password });
+}
+
 function buildBudgetBackend(): YnabBackend | undefined {
 	const accessToken = process.env.YNAB_ACCESS_TOKEN;
 	const budgetId = process.env.YNAB_BUDGET_ID;
@@ -88,6 +97,7 @@ async function start() {
 			history,
 			email: buildEmailBackend(),
 			calendar: buildCalendarBackend(),
+			contacts: buildContactsBackend(),
 			budget: buildBudgetBackend(),
 			corrections: correctionStore,
 			interactions: interactionStore,
