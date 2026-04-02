@@ -79,7 +79,7 @@ export class ImapFlowBackend implements EmailBackend {
 					uid: true,
 					envelope: true,
 					flags: true,
-				})) {
+				}, { uid: true })) {
 					const from = msg.envelope?.from?.[0];
 					results.push({
 						uid: String(msg.uid),
@@ -127,7 +127,7 @@ export class ImapFlowBackend implements EmailBackend {
 					uid: true,
 					envelope: true,
 					flags: true,
-				})) {
+				}, { uid: true })) {
 					const from = msg.envelope?.from?.[0];
 					results.push({
 						uid: String(msg.uid),
