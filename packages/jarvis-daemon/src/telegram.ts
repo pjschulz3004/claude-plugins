@@ -21,6 +21,7 @@ import {
 	getDayOfWeek,
 } from "./state/interactions.js";
 import { ClaudeAPI, RateLimitError, AuthError, type StreamDelta } from "./claude-api.js";
+import { buildToolDefinitions, buildToolExecutor } from "./tool-bridge.js";
 import type { ImapFlowBackend } from "@jarvis/email";
 import type { TsdavCalendarBackend } from "@jarvis/calendar";
 import type { YnabBackend } from "@jarvis/budget";
@@ -440,16 +441,31 @@ export function createBot(config: TelegramConfig): Telegraf {
 		}
 	});
 
-	// Free-text relay — direct Claude API with streaming
+	// Free-text relay — direct Claude API with tool loop
 	const claude = new ClaudeAPI();
+	const tools = buildToolDefinitions({
+		email: config.email,
+		calendar: config.calendar,
+		budget: config.budget,
+	});
+	const executor = buildToolExecutor({
+		email: config.email,
+		calendar: config.calendar,
+		budget: config.budget,
+	});
+
 	let lastInteractionId: number | null = null;
 	let lastInteractionTopic: string | null = null;
 
-	const SYSTEM_PROMPT = `You are Jarvis, Paul's personal AI assistant. You run on a VPS in Germany, 24/7.
+	const SYSTEM_PROMPT = `You are Jarvis, Paul's personal AI assistant. You run 24/7 on a server in Germany.
 
-Personality: Efficient, polite, slight British dry humour. Lead with what matters. Skip filler.
-Format: Plain text only. No markdown. No bullet points unless listing items.
-Behaviour: Act on requests, don't just describe what you could do. Be concise.`;
+Who you are: Efficient, thoughtful, slightly dry British humour. You know Paul's email, calendar, budget, and contacts. You are not a chatbot. You are a capable assistant who acts on requests.
+
+How to respond: Plain text only. No markdown formatting. No bullet points unless listing items. Lead with what matters. Be specific: names, times, amounts. If you used tools, summarise what you DID, not what tools you called.
+
+How to act: When Paul asks you to do something, DO it using your tools. Don't describe what you could do. Check email, look at the calendar, categorise transactions. Then report the result naturally: "Triaged your inbox. 3 newsletters marked read, flagged an invoice from Hetzner, trashed 2 spam."
+
+What you know about Paul: His email is mailbox.org (paul@jschulz.org and it@jschulz.org). His calendar and contacts are on the same provider (CalDAV/CardDAV). His budget is in YNAB. He lives in Germany.`;
 
 	bot.on("text", async (ctx) => {
 		const startMs = Date.now();
@@ -461,79 +477,58 @@ Behaviour: Act on requests, don't just describe what you could do. Be concise.`;
 		const topic = classifyTopic(userText);
 		const mood = classifyMood(userText);
 
-		// Detect follow-up on same topic
-		const isFollowUp = lastInteractionTopic !== null && lastInteractionTopic === topic;
-		if (isFollowUp && lastInteractionId !== null && config.interactions) {
+		// Detect follow-up / correction
+		if (lastInteractionTopic === topic && lastInteractionId !== null && config.interactions) {
 			config.interactions.markFollowUp(lastInteractionId);
-			log.info("follow_up_detected", { previousId: lastInteractionId, topic });
 		}
-
-		// Detect correction intent
 		if (intent === "correction" && lastInteractionId !== null && config.interactions) {
 			config.interactions.markCorrection(lastInteractionId, userText.slice(0, 200));
 		}
 
+		// Show typing immediately
+		ctx.sendChatAction("typing").catch(() => {});
+		const typingInterval = setInterval(() => {
+			ctx.sendChatAction("typing").catch(() => {});
+		}, 4000);
+
+		// Progress message for tool use
+		let progressMsgId: number | null = null;
+
+		const onDelta = (delta: StreamDelta) => {
+			if (delta.type === "tool_start" && delta.toolName) {
+				const desc = TOOL_DESCRIPTIONS[delta.toolName] ?? `Working on it...`;
+				if (!progressMsgId) {
+					ctx.reply(desc).then((msg) => { progressMsgId = msg.message_id; }).catch(() => {});
+				} else {
+					ctx.telegram.editMessageText(ctx.chat.id, progressMsgId, undefined, desc).catch(() => {});
+				}
+			}
+		};
+
 		try {
-			// Record user message in chat history (for telemetry — API maintains its own context)
 			config.history.record(chatId, "user", userText);
 
-			// Progress message — updated as Claude streams text
-			let progressMsgId: number | null = null;
-			let accumulatedText = "";
-			let lastEditTime = 0;
-			const EDIT_DEBOUNCE_MS = 800; // Don't edit faster than this
-
-			const onDelta = (delta: StreamDelta) => {
-				if (delta.type === "tool_use_start" && delta.toolName) {
-					// Show tool activity
-					const desc = TOOL_DESCRIPTIONS[delta.toolName] ?? `Using ${delta.toolName}...`;
-					if (!progressMsgId) {
-						ctx.reply(desc).then((msg) => {
-							progressMsgId = msg.message_id;
-						}).catch(() => {});
-					} else {
-						ctx.telegram.editMessageText(ctx.chat.id, progressMsgId, undefined, desc).catch(() => {});
-					}
-				} else if (delta.type === "text" && delta.text) {
-					accumulatedText += delta.text;
-					// Debounced edit — stream partial text to Telegram
-					const now = Date.now();
-					if (now - lastEditTime > EDIT_DEBOUNCE_MS && accumulatedText.length > 20) {
-						lastEditTime = now;
-						const preview = accumulatedText.slice(0, 4000);
-						if (progressMsgId) {
-							ctx.telegram.editMessageText(ctx.chat.id, progressMsgId, undefined, preview).catch(() => {});
-						} else {
-							ctx.reply(preview).then((msg) => {
-								progressMsgId = msg.message_id;
-							}).catch(() => {});
-						}
-					}
-				}
-			};
-
-			// Direct API call with streaming — conversation context maintained automatically
-			const result = await claude.sendStreaming(chatId, userText, {
+			// Full agentic tool loop — Claude thinks (subscription), tools execute locally (free)
+			const result = await claude.sendWithTools(chatId, userText, {
 				model: "sonnet",
 				system: SYSTEM_PROMPT,
+				tools,
+				executor,
+				maxTurns: 15,
 				onDelta,
 			});
 
+			clearInterval(typingInterval);
 			const responseTimeMs = Date.now() - startMs;
 
-			// Send or update final response
-			const finalText = result.text || "Done.";
+			// Delete progress message, send final response
 			if (progressMsgId) {
-				try {
-					await ctx.telegram.editMessageText(ctx.chat.id, progressMsgId, undefined, finalText.slice(0, 4000));
-				} catch {
-					await sendSplit(ctx, finalText);
-				}
-			} else {
-				await sendSplit(ctx, finalText);
+				ctx.telegram.deleteMessage(ctx.chat.id, progressMsgId).catch(() => {});
 			}
+			const finalText = result.text || "Done.";
+			await sendSplit(ctx, finalText);
 
-			// Record in chat history
+			// Record in chat history + deep interaction logging
 			config.history.record(chatId, "assistant", result.text);
 
 			// Deep interaction logging
@@ -546,10 +541,10 @@ Behaviour: Act on requests, don't just describe what you could do. Be concise.`;
 					topic,
 					entities: "[]",
 					assistant_response: result.text.slice(0, 500),
-					tools_used: "[]",
-					actions_taken: "[]",
+					tools_used: JSON.stringify(result.toolsUsed),
+					actions_taken: JSON.stringify(result.toolsUsed),
 					response_time_ms: responseTimeMs,
-					model_used: "sonnet",
+					model_used: result.model,
 					tokens_used: (result.inputTokens ?? 0) + (result.outputTokens ?? 0),
 					follow_up: false,
 					correction: false,
@@ -560,9 +555,6 @@ Behaviour: Act on requests, don't just describe what you could do. Be concise.`;
 				});
 				lastInteractionTopic = topic;
 			}
-
-			// Send response
-			await sendSplit(ctx, result.text);
 
 			log.info("free_text_complete", {
 				intent,
