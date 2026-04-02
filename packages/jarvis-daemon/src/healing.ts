@@ -34,9 +34,9 @@ export interface HealingOpts {
 export async function dispatchHealing(opts: HealingOpts): Promise<void> {
 	const { taskName, ledger, dispatcher, notifyChannels } = opts;
 
-	// Guard: threshold not met
+	// Guard: threshold not met. Only trigger on exactly 3 failures (not every subsequent one)
 	const consecutiveFailures = ledger.getConsecutiveFailures(taskName);
-	if (consecutiveFailures < 3) return;
+	if (consecutiveFailures < 3 || consecutiveFailures > 3) return;
 
 	// Guard: already healing this task
 	if (healingInProgress.has(taskName)) return;
@@ -79,7 +79,7 @@ export async function dispatchHealing(opts: HealingOpts): Promise<void> {
 		];
 
 		const dispatchOpts: DispatchOptions = {
-			model: "sonnet",
+			model: "haiku",
 			maxTurns: 8,
 			timeoutMs: 180_000,
 			pluginDirs,
@@ -94,17 +94,10 @@ export async function dispatchHealing(opts: HealingOpts): Promise<void> {
 			await sendNotification(notifyChannels, summary, { urgent: false });
 		}
 	} catch (err) {
-		// Healing itself failed -- notify urgently, never throw
+		// Healing itself failed -- log but don't spam Telegram
 		const error = err instanceof Error ? err.message : String(err);
-		log.error("healing_failed", { task: taskName, error });
-
-		if (notifyChannels?.length) {
-			await sendNotification(
-				notifyChannels,
-				`Healing agent failed for "${taskName}": ${error.slice(0, 500)}`,
-				{ urgent: true },
-			);
-		}
+		log.error("healing_failed", { task: taskName, error: error.slice(0, 200) });
+		// No Telegram notification for healing failures — they're noisy and not actionable
 	} finally {
 		healingInProgress.delete(taskName);
 	}
