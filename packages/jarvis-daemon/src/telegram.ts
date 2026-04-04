@@ -533,9 +533,9 @@ Address Paul naturally. Not "sir", not "boss". Just his name when needed, or not
 		try {
 			config.history.record(chatId, "user", userText);
 
-			// Full agentic tool loop — Claude thinks (subscription), tools execute locally (free)
+			// Full agentic tool loop — Opus orchestrates, tools execute locally (free)
 			const result = await claude.sendWithTools(chatId, userText, {
-				model: "sonnet",
+				model: "opus",
 				system: SYSTEM_PROMPT,
 				tools,
 				executor,

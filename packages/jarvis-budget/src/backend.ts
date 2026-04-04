@@ -125,4 +125,33 @@ export class YnabBackend implements BudgetBackend {
 			);
 		});
 	}
+
+	async getAccounts(): Promise<Array<{ id: string; name: string; type: string; balance: number; cleared_balance: number }>> {
+		return this.withRetry(async (api) => {
+			const response = await api.accounts.getAccounts(this.config.budgetId);
+			return response.data.accounts
+				.filter((a) => !a.closed && !a.deleted)
+				.map((a) => ({
+					id: String(a.id),
+					name: a.name,
+					type: String(a.type),
+					balance: a.balance / 1000,
+					cleared_balance: a.cleared_balance / 1000,
+				}));
+		});
+	}
+
+	async getMonthSummary(month: string): Promise<{ month: string; budgeted: number; activity: number; to_be_budgeted: number; age_of_money: number | null }> {
+		return this.withRetry(async (api) => {
+			const response = await api.months.getBudgetMonth(this.config.budgetId, month);
+			const m = response.data.month;
+			return {
+				month: String(m.month),
+				budgeted: m.budgeted / 1000,
+				activity: m.activity / 1000,
+				to_be_budgeted: m.to_be_budgeted / 1000,
+				age_of_money: m.age_of_money ?? null,
+			};
+		});
+	}
 }

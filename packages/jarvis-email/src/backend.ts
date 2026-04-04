@@ -21,6 +21,8 @@ export interface EmailBackend {
 	markSpam(uid: string): Promise<void>;
 	/** Returns current folder and flags for an email by UID. Throws if not found. */
 	getMessageFlags(uid: string): Promise<{ folder: string; flags: string[] }>;
+	/** Read the full text body of an email. Returns plain text (or stripped HTML fallback). */
+	getEmailBody(uid: string): Promise<string>;
 }
 
 export class ImapFlowBackend implements EmailBackend {
@@ -239,6 +241,64 @@ export class ImapFlowBackend implements EmailBackend {
 					throw new Error(`Email UID ${uid} not found in INBOX`);
 				}
 				return { folder: "INBOX", flags: results[0].flags };
+			} finally {
+				lock.release();
+			}
+		});
+	}
+
+	async getEmailBody(uid: string): Promise<string> {
+		return this.withConnection(async (client) => {
+			const lock = await client.getMailboxLock("INBOX");
+			try {
+				// Fetch the full source of the email
+				const msg = await client.fetchOne(uid, { source: true }, { uid: true });
+				const msgAny = msg as unknown as { source?: Buffer };
+				if (!msg || !msgAny.source) {
+					return "(Email body not available)";
+				}
+
+				const source = msgAny.source.toString();
+
+				// Try to extract plain text part
+				const plainMatch = source.match(/Content-Type:\s*text\/plain[\s\S]*?\r?\n\r?\n([\s\S]*?)(?:\r?\n--|\r?\n\.\r?\n|$)/i);
+				if (plainMatch?.[1]) {
+					let text = plainMatch[1].trim();
+					// Handle quoted-printable decoding
+					if (source.includes("Content-Transfer-Encoding: quoted-printable")) {
+						text = text.replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/gi, (_: string, hex: string) => String.fromCharCode(parseInt(hex, 16)));
+					}
+					// Handle base64 decoding
+					if (source.includes("Content-Transfer-Encoding: base64")) {
+						try { text = Buffer.from(text.replace(/\s/g, ""), "base64").toString("utf-8"); } catch { /* keep as-is */ }
+					}
+					return text.slice(0, 5000); // Cap to prevent massive emails
+				}
+
+				// Fallback: strip HTML tags from HTML part
+				const htmlMatch = source.match(/Content-Type:\s*text\/html[\s\S]*?\r?\n\r?\n([\s\S]*?)(?:\r?\n--|\r?\n\.\r?\n|$)/i);
+				if (htmlMatch?.[1]) {
+					let html = htmlMatch[1].trim();
+					if (source.includes("Content-Transfer-Encoding: quoted-printable")) {
+						html = html.replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/gi, (_: string, hex: string) => String.fromCharCode(parseInt(hex, 16)));
+					}
+					if (source.includes("Content-Transfer-Encoding: base64")) {
+						try { html = Buffer.from(html.replace(/\s/g, ""), "base64").toString("utf-8"); } catch { /* keep as-is */ }
+					}
+					// Strip HTML tags
+					const stripped = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+						.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+						.replace(/<[^>]+>/g, " ")
+						.replace(/&nbsp;/g, " ")
+						.replace(/&amp;/g, "&")
+						.replace(/&lt;/g, "<")
+						.replace(/&gt;/g, ">")
+						.replace(/\s+/g, " ")
+						.trim();
+					return stripped.slice(0, 5000);
+				}
+
+				return "(Could not extract text content from this email)";
 			} finally {
 				lock.release();
 			}
