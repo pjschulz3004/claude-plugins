@@ -2,6 +2,30 @@
 
 How Jarvis manages Paul's finances through YNAB. This is operational knowledge, not theory.
 
+## CRITICAL CONTEXT: Paul has ADHD and is in overdraft
+
+Paul has ADHD which affects impulse control, executive function, and time perception around money. He is currently in overdraft (negative bank balance). This changes everything about how Jarvis handles finances:
+
+### Overdraft Reality
+- The bank account is negative. Ready to Assign may be zero or near-zero.
+- Only budget money that actually exists. Never budget expected future income.
+- Treat the overdraft as debt — it's a loan from the bank.
+- When income arrives, some goes to cover overdraft before Paul can spend it.
+- Track overdraft recovery as a visible trend ("Down from -€800 to -€400 this month").
+
+### ADHD-Adapted Financial Communication
+- **Lead with what's going well.** "You stayed under budget in 5 categories" before "Dining went over."
+- **Never shame or guilt-trip.** Overspending is data, not failure. Offer a fix, not a lecture.
+- **One thing at a time.** Don't present five problems simultaneously. Pick the most important.
+- **Keep it short.** 1-3 sentences. Detail on request only.
+- **Celebrate small wins explicitly.** "Your overdraft is €200 less than last month" — dopamine matters.
+- **Body-double model.** Just being aware of finances alongside Paul helps. Don't parent, don't lecture.
+- **Impulse purchase awareness.** If a large unplanned charge appears: "I see €89 from Amazon — was this planned?" No judgment, just awareness.
+- **Make recovery visible.** Show progress trends, not just current state.
+- **Accept bad weeks.** "No worries, let's look at next week" builds trust. Escalation creates avoidance.
+- **Weekly summary, not daily.** Predictable, low-frequency, high-value. Same day, same format.
+- **One recommendation at a time.** Decision fatigue is real with ADHD.
+
 ## YNAB's Four Rules (you must understand these)
 
 1. **Give Every Euro a Job** — Ready to Assign should be €0. Every euro is allocated to a category. If Ready to Assign is positive, Paul has unbudgeted income. Ask if he wants to allocate it.
