@@ -72,6 +72,35 @@ server.tool(
 	},
 );
 
+// Tool: batch_categorize — categorize multiple transactions in one call
+server.tool(
+	"batch_categorize",
+	"Categorize multiple transactions at once. Pass an array of {id, categoryId} pairs. Use get_uncategorized + get_categories first to build the mapping.",
+	{
+		assignments: z.array(z.object({
+			id: z.string().describe("Transaction ID"),
+			categoryId: z.string().describe("Category ID to assign"),
+		})).describe("Array of transaction-to-category assignments"),
+	},
+	async ({ assignments }) => {
+		try {
+			let success = 0;
+			let failed = 0;
+			for (const { id, categoryId } of assignments) {
+				try {
+					await backend.categorizeTransaction(id, categoryId);
+					success++;
+				} catch {
+					failed++;
+				}
+			}
+			return textResult(`Categorized ${success} transaction(s)${failed > 0 ? `, ${failed} failed` : ""}. Currency: EUR.`);
+		} catch (err) {
+			return textResult(`Error: ${(err as Error).message}`);
+		}
+	},
+);
+
 // Tool: approve_transactions (BUD-04)
 server.tool(
 	"approve_transactions",
