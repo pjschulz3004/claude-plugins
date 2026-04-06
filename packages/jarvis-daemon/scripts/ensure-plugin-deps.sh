@@ -1,21 +1,41 @@
 #!/usr/bin/env bash
-# Ensure Jarvis MCP plugin node_modules are symlinked to the monorepo.
+# Ensure Jarvis MCP plugins have compiled JS and node_modules.
 # Run before daemon startup (ExecStartPre in systemd).
-# The plugins use workspace dependencies (@jarvis/shared) that only resolve
-# from the monorepo's node_modules. Without this, MCP servers fail to start.
+#
+# Two problems this solves permanently:
+# 1. Marketplace cache only has TypeScript source, no compiled dist/
+#    → Symlink dist/ from the monorepo into each plugin cache
+# 2. Workspace dependencies (@jarvis/shared) don't resolve outside monorepo
+#    → Symlink node_modules from monorepo into plugin data dirs
 
-MONOREPO_MODULES="$HOME/dev/claude/plugins/node_modules"
+MONOREPO="$HOME/dev/claude/plugins"
+MONOREPO_MODULES="$MONOREPO/node_modules"
+PLUGIN_CACHE="$HOME/.claude/plugins/cache/pjschulz-plugins"
 
-if [ ! -d "$MONOREPO_MODULES" ]; then
-  echo "[ensure-plugin-deps] Monorepo node_modules not found at $MONOREPO_MODULES"
-  exit 0  # non-fatal
+if [ ! -d "$MONOREPO" ]; then
+  echo "[ensure-plugin-deps] Monorepo not found at $MONOREPO"
+  exit 0
 fi
 
-for dir in "$HOME/.claude/plugins/data/jarvis-"*; do
-  if [ -d "$dir" ]; then
-    rm -rf "$dir/node_modules" 2>/dev/null
-    ln -sf "$MONOREPO_MODULES" "$dir/node_modules"
+# 1. Symlink compiled dist/ into plugin cache
+for plugin in jarvis-email jarvis-calendar jarvis-contacts jarvis-budget jarvis-files; do
+  CACHE_DIR="$PLUGIN_CACHE/$plugin/0.1.0"
+  MONO_DIST="$MONOREPO/packages/$plugin/dist"
+
+  if [ -d "$CACHE_DIR" ] && [ -d "$MONO_DIST" ]; then
+    rm -rf "$CACHE_DIR/dist" 2>/dev/null
+    ln -sf "$MONO_DIST" "$CACHE_DIR/dist"
   fi
 done
 
-echo "[ensure-plugin-deps] Jarvis plugin symlinks verified"
+# 2. Symlink node_modules into plugin data dirs
+if [ -d "$MONOREPO_MODULES" ]; then
+  for dir in "$HOME/.claude/plugins/data/jarvis-"*; do
+    if [ -d "$dir" ]; then
+      rm -rf "$dir/node_modules" 2>/dev/null
+      ln -sf "$MONOREPO_MODULES" "$dir/node_modules"
+    fi
+  done
+fi
+
+echo "[ensure-plugin-deps] Jarvis plugins: dist + node_modules verified"
