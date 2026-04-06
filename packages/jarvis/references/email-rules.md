@@ -46,8 +46,12 @@ The triage skill checks rules in priority order. First match wins.
 
 - $AutoDelete3d: Delete after 3 days
 - $AutoDelete7d: Delete after 7 days
+- $Processed: Email has been triaged — skip on future passes
 
 Set via IMAP keyword when categorising. The email_cleanup heartbeat task handles deletion.
+
+Newsletters always get $AutoDelete7d. Notifications get $AutoDelete3d or $AutoDelete7d per sender rule.
+All routed emails (except noise, which is trashed) get $Processed after routing.
 
 ## LLM Fallback Instructions
 

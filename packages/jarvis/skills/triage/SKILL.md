@@ -5,7 +5,7 @@ description: "Classify unread emails using deterministic rules first, LLM fallba
 
 # Email Triage Skill
 
-Classifies and routes unread emails through a 4-signal deterministic chain before falling back to LLM judgment. First match wins. Always load rules before fetching email.
+Classifies and routes emails through a 4-signal deterministic chain before falling back to LLM judgment. First match wins. Always load rules and resolve folder paths before fetching email.
 
 ## Step 1: Load Rules
 
@@ -17,9 +17,22 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/email-rules.md`. Parse into working memor
 - Folder routing logic (business vs personal, target paths)
 - LLM fallback heuristics
 
-## Step 2: Fetch Unread
+## Step 2: Resolve Folder Paths
 
-Call `mcp__jarvis-email__list_unread` with limit 25. For each email, extract:
+Call `mcp__jarvis-email__list_folders`. Extract the exact folder path strings for:
+- Action-Required (personal and business)
+- Invoices, Newsletters, Reference, Waiting (personal and business)
+
+Use these exact paths in all subsequent move operations. Never guess folder names.
+
+## Step 3: Fetch Emails
+
+Fetch both unread and read-but-unprocessed emails:
+
+1. Call `mcp__jarvis-email__list_unread` with limit 25.
+2. Call `mcp__jarvis-email__search` with `seen: true`, `folder: "INBOX"` to find read emails still in INBOX. Filter out any with the `$Processed` flag — those are already handled.
+
+Combine into a single deduplicated list. For each email, extract:
 
 - uid
 - sender (full address, extract the bare email with regex `<(.+)>` or take the full string if no angle brackets)
@@ -27,7 +40,7 @@ Call `mcp__jarvis-email__list_unread` with limit 25. For each email, extract:
 - date
 - flags (existing keywords/flags)
 
-## Step 3: Deterministic Classification
+## Step 4: Deterministic Classification
 
 For each email, test signals in strict priority order. Stop at the first match.
 
@@ -41,9 +54,9 @@ If the email was returned with a List-Unsubscribe header or indicator, classify 
 Check subject (case-insensitive) for any invoice keyword from the list above. If found AND the subject or snippet also contains any of: PDF, attached, attachment, Anhang, anbei, enclosed — classify as invoice.
 
 **Signal 4 — No match:**
-Mark as ambiguous for LLM classification in Step 4.
+Mark as ambiguous for LLM classification in Step 5.
 
-## Step 4: LLM Classification (ambiguous emails only)
+## Step 5: LLM Classification (ambiguous emails only)
 
 For each email marked ambiguous, apply these heuristics from email-rules.md:
 
@@ -55,14 +68,14 @@ For each email marked ambiguous, apply these heuristics from email-rules.md:
 
 Record: category + one-sentence reason (for the improve agent to learn from corrections).
 
-## Step 5: Route
+## Step 6: Route
 
 For each classified email:
 
 1. Determine account type: if to/from `it@jschulz.org` -> business, else personal.
-2. Determine target folder:
-   - business: `INBOX/Business/{Category}` (e.g. `INBOX/Business/Invoices`, `INBOX/Business/ActionRequired`)
-   - personal: `INBOX/Personal/{Category}` (e.g. `INBOX/Personal/Newsletters`)
+2. Determine target folder using the resolved paths from Step 2:
+   - business: `INBOX/Business/{Category}` (e.g. `INBOX/Business/Invoices`, `INBOX/Business/Action-Required`)
+   - personal: `INBOX/Personal/{Category}` (e.g. `INBOX/Personal/Newsletters`, `INBOX/Personal/Action-Required`)
    - newsletters always -> `INBOX/Personal/Newsletters` regardless of account
    - invoices always -> `INBOX/Business/Invoices` regardless of account
    - notifications: stay in INBOX (no move needed, just keyword)
@@ -73,9 +86,11 @@ For each classified email:
    - all others with a target folder: call `mcp__jarvis-email__move` with uid and target folder
    - auto_delete set to "3d": call `mcp__jarvis-email__set_keyword` with keyword `$AutoDelete3d`
    - auto_delete set to "7d": call `mcp__jarvis-email__set_keyword` with keyword `$AutoDelete7d`
+   - newsletters: always call `mcp__jarvis-email__set_keyword` with keyword `$AutoDelete7d`
    - action_required: call `mcp__jarvis-email__flag` with uid
+   - all routed emails (except noise): call `mcp__jarvis-email__set_keyword` with keyword `$Processed`
 
-## Step 6: Summary
+## Step 7: Summary
 
 Produce a triage summary following `${CLAUDE_PLUGIN_ROOT}/references/jarvis-voice.md` tone rules.
 
