@@ -83,7 +83,7 @@ inject_mcp_env() {
         "JARVIS_MAILBOX_IMAP_HOST": "${MAILBOX_IMAP_HOST:-imap.mailbox.org}",
         "JARVIS_CALDAV_URL": "${MAILBOX_CALDAV_URL:-https://dav.mailbox.org/caldav/}",
         "JARVIS_CARDDAV_URL": "https://dav.mailbox.org/carddav/",
-        "JARVIS_YNAB_API_KEY": "${YNAB_ACCESS_TOKEN:-}",
+        "JARVIS_YNAB_ACCESS_TOKEN": "${YNAB_ACCESS_TOKEN:-}",
         "JARVIS_YNAB_BUDGET_ID": "${YNAB_BUDGET_ID:-}"
       }
     }
