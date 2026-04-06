@@ -24,12 +24,12 @@ function textResult(text: string): { content: Array<{ type: "text"; text: string
 // Tool: get_categories (BUD-01)
 server.tool(
 	"get_categories",
-	"Get all budget categories with balances (budgeted, activity, remaining)",
+	"Get all budget categories with balances in EUR (budgeted, activity, remaining). All amounts are in EUR.",
 	{},
 	async () => {
 		try {
 			const categories = await backend.getCategories();
-			return textResult(JSON.stringify(categories, null, 2));
+			return textResult("Currency: EUR. All amounts in euros.\n" + JSON.stringify(categories, null, 2));
 		} catch (err) {
 			return textResult(`Error getting categories: ${(err as Error).message}`);
 		}
@@ -39,7 +39,7 @@ server.tool(
 // Tool: get_transactions (BUD-02)
 server.tool(
 	"get_transactions",
-	"Get transactions, optionally filtered by date range",
+	"Get transactions in EUR, optionally filtered by date range. All amounts in EUR.",
 	{
 		startDate: z.string().optional().describe("Start date (ISO format, e.g. 2026-01-01)"),
 		endDate: z.string().optional().describe("End date (ISO format, e.g. 2026-01-31)"),
@@ -47,7 +47,7 @@ server.tool(
 	async ({ startDate, endDate }) => {
 		try {
 			const transactions = await backend.getTransactions(startDate, endDate);
-			return textResult(JSON.stringify(transactions, null, 2));
+			return textResult("Currency: EUR. All amounts in euros.\n" + JSON.stringify(transactions, null, 2));
 		} catch (err) {
 			return textResult(`Error getting transactions: ${(err as Error).message}`);
 		}
