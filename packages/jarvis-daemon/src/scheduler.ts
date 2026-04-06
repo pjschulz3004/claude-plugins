@@ -48,6 +48,24 @@ export class Scheduler {
 
 	constructor(config: SchedulerConfig) {
 		this.config = config;
+		config.ledger.database.exec(`CREATE TABLE IF NOT EXISTS task_sessions (
+			task_name TEXT PRIMARY KEY,
+			session_id TEXT NOT NULL,
+			updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+		)`);
+	}
+
+	private getTaskSession(taskName: string): string | undefined {
+		const row = this.config.ledger.database.prepare(
+			"SELECT session_id FROM task_sessions WHERE task_name = ?",
+		).get(taskName) as { session_id: string } | undefined;
+		return row?.session_id;
+	}
+
+	private saveTaskSession(taskName: string, sessionId: string): void {
+		this.config.ledger.database.prepare(
+			"INSERT OR REPLACE INTO task_sessions (task_name, session_id, updated_at) VALUES (?, ?, datetime('now'))",
+		).run(taskName, sessionId);
 	}
 
 	start(): void {
