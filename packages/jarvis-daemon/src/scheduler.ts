@@ -188,15 +188,23 @@ export class Scheduler {
 		}
 
 		try {
+			// Each task gets its own persistent session for domain context accumulation
+			const taskSessionId = this.getTaskSession(taskName);
 			const opts: DispatchOptions = {
 				model: task.model,
 				maxTurns: task.max_turns,
 				timeoutMs: task.timeout_ms,
 				retries: task.retries,
 				pluginDirs: task.plugin_dirs,
+				resumeSessionId: taskSessionId,
 			};
 
 			const result = await dispatcher.dispatch(this.substituteTemplateVars(promptToUse), opts);
+
+			// Store session for next run (accumulates domain context)
+			if (result.session_id) {
+				this.saveTaskSession(taskName, result.session_id);
+			}
 
 			// Extract JSON decision block from result (email triage outputs ```json{decisions:...}```)
 			let decisionSummary: string | undefined;

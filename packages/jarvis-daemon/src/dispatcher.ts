@@ -142,6 +142,27 @@ export class Dispatcher {
 			return parsed;
 		}
 
+		// Fallback: if we were resuming a session and it failed, retry without resume
+		if (opts.resumeSessionId) {
+			log.warn("dispatch_resume_fallback", {
+				sessionId: opts.resumeSessionId,
+				error: lastError?.message?.slice(0, 100) ?? "unknown",
+			});
+			const freshArgs = args.filter((a, i) => a !== "--resume" && args[i - 1] !== "--resume");
+			try {
+				const result = await this.runCommand("claude", freshArgs, execOpts);
+				const parsed = this.parseOutput(result.stdout);
+				log.info("dispatch_complete_fresh", {
+					model: opts.model ?? "default",
+					duration_ms: Date.now() - dispatchStartMs,
+					result_preview: parsed.result.slice(0, 100),
+				});
+				return parsed;
+			} catch {
+				// Fresh attempt also failed — fall through to throw
+			}
+		}
+
 		log.error("dispatch_failed", {
 			error: lastError?.message ?? "unknown",
 			duration_ms: Date.now() - dispatchStartMs,
