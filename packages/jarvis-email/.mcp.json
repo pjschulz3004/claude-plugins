@@ -4,7 +4,10 @@
 			"command": "node",
 			"args": ["${CLAUDE_PLUGIN_ROOT}/dist/mcp-server.js"],
 			"env": {
-				"NODE_PATH": "${CLAUDE_PLUGIN_DATA}/node_modules"
+				"NODE_PATH": "${CLAUDE_PLUGIN_DATA}/node_modules",
+				"JARVIS_MAILBOX_EMAIL": "${JARVIS_MAILBOX_EMAIL}",
+				"JARVIS_MAILBOX_PASSWORD": "${JARVIS_MAILBOX_PASSWORD}",
+				"JARVIS_MAILBOX_IMAP_HOST": "${JARVIS_MAILBOX_IMAP_HOST}"
 			}
 		}
 	}
