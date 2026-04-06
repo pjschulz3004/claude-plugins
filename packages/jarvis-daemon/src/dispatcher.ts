@@ -61,9 +61,16 @@ export class Dispatcher {
 		prompt: string,
 		opts: DispatchOptions = {},
 	): Promise<ClaudeResult> {
+		// Inject current date/time into every prompt so Claude always knows "now"
+		const now = new Date();
+		const dateStr = now.toISOString().slice(0, 10);
+		const timeStr = now.toLocaleTimeString("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" });
+		const dayName = now.toLocaleDateString("en-GB", { timeZone: "Europe/Berlin", weekday: "long" });
+		const timeContext = `[Current time: ${dayName} ${dateStr} ${timeStr} Europe/Berlin]\n\n`;
+
 		const args = [
 			"-p",
-			prompt,
+			timeContext + prompt,
 			"--output-format",
 			"json",
 			"--dangerously-skip-permissions",
@@ -241,9 +248,16 @@ export async function dispatchWithProgress(
 	prompt: string,
 	opts: DispatchOptions & { onProgress?: ProgressCallback } = {},
 ): Promise<ClaudeResult> {
+	// Inject current date/time
+	const now = new Date();
+	const dateStr = now.toISOString().slice(0, 10);
+	const timeStr = now.toLocaleTimeString("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" });
+	const dayName = now.toLocaleDateString("en-GB", { timeZone: "Europe/Berlin", weekday: "long" });
+	const timeContext = `[Current time: ${dayName} ${dateStr} ${timeStr} Europe/Berlin]\n\n`;
+
 	const args = [
 		"-oL", "claude",
-		"-p", prompt,
+		"-p", timeContext + prompt,
 		"--output-format", "stream-json",
 		"--verbose",
 		"--dangerously-skip-permissions",
