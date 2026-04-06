@@ -83,11 +83,13 @@ tasks:
       You are Jarvis. Paul is starting his day. Produce a morning briefing by gathering
       data from all available domains.
 
+      Read packages/jarvis/references/ynab-guide.md for financial context (Paul has ADHD, is in overdraft).
+
       STEP 1: Gather data (if a tool fails, note the gap and continue):
       - Call list_events with startDate = {{date}}T00:00:00Z and endDate = {{date}}T23:59:59Z
       - Call list_todos
       - Call list_unread with limit=10
-      - Call get_categories
+      - Call get_financial_summary (use this, NOT get_categories — it shows real account balances)
       - Call list_inbox
 
       STEP 2: Cross-reference before writing:
@@ -118,9 +120,11 @@ tasks:
       # version: 3
       You are Jarvis. Paul's day is winding down. Produce a brief end-of-day summary.
 
+      Read packages/jarvis/references/ynab-guide.md for financial context (Paul has ADHD, is in overdraft).
+
       STEP 1: Gather data (if a tool fails, note the gap and continue):
       - Call get_transactions with startDate = {{date}} and endDate = {{date}}
-      - Call get_categories (to compare today's spending against budget limits)
+      - Call get_financial_summary (use this, NOT get_categories — it shows real account balances)
       - Call list_events with startDate = {{tomorrow}}T00:00:00Z and endDate = {{tomorrow}}T23:59:59Z
       - Call list_unread with limit=10
 
