@@ -89,6 +89,70 @@ server.tool(
 	},
 );
 
+// Tool: get_uncategorized
+server.tool(
+	"get_uncategorized",
+	"Get all uncategorized transactions (need categorization). Amounts in EUR.",
+	{},
+	async () => {
+		try {
+			const txns = await backend.getUncategorized();
+			return textResult(`${txns.length} uncategorized transaction(s). Currency: EUR.\n` + JSON.stringify(txns, null, 2));
+		} catch (err) {
+			return textResult(`Error: ${(err as Error).message}`);
+		}
+	},
+);
+
+// Tool: get_unapproved
+server.tool(
+	"get_unapproved",
+	"Get all unapproved transactions (need approval). Amounts in EUR.",
+	{},
+	async () => {
+		try {
+			const txns = await backend.getUnapproved();
+			return textResult(`${txns.length} unapproved transaction(s). Currency: EUR.\n` + JSON.stringify(txns, null, 2));
+		} catch (err) {
+			return textResult(`Error: ${(err as Error).message}`);
+		}
+	},
+);
+
+// Tool: get_by_category
+server.tool(
+	"get_by_category",
+	"Get transactions for a specific budget category (fuzzy match on name). Amounts in EUR.",
+	{
+		category: z.string().describe("Category name to search for (e.g. 'Dining', 'Groceries', 'Rent')"),
+	},
+	async ({ category }) => {
+		try {
+			const txns = await backend.getByCategory(category);
+			return textResult(`${txns.length} transaction(s) in '${category}'. Currency: EUR.\n` + JSON.stringify(txns, null, 2));
+		} catch (err) {
+			return textResult(`Error: ${(err as Error).message}`);
+		}
+	},
+);
+
+// Tool: get_by_payee
+server.tool(
+	"get_by_payee",
+	"Get all transactions from a specific payee/vendor (fuzzy match). Amounts in EUR.",
+	{
+		payee: z.string().describe("Payee name to search for (e.g. 'REWE', 'Hetzner', 'HelloFresh')"),
+	},
+	async ({ payee }) => {
+		try {
+			const txns = await backend.getByPayee(payee);
+			return textResult(`${txns.length} transaction(s) from '${payee}'. Currency: EUR.\n` + JSON.stringify(txns, null, 2));
+		} catch (err) {
+			return textResult(`Error: ${(err as Error).message}`);
+		}
+	},
+);
+
 // Connect via stdio transport
 const transport = new StdioServerTransport();
 await server.connect(transport);

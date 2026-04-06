@@ -141,6 +141,84 @@ export class YnabBackend implements BudgetBackend {
 		});
 	}
 
+	async getUncategorized(): Promise<Transaction[]> {
+		return this.withRetry(async (api) => {
+			const response = await api.transactions.getTransactions(this.config.budgetId);
+			return response.data.transactions
+				.filter((t) => !t.category_id && !t.deleted)
+				.map((t) => ({
+					id: String(t.id),
+					date: t.date,
+					amount: t.amount / 1000,
+					payee: t.payee_name ?? "",
+					categoryName: undefined,
+					categoryId: undefined,
+					memo: t.memo ?? undefined,
+					approved: t.approved,
+					cleared: t.cleared,
+				}));
+		});
+	}
+
+	async getUnapproved(): Promise<Transaction[]> {
+		return this.withRetry(async (api) => {
+			const response = await api.transactions.getTransactions(this.config.budgetId);
+			return response.data.transactions
+				.filter((t) => !t.approved && !t.deleted)
+				.map((t) => ({
+					id: String(t.id),
+					date: t.date,
+					amount: t.amount / 1000,
+					payee: t.payee_name ?? "",
+					categoryName: t.category_name ?? undefined,
+					categoryId: t.category_id ? String(t.category_id) : undefined,
+					memo: t.memo ?? undefined,
+					approved: false,
+					cleared: t.cleared,
+				}));
+		});
+	}
+
+	async getByCategory(categoryName: string): Promise<Transaction[]> {
+		return this.withRetry(async (api) => {
+			const response = await api.transactions.getTransactions(this.config.budgetId);
+			const lower = categoryName.toLowerCase();
+			return response.data.transactions
+				.filter((t) => t.category_name?.toLowerCase().includes(lower) && !t.deleted)
+				.map((t) => ({
+					id: String(t.id),
+					date: t.date,
+					amount: t.amount / 1000,
+					payee: t.payee_name ?? "",
+					categoryName: t.category_name ?? undefined,
+					categoryId: t.category_id ? String(t.category_id) : undefined,
+					memo: t.memo ?? undefined,
+					approved: t.approved,
+					cleared: t.cleared,
+				}));
+		});
+	}
+
+	async getByPayee(payeeName: string): Promise<Transaction[]> {
+		return this.withRetry(async (api) => {
+			const response = await api.transactions.getTransactions(this.config.budgetId);
+			const lower = payeeName.toLowerCase();
+			return response.data.transactions
+				.filter((t) => t.payee_name?.toLowerCase().includes(lower) && !t.deleted)
+				.map((t) => ({
+					id: String(t.id),
+					date: t.date,
+					amount: t.amount / 1000,
+					payee: t.payee_name ?? "",
+					categoryName: t.category_name ?? undefined,
+					categoryId: t.category_id ? String(t.category_id) : undefined,
+					memo: t.memo ?? undefined,
+					approved: t.approved,
+					cleared: t.cleared,
+				}));
+		});
+	}
+
 	async getMonthSummary(month: string): Promise<{ month: string; budgeted: number; activity: number; to_be_budgeted: number; age_of_money: number | null }> {
 		return this.withRetry(async (api) => {
 			const response = await api.months.getBudgetMonth(this.config.budgetId, month);
