@@ -7,11 +7,12 @@ How Jarvis manages Paul's finances through YNAB. This is operational knowledge, 
 Paul has ADHD which affects impulse control, executive function, and time perception around money. He is currently in overdraft (negative bank balance). This changes everything about how Jarvis handles finances:
 
 ### Overdraft Reality
-- The bank account is negative. Ready to Assign may be zero or near-zero.
-- Only budget money that actually exists. Never budget expected future income.
-- Treat the overdraft as debt — it's a loan from the bank.
-- When income arrives, some goes to cover overdraft before Paul can spend it.
-- Track overdraft recovery as a visible trend ("Down from -€800 to -€400 this month").
+- Paul's bank accounts total approximately -€2,357 EUR (as of April 2026).
+- Ready to Assign is NEGATIVE (-€1,842). This is correct — there is no money to assign.
+- HOWEVER, category balances total ~€33K from previous months. These are PHANTOM balances — the categories promise money the accounts no longer hold. This is a common YNAB trap when spending exceeds income over time.
+- When reporting finances, ALWAYS lead with actual account balances, not category balances.
+- The "Uncategorized" category balance (~€27K) is NOT "Ready to Assign." The real Ready to Assign comes from the month summary's to_be_budgeted field.
+- Track overdraft recovery as a visible trend ("Down from -€2,400 to -€2,100 this month").
 
 ### ADHD-Adapted Financial Communication
 - **Lead with what's going well.** "You stayed under budget in 5 categories" before "Dining went over."

@@ -133,6 +133,47 @@ server.tool(
 	},
 );
 
+// Tool: get_financial_summary — the honest picture
+server.tool(
+	"get_financial_summary",
+	"Get the REAL financial picture: actual account balances (the truth), Ready to Assign, and month summary. Category balances may be phantom (promising money that accounts dont hold). Always lead with account balances. All amounts EUR.",
+	{},
+	async () => {
+		try {
+			const accounts = await backend.getAccounts();
+			const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
+
+			const now = new Date();
+			const month = now.toISOString().slice(0, 7) + "-01";
+			const monthSummary = await backend.getMonthSummary(month);
+
+			const uncatTxns = await backend.getUncategorized();
+			const unappTxns = await backend.getUnapproved();
+
+			const summary = {
+				realAccountBalances: {
+					total: totalBalance,
+					accounts: accounts.map(a => ({ name: a.name, balance: a.balance, type: a.type })),
+				},
+				readyToAssign: monthSummary.to_be_budgeted,
+				monthActivity: monthSummary.activity,
+				ageOfMoney: monthSummary.age_of_money,
+				pendingActions: {
+					uncategorized: uncatTxns.length,
+					unapproved: unappTxns.length,
+				},
+				note: totalBalance < 0
+					? `Paul is in overdraft (${totalBalance.toFixed(2)} EUR). Category balances may be phantom — they promise money the accounts dont hold. Focus on account balances as the source of truth.`
+					: undefined,
+			};
+
+			return textResult("Currency: EUR. All amounts in euros.\n" + JSON.stringify(summary, null, 2));
+		} catch (err) {
+			return textResult(`Error: ${(err as Error).message}`);
+		}
+	},
+);
+
 // Tool: get_unapproved
 server.tool(
 	"get_unapproved",
