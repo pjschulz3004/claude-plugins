@@ -150,6 +150,11 @@ server.tool(
 			const uncatTxns = await backend.getUncategorized();
 			const unappTxns = await backend.getUnapproved();
 
+			// Flag accounts that show negative but cant go negative in real life
+			const reconciliationWarnings = accounts
+				.filter(a => a.balance < 0 && (a.type === "cash" || a.name.includes("Taschengeld")))
+				.map(a => `${a.name} shows ${a.balance.toFixed(2)} EUR in YNAB but this account cant go negative in real life. Needs reconciliation against actual bank balance.`);
+
 			const summary = {
 				realAccountBalances: {
 					total: totalBalance,
@@ -162,6 +167,7 @@ server.tool(
 					uncategorized: uncatTxns.length,
 					unapproved: unappTxns.length,
 				},
+				reconciliationWarnings: reconciliationWarnings.length > 0 ? reconciliationWarnings : undefined,
 				note: totalBalance < 0
 					? `Paul is in overdraft (${totalBalance.toFixed(2)} EUR). Category balances may be phantom — they promise money the accounts dont hold. Focus on account balances as the source of truth.`
 					: undefined,
