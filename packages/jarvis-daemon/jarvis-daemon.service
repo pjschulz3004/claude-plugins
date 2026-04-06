@@ -7,6 +7,7 @@ Wants=network-online.target
 Type=simple
 User=paul
 WorkingDirectory=/home/paul/dev/claude/plugins
+ExecStartPre=/home/paul/dev/claude/plugins/packages/jarvis-daemon/scripts/ensure-plugin-deps.sh
 ExecStart=/usr/bin/node packages/jarvis-daemon/dist/main.js
 EnvironmentFile=/home/paul/dev/claude/plugins/packages/jarvis-daemon/.env
 Restart=on-failure
