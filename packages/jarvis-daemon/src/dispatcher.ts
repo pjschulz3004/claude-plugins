@@ -25,6 +25,8 @@ export interface DispatchOptions {
 	pluginDirs?: string[];
 	maxTurns?: number;
 	timeoutMs?: number;
+	/** Resume a previous session by ID. Maintains full conversation context. */
+	resumeSessionId?: string;
 	/** Number of retries on transient exec failure (e.g. CLI startup crash, MCP blip). Default: 0. */
 	retries?: number;
 }
@@ -67,6 +69,9 @@ export class Dispatcher {
 			"--dangerously-skip-permissions",
 		];
 
+		if (opts.resumeSessionId) {
+			args.push("--resume", opts.resumeSessionId);
+		}
 		if (opts.model) {
 			args.push("--model", opts.model);
 		}

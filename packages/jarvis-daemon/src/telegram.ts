@@ -20,8 +20,6 @@ import {
 	getTimeOfDay,
 	getDayOfWeek,
 } from "./state/interactions.js";
-import { ClaudeAPI, RateLimitError, AuthError, type StreamDelta } from "./claude-api.js";
-import { buildToolDefinitions, buildToolExecutor } from "./tool-bridge.js";
 import type { ImapFlowBackend } from "@jarvis/email";
 import type { TsdavCalendarBackend } from "@jarvis/calendar";
 import type { TsdavContactsBackend } from "@jarvis/contacts";
@@ -443,66 +441,36 @@ export function createBot(config: TelegramConfig): Telegraf {
 		}
 	});
 
-	// Free-text relay — direct Claude API with tool loop
-	const claude = new ClaudeAPI(config.ledger.database);
-	const tools = buildToolDefinitions({
-		email: config.email,
-		calendar: config.calendar,
-		contacts: config.contacts,
-		budget: config.budget,
-	});
-	const executor = buildToolExecutor({
-		email: config.email,
-		calendar: config.calendar,
-		contacts: config.contacts,
-		budget: config.budget,
-	});
+	// Free-text relay — claude -p --resume for persistent conversation
+	// Session ID per chat stored in SQLite, survives daemon restarts
+	const sessionDb = config.ledger.database;
+	sessionDb.exec(`CREATE TABLE IF NOT EXISTS chat_sessions (
+		chat_id TEXT PRIMARY KEY,
+		session_id TEXT NOT NULL,
+		updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+	)`);
+
+	function getSessionId(chatId: string): string | undefined {
+		const row = sessionDb.prepare("SELECT session_id FROM chat_sessions WHERE chat_id = ?").get(chatId) as { session_id: string } | undefined;
+		return row?.session_id;
+	}
+
+	function saveSessionId(chatId: string, sessionId: string): void {
+		sessionDb.prepare("INSERT OR REPLACE INTO chat_sessions (chat_id, session_id, updated_at) VALUES (?, ?, datetime('now'))").run(chatId, sessionId);
+	}
 
 	let lastInteractionId: number | null = null;
 	let lastInteractionTopic: string | null = null;
-
-	const SYSTEM_PROMPT = `You are Jarvis, Paul's personal AI assistant. You run 24/7 on a server in Germany. This is a persistent conversation. You remember everything Paul tells you within this session.
-
-WHO YOU ARE
-Efficient, thoughtful, slightly dry British humour. You are not a chatbot. You are a capable, proactive personal assistant who knows Paul's digital life: email, calendar, budget, contacts, and files. Think of yourself as a senior executive assistant who happens to be software.
-
-HOW TO RESPOND
-Plain text only. No markdown. No bullet points unless listing items. Lead with what matters. Be specific: names, times, amounts, sender addresses. When you acted on something, say what you DID naturally: "Triaged your inbox. 3 newsletters marked read, flagged an invoice from Hetzner (EUR 49.00), trashed 2 spam." Never list tool names or API calls.
-
-HOW TO ACT
-When Paul asks you to do something, DO it using your tools. Don't describe what you could do. Act first, report results. If a request is ambiguous, ask a brief clarifying question BEFORE acting. Remember Paul's answer for next time.
-
-CLARIFYING QUESTIONS AND PREFERENCES
-When Paul makes a request that could be interpreted multiple ways, ask ONE focused clarifying question. Examples:
-- "When you say 'give me my emails from this week', shall I include read ones too? All folders or just inbox?"
-- "For the budget rundown, want me to compare against your budget limits, or just list the spending?"
-- "Should I group these by day, by sender, or by importance?"
-
-Once Paul answers, REMEMBER that preference. Never ask the same clarifying question twice. If he said he wants all folders including read emails, do that every time from now on without asking.
-
-PROACTIVE OBSERVATIONS
-When you notice something while fulfilling a request, mention it naturally:
-- "By the way, that Hetzner invoice is EUR 10 more than last month."
-- "You have a meeting with Mueller at 14:00 and he sent you an email yesterday you haven't read."
-- "Your dining budget is at 85% with 10 days left in the month."
-
-WHAT YOU KNOW ABOUT PAUL
-Email: mailbox.org (paul@jschulz.org personal, it@jschulz.org business). Calendar and contacts: same provider (CalDAV/CardDAV at dav.mailbox.org). Budget: YNAB. Location: Germany (Europe/Berlin timezone). Currency: EUR.
-
-TONE
-Address Paul naturally. Not "sir", not "boss". Just his name when needed, or nothing at all. Dry British wit is welcome when it comes naturally. Never forced. No emoji. No exclamation marks. No filler ("Sure!", "Of course!", "Great question!").`;
 
 	bot.on("text", async (ctx) => {
 		const startMs = Date.now();
 		const chatId = ctx.chat.id.toString();
 		const userText = ctx.message.text;
 
-		// Classify the interaction
 		const intent = classifyIntent(userText);
 		const topic = classifyTopic(userText);
 		const mood = classifyMood(userText);
 
-		// Detect follow-up / correction
 		if (lastInteractionTopic === topic && lastInteractionId !== null && config.interactions) {
 			config.interactions.markFollowUp(lastInteractionId);
 		}
@@ -510,51 +478,35 @@ Address Paul naturally. Not "sir", not "boss". Just his name when needed, or not
 			config.interactions.markCorrection(lastInteractionId, userText.slice(0, 200));
 		}
 
-		// Show typing immediately
 		ctx.sendChatAction("typing").catch(() => {});
 		const typingInterval = setInterval(() => {
 			ctx.sendChatAction("typing").catch(() => {});
 		}, 4000);
 
-		// Progress message for tool use
-		let progressMsgId: number | null = null;
-
-		const onDelta = (delta: StreamDelta) => {
-			if (delta.type === "tool_start" && delta.toolName) {
-				const desc = TOOL_DESCRIPTIONS[delta.toolName] ?? `Working on it...`;
-				if (!progressMsgId) {
-					ctx.reply(desc).then((msg) => { progressMsgId = msg.message_id; }).catch(() => {});
-				} else {
-					ctx.telegram.editMessageText(ctx.chat.id, progressMsgId, undefined, desc).catch(() => {});
-				}
-			}
-		};
-
 		try {
 			config.history.record(chatId, "user", userText);
 
-			// Full agentic tool loop — Opus orchestrates, tools execute locally (free)
-			const result = await claude.sendWithTools(chatId, userText, {
-				model: "opus",
-				system: SYSTEM_PROMPT,
-				tools,
-				executor,
-				maxTurns: 15,
-				onDelta,
+			// claude -p --resume: persistent conversation with full MCP tool access
+			const sessionId = getSessionId(chatId);
+			const result = await config.dispatcher.dispatch(userText, {
+				model: "sonnet",
+				maxTurns: 20,
+				timeoutMs: 180_000,
+				resumeSessionId: sessionId,
 			});
 
 			clearInterval(typingInterval);
 			const responseTimeMs = Date.now() - startMs;
 
-			// Delete progress message, send final response
-			if (progressMsgId) {
-				ctx.telegram.deleteMessage(ctx.chat.id, progressMsgId).catch(() => {});
+			// Store session for conversation continuity
+			if (result.session_id) {
+				saveSessionId(chatId, result.session_id);
 			}
-			const finalText = result.text || "Done.";
+
+			const finalText = result.result || "Done.";
 			await sendSplit(ctx, finalText);
 
-			// Record in chat history + deep interaction logging
-			config.history.record(chatId, "assistant", result.text);
+			config.history.record(chatId, "assistant", result.result);
 
 			// Deep interaction logging
 			if (config.interactions) {
@@ -565,12 +517,12 @@ Address Paul naturally. Not "sir", not "boss". Just his name when needed, or not
 					intent,
 					topic,
 					entities: "[]",
-					assistant_response: result.text.slice(0, 500),
-					tools_used: JSON.stringify(result.toolsUsed),
-					actions_taken: JSON.stringify(result.toolsUsed),
+					assistant_response: result.result.slice(0, 500),
+					tools_used: "[]",
+					actions_taken: "[]",
 					response_time_ms: responseTimeMs,
-					model_used: result.model,
-					tokens_used: (result.inputTokens ?? 0) + (result.outputTokens ?? 0),
+					model_used: "sonnet",
+					tokens_used: (result.usage?.input_tokens ?? 0) + (result.usage?.output_tokens ?? 0),
 					follow_up: false,
 					correction: false,
 					explicit_feedback: null,
@@ -586,7 +538,8 @@ Address Paul naturally. Not "sir", not "boss". Just his name when needed, or not
 				topic,
 				mood,
 				response_time_ms: responseTimeMs,
-				response_length: result.text.length,
+				response_length: result.result.length,
+				session_id: result.session_id,
 			});
 		} catch (err) {
 			const responseTimeMs = Date.now() - startMs;
