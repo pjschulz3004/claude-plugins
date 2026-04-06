@@ -200,6 +200,170 @@ export class Dispatcher {
 	}
 }
 
+// Tool name → human-friendly description for progress updates
+const TOOL_PROGRESS: Record<string, string> = {
+	list_unread: "Checking your inbox...",
+	search: "Searching emails...",
+	move: "Moving email...",
+	flag: "Flagging...",
+	trash: "Trashing...",
+	archive: "Archiving...",
+	mark_read: "Marking as read...",
+	set_keyword: "Tagging email...",
+	list_folders: "Listing folders...",
+	list_events: "Checking your calendar...",
+	list_todos: "Looking at your tasks...",
+	create_event: "Creating event...",
+	complete_todo: "Completing task...",
+	search_contacts: "Looking up contacts...",
+	get_contact: "Getting contact details...",
+	get_categories: "Checking budget...",
+	get_transactions: "Looking at transactions...",
+	categorize_transaction: "Categorising...",
+	approve_transactions: "Approving transactions...",
+	get_accounts: "Checking accounts...",
+	get_month: "Getting month summary...",
+	Read: "Reading...",
+	Bash: "Running command...",
+	WebSearch: "Searching the web...",
+};
+
+export type ProgressCallback = (update: string) => Promise<void>;
+
+/**
+ * Streaming dispatch: spawns claude -p with stream-json output.
+ * Calls onProgress with human-friendly updates as Claude uses tools.
+ * Returns the final result.
+ *
+ * Uses stdbuf -oL on Linux to force line-buffered stdout.
+ */
+export async function dispatchWithProgress(
+	prompt: string,
+	opts: DispatchOptions & { onProgress?: ProgressCallback } = {},
+): Promise<ClaudeResult> {
+	const args = [
+		"-oL", "claude",
+		"-p", prompt,
+		"--output-format", "stream-json",
+		"--verbose",
+		"--dangerously-skip-permissions",
+	];
+
+	if (opts.resumeSessionId) {
+		args.push("--resume", opts.resumeSessionId);
+	}
+	if (opts.model) {
+		args.push("--model", opts.model);
+	}
+	if (opts.maxTurns) {
+		args.push("--max-turns", String(opts.maxTurns));
+	}
+
+	const env = { ...process.env };
+	delete env.ANTHROPIC_API_KEY;
+
+	log.info("dispatch_streaming_start", {
+		prompt_preview: prompt.slice(0, 100),
+		model: opts.model ?? "default",
+	});
+	const startMs = Date.now();
+
+	return new Promise<ClaudeResult>((resolve, reject) => {
+		const child = spawn("stdbuf", args, {
+			env,
+			stdio: ["pipe", "pipe", "pipe"],
+		});
+
+		child.stdin.end();
+
+		const rl = createInterface({ input: child.stdout });
+		let result: ClaudeResult | null = null;
+		let lastProgress = "";
+		let killTimer: ReturnType<typeof setTimeout> | null = null;
+
+		// Timeout
+		const timeout = setTimeout(() => {
+			child.kill("SIGTERM");
+			reject(new Error("Dispatch timed out"));
+		}, opts.timeoutMs ?? 300_000);
+
+		rl.on("line", async (line) => {
+			if (!line.trim()) return;
+			let msg: Record<string, unknown>;
+			try {
+				msg = JSON.parse(line);
+			} catch {
+				return;
+			}
+
+			// Tool use events → progress update
+			if (msg.type === "assistant" && msg.message) {
+				const message = msg.message as Record<string, unknown>;
+				const content = message.content as Array<Record<string, unknown>> | undefined;
+				if (content) {
+					for (const block of content) {
+						if (block.type === "tool_use" && block.name) {
+							const toolName = String(block.name).split("__").pop() ?? String(block.name);
+							const desc = TOOL_PROGRESS[toolName] ?? `Working on it...`;
+							if (desc !== lastProgress && opts.onProgress) {
+								lastProgress = desc;
+								opts.onProgress(desc).catch(() => {});
+							}
+						}
+					}
+				}
+			}
+
+			// Result event → we're done
+			if (msg.type === "result") {
+				result = msg as unknown as ClaudeResult;
+				// Kill the process (it hangs after result — known bug #25629)
+				killTimer = setTimeout(() => child.kill("SIGTERM"), 3000);
+			}
+		});
+
+		let stderr = "";
+		child.stderr.on("data", (chunk: Buffer) => {
+			stderr += chunk.toString();
+		});
+
+		child.on("close", () => {
+			clearTimeout(timeout);
+			if (killTimer) clearTimeout(killTimer);
+			const durationMs = Date.now() - startMs;
+
+			if (result) {
+				if (result.subtype !== "success") {
+					log.error("dispatch_streaming_failed", {
+						subtype: result.subtype,
+						duration_ms: durationMs,
+					});
+					reject(new Error(`Claude dispatch failed: ${result.subtype} - ${result.result}`));
+					return;
+				}
+				log.info("dispatch_streaming_complete", {
+					duration_ms: durationMs,
+					cost_usd: result.total_cost_usd,
+					result_preview: result.result?.slice(0, 100),
+				});
+				resolve(result);
+			} else {
+				// No result event — process crashed or was killed
+				log.error("dispatch_streaming_no_result", {
+					duration_ms: durationMs,
+					stderr_preview: stderr.slice(0, 200),
+				});
+				reject(new Error(`claude -p exited without result: ${stderr.slice(0, 200)}`));
+			}
+		});
+
+		child.on("error", (err) => {
+			clearTimeout(timeout);
+			reject(err);
+		});
+	});
+}
+
 /**
  * Add random jitter to a base delay to stagger task dispatch (DAEMON-09 / Pitfall 3).
  */

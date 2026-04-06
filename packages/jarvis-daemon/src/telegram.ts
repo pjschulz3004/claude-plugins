@@ -495,13 +495,30 @@ export function createBot(config: TelegramConfig): Telegraf {
 		try {
 			config.history.record(chatId, "user", userText);
 
-			// claude -p --resume: persistent conversation with full MCP tool access
+			// Streaming dispatch: shows progress as Claude uses tools
 			const sessionId = getSessionId(chatId);
-			const result = await config.dispatcher.dispatch(userText, {
+			let progressMsgId: number | null = null;
+
+			const onProgress = async (update: string) => {
+				try {
+					if (progressMsgId) {
+						await ctx.telegram.editMessageText(ctx.chat.id, progressMsgId, undefined, update);
+					} else {
+						const msg = await ctx.reply(update);
+						progressMsgId = msg.message_id;
+					}
+				} catch {
+					// edit can fail if text unchanged — ignore
+				}
+			};
+
+			const { dispatchWithProgress } = await import("./dispatcher.js");
+			const result = await dispatchWithProgress(userText, {
 				model: "sonnet",
 				maxTurns: 20,
-				timeoutMs: 180_000,
+				timeoutMs: 300_000,
 				resumeSessionId: sessionId,
+				onProgress,
 			});
 
 			clearInterval(typingInterval);
@@ -512,8 +529,20 @@ export function createBot(config: TelegramConfig): Telegraf {
 				saveSessionId(chatId, result.session_id);
 			}
 
+			// Replace progress message with final response, or send new
 			const finalText = result.result || "Done.";
-			await sendSplit(ctx, finalText);
+			if (progressMsgId) {
+				try {
+					await ctx.telegram.editMessageText(ctx.chat.id, progressMsgId, undefined, finalText.slice(0, 4000));
+					if (finalText.length > 4000) {
+						await sendSplit(ctx, finalText.slice(4000));
+					}
+				} catch {
+					await sendSplit(ctx, finalText);
+				}
+			} else {
+				await sendSplit(ctx, finalText);
+			}
 
 			config.history.record(chatId, "assistant", result.result);
 
