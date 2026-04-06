@@ -214,12 +214,21 @@ async function sendSplit(ctx: Context, text: string): Promise<void> {
  * slash commands, and free-text relay.
  */
 export function createBot(config: TelegramConfig): Telegraf {
-	const bot = new Telegraf(config.token);
+	const bot = new Telegraf(config.token, {
+		// claude -p can take 2-3 minutes for complex tool-using queries
+		handlerTimeout: 300_000, // 5 minutes
+	});
 
 	// Override default error handler to prevent process.exit (Pitfall 6)
 	bot.catch((err: unknown, ctx: Context) => {
-		console.error("[telegram] Unhandled error:", err);
-		ctx.reply("Something went wrong. I'll look into it.").catch(() => {});
+		const msg = err instanceof Error ? err.message : String(err);
+		if (msg.includes("timed out")) {
+			log.warn("telegram_handler_timeout", { error: msg });
+			// Don't reply — the dispatch may still be running and will send the result
+		} else {
+			log.error("telegram_unhandled_error", { error: msg });
+			ctx.reply("Something went wrong. I'll look into it.").catch(() => {});
+		}
 	});
 
 	// Auth middleware -- must be first (TG-05)
