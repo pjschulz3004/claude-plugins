@@ -132,7 +132,8 @@ async function start() {
 
 	// Nightly growth loop: 01:00-05:00, runs as a time-bounded loop
 	const repoRoot = join(__dirname, "..", "..");
-	const growthJob = new Cron("0 1 * * *", () => {
+	// Growth disabled temporarily — re-enable by uncommenting
+	const growthJob = new Cron("0 1 1 1 *", () => { // disabled: was "0 1 * * *"
 		log.info("growth_cron_triggered");
 		runGrowthLoop({
 			dispatcher,
