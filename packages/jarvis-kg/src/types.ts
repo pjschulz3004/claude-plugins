@@ -38,3 +38,12 @@ export interface KGClientConfig {
 	password: string;
 	staleThresholdDays?: number; // default 30
 }
+
+export interface ContextSearchOptions {
+	/** Keywords to search for (OR-joined). */
+	keywords: string[];
+	/** Only return relationships newer than this many days. Default: 7. */
+	daysBack?: number;
+	/** Max results to return. Default: 5. */
+	limit?: number;
+}
