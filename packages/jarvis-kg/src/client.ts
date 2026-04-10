@@ -200,9 +200,14 @@ export class KnowledgeGraphClient {
 			const seen = new Set<string>();
 			const lines: string[] = [];
 
+			// The session is intentionally shared across all keyword queries so we maintain
+			// a single running count for the global limit check (lines.length >= limit).
+			// Other methods open/close a session per query; here we need cross-query state.
 			for (const keyword of keywords) {
 				if (lines.length >= limit) break;
 
+				// Entities found by keyword are included even if they have no recent relations.
+				// The OPTIONAL MATCH + WHERE filters relations by recency but preserves the entity row.
 				const cypher = `
 					MATCH (e:Entity)
 					WHERE toLower(e.name) CONTAINS toLower($query)
@@ -215,7 +220,7 @@ export class KnowledgeGraphClient {
 				const result = await session.run(cypher, {
 					query: keyword,
 					cutoff,
-					perKeywordLimit: neo4j.int(limit - lines.length),
+					perKeywordLimit: neo4j.int(limit),
 				});
 
 				for (const record of result.records) {
@@ -223,11 +228,10 @@ export class KnowledgeGraphClient {
 
 					const entity = record.get("e");
 					const name = entity.properties.name as string;
-
-					if (seen.has(name)) continue;
-					seen.add(name);
-
 					const type = entity.properties.type as string;
+
+					if (seen.has(`${name}::${type}`)) continue;
+					seen.add(`${name}::${type}`);
 					const relations = record.get("relations") as Array<{
 						relation: { properties: Record<string, unknown> } | null;
 						target: { properties: Record<string, unknown> } | null;

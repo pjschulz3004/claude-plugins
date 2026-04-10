@@ -24,7 +24,7 @@ vi.mock("neo4j-driver", () => ({
 }));
 
 import { KnowledgeGraphClient } from "./client.js";
-import type { Episode, SearchResult, KGStats, ContextSearchOptions } from "./types.js";
+import type { Episode, SearchResult, KGStats } from "./types.js";
 
 describe("KnowledgeGraphClient", () => {
 	let client: KnowledgeGraphClient;
