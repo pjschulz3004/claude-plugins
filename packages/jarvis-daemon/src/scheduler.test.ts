@@ -255,4 +255,129 @@ describe("Scheduler", () => {
 			expect.objectContaining({ maxTurns: 30, timeoutMs: 240000 }),
 		);
 	});
+
+
+	// ── KG context injection tests ────────────────────────────────────────────
+
+	it("KG injection: when task has kg_domains and injector returns context, prompt is prepended with [Cross-domain context] block", async () => {
+		const KG_YAML = [
+			"tasks:",
+			"  kg_task:",
+			'    schedule: "0 9 * * *"',
+			"    service: imap",
+			"    model: sonnet",
+			"    max_turns: 5",
+			"    timeout_ms: 60000",
+			"    kg_domains:",
+			"      - email",
+			"      - budget",
+			"    kg_days_back: 14",
+			'    prompt: "Check everything"',
+		].join("\n") + "\n";
+		writeFileSync(yamlPath, KG_YAML);
+
+		const kgContext = "[Cross-domain context]\nYou have 3 unread emails and a budget overrun.\n";
+		const mockKgInjector = {
+			getContext: vi.fn<[string[], number | undefined], Promise<string>>().mockResolvedValue(kgContext),
+		};
+
+		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
+
+		const kgScheduler = new Scheduler({
+			yamlPath,
+			dispatcher: mockDispatcher,
+			ledger,
+			breakers,
+			kgInjector: mockKgInjector as unknown as import("./kg-context.js").KGContextInjector,
+		});
+		kgScheduler.start();
+		await kgScheduler.fireTask("kg_task");
+		kgScheduler.stop();
+
+		expect(mockKgInjector.getContext).toHaveBeenCalledWith(["email", "budget"], 14);
+
+		const dispatchedPrompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
+		expect(dispatchedPrompt).toContain("[Cross-domain context]");
+		expect(dispatchedPrompt).toContain("You have 3 unread emails and a budget overrun.");
+		expect(dispatchedPrompt).toContain("Check everything");
+		// Context must be prepended (appears before the task prompt)
+		expect(dispatchedPrompt.indexOf("[Cross-domain context]")).toBeLessThan(dispatchedPrompt.indexOf("Check everything"));
+	});
+
+	it("KG injection: when task has no kg_domains, injector is NOT called and prompt is unchanged", async () => {
+		const NO_KG_YAML = [
+			"tasks:",
+			"  plain_task:",
+			'    schedule: "0 9 * * *"',
+			"    service: imap",
+			"    model: sonnet",
+			"    max_turns: 5",
+			"    timeout_ms: 60000",
+			'    prompt: "Plain prompt without KG"',
+		].join("\n") + "\n";
+		writeFileSync(yamlPath, NO_KG_YAML);
+
+		const mockKgInjector = {
+			getContext: vi.fn<[string[], number | undefined], Promise<string>>(),
+		};
+
+		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
+
+		const kgScheduler = new Scheduler({
+			yamlPath,
+			dispatcher: mockDispatcher,
+			ledger,
+			breakers,
+			kgInjector: mockKgInjector as unknown as import("./kg-context.js").KGContextInjector,
+		});
+		kgScheduler.start();
+		await kgScheduler.fireTask("plain_task");
+		kgScheduler.stop();
+
+		expect(mockKgInjector.getContext).not.toHaveBeenCalled();
+
+		const dispatchedPrompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
+		expect(dispatchedPrompt).toBe("Plain prompt without KG");
+		expect(dispatchedPrompt).not.toContain("[Cross-domain context]");
+	});
+
+	it("KG injection: when injector returns empty string, no context block is prepended", async () => {
+		const KG_EMPTY_YAML = [
+			"tasks:",
+			"  kg_empty_task:",
+			'    schedule: "0 9 * * *"',
+			"    service: imap",
+			"    model: sonnet",
+			"    max_turns: 5",
+			"    timeout_ms: 60000",
+			"    kg_domains:",
+			"      - calendar",
+			'    prompt: "Check calendar events"',
+		].join("\n") + "\n";
+		writeFileSync(yamlPath, KG_EMPTY_YAML);
+
+		const mockKgInjector = {
+			getContext: vi.fn<[string[], number | undefined], Promise<string>>().mockResolvedValue(""),
+		};
+
+		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
+
+		const kgScheduler = new Scheduler({
+			yamlPath,
+			dispatcher: mockDispatcher,
+			ledger,
+			breakers,
+			kgInjector: mockKgInjector as unknown as import("./kg-context.js").KGContextInjector,
+		});
+		kgScheduler.start();
+		await kgScheduler.fireTask("kg_empty_task");
+		kgScheduler.stop();
+
+		expect(mockKgInjector.getContext).toHaveBeenCalledWith(["calendar"], undefined);
+
+		const dispatchedPrompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
+		expect(dispatchedPrompt).toBe("Check calendar events");
+		expect(dispatchedPrompt).not.toContain("[Cross-domain context]");
+	});
+
 });
