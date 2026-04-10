@@ -19,11 +19,12 @@ vi.mock("neo4j-driver", () => ({
 		auth: {
 			basic: vi.fn((user: string, pass: string) => ({ user, pass })),
 		},
+		int: vi.fn((n: number) => n),
 	},
 }));
 
 import { KnowledgeGraphClient } from "./client.js";
-import type { Episode, SearchResult, KGStats } from "./types.js";
+import type { Episode, SearchResult, KGStats, ContextSearchOptions } from "./types.js";
 
 describe("KnowledgeGraphClient", () => {
 	let client: KnowledgeGraphClient;
@@ -295,6 +296,104 @@ describe("KnowledgeGraphClient", () => {
 			await client.close();
 
 			expect(mockDriverClose).toHaveBeenCalledOnce();
+		});
+	});
+
+	describe("searchForContext", () => {
+		beforeEach(() => {
+			vi.clearAllMocks();
+			client = new KnowledgeGraphClient({
+				uri: "bolt://localhost:7687",
+				user: "neo4j",
+				password: "test",
+			});
+		});
+
+		it("returns formatted context lines from KG results", async () => {
+			mockRun
+				.mockResolvedValueOnce({
+					records: [
+						{
+							get: (key: string) => {
+								if (key === "e") return { properties: { name: "Max Mueller", type: "person" } };
+								if (key === "relations") return [
+									{
+										relation: { properties: { type: "SENT_EMAIL", timestamp: "2026-04-09T10:00:00Z" } },
+										target: { properties: { name: "Invoice Q1", type: "invoice" } },
+									},
+								];
+								return null;
+							},
+						},
+					],
+				})
+				.mockResolvedValueOnce({ records: [] }); // second keyword: "invoice"
+
+			const result = await client.searchForContext({
+				keywords: ["email", "invoice"],
+				daysBack: 7,
+				limit: 5,
+			});
+
+			expect(result).toContain("Max Mueller");
+			expect(result).toContain("Invoice Q1");
+			expect(result).toContain("SENT_EMAIL");
+		});
+
+		it("returns empty string when KG has no results", async () => {
+			mockRun.mockResolvedValueOnce({ records: [] });
+			const result = await client.searchForContext({ keywords: ["nonexistent"] });
+			expect(result).toBe("");
+		});
+
+		it("returns empty string when Neo4j is unavailable", async () => {
+			mockRun.mockRejectedValueOnce(new Error("Connection refused"));
+			const result = await client.searchForContext({ keywords: ["email"] });
+			expect(result).toBe("");
+		});
+
+		it("deduplicates entities across keyword queries", async () => {
+			const mockRecord = {
+				get: (key: string) => {
+					if (key === "e") return { properties: { name: "Max Mueller", type: "person" } };
+					if (key === "relations") return [];
+					return null;
+				},
+			};
+
+			mockRun
+				.mockResolvedValueOnce({ records: [mockRecord] })
+				.mockResolvedValueOnce({ records: [mockRecord] });
+
+			const result = await client.searchForContext({
+				keywords: ["email", "contact"],
+				limit: 5,
+			});
+
+			const maxCount = (result.match(/Max Mueller/g) || []).length;
+			expect(maxCount).toBeLessThanOrEqual(1);
+		});
+
+		it("respects the limit parameter", async () => {
+			const makeRecord = (name: string) => ({
+				get: (key: string) => {
+					if (key === "e") return { properties: { name, type: "person" } };
+					if (key === "relations") return [];
+					return null;
+				},
+			});
+
+			mockRun.mockResolvedValueOnce({
+				records: [makeRecord("Alice"), makeRecord("Bob"), makeRecord("Carol")],
+			});
+
+			const result = await client.searchForContext({
+				keywords: ["person"],
+				limit: 2,
+			});
+
+			const lines = result.split("\n").filter((l: string) => l.startsWith("- "));
+			expect(lines.length).toBeLessThanOrEqual(2);
 		});
 	});
 });
