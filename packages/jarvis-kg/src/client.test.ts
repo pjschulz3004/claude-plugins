@@ -157,7 +157,7 @@ describe("KnowledgeGraphClient", () => {
 	});
 
 	describe("getStats", () => {
-		it("returns counts from mock queries using RelatesToNode_ for edges", async () => {
+		it("returns counts from mock queries using direct RELATES_TO relationships for edges", async () => {
 			mockRun
 				.mockResolvedValueOnce({
 					records: [
@@ -173,7 +173,7 @@ describe("KnowledgeGraphClient", () => {
 					records: [
 						{
 							get: (key: string) => {
-								if (key === "edgeCount") return { toNumber: () => 100 };
+								if (key === "cnt") return { toNumber: () => 100 };
 								return null;
 							},
 						},
@@ -183,7 +183,7 @@ describe("KnowledgeGraphClient", () => {
 					records: [
 						{
 							get: (key: string) => {
-								if (key === "staleCount") return { toNumber: () => 15 };
+								if (key === "cnt") return { toNumber: () => 15 };
 								return null;
 							},
 						},
@@ -197,14 +197,16 @@ describe("KnowledgeGraphClient", () => {
 			expect(stats.staleEdgeCount).toBe(15);
 			expect(mockRun).toHaveBeenCalledTimes(3);
 
-			// Verify edge query targets RelatesToNode_, not native relationships
+			// Verify edge query uses direct RELATES_TO relationships, not RelatesToNode_ nodes
 			const [edgeCypher] = mockRun.mock.calls[1];
-			expect(edgeCypher).toContain("RelatesToNode_");
-			expect(edgeCypher).not.toContain("()-[r:RELATES_TO]-()");
+			expect(edgeCypher).toContain("RELATES_TO");
+			expect(edgeCypher).not.toContain("RelatesToNode_");
+			expect(edgeCypher).toContain("group_id");
 
-			// Verify stale query also targets RelatesToNode_
+			// Verify stale query also uses direct RELATES_TO relationships
 			const [staleCypher] = mockRun.mock.calls[2];
-			expect(staleCypher).toContain("RelatesToNode_");
+			expect(staleCypher).toContain("RELATES_TO");
+			expect(staleCypher).not.toContain("RelatesToNode_");
 		});
 
 		it("uses custom threshold when provided", async () => {
@@ -334,7 +336,29 @@ describe("KnowledgeGraphClient", () => {
 			expect(result).toMatch(/^- it@jschulz\.org \(email_address\): /m);
 		});
 
-		it("includes Related: section when RelatesToNode_ edges exist", async () => {
+		it("truncates long summaries to first sentence for token budget", async () => {
+			mockRun.mockResolvedValueOnce({
+				records: [
+					{
+						get: (key: string) => {
+							if (key === "name") return "emails";
+							if (key === "summary") return "The emails system handles routing. It has many rules. And more rules. And even more rules that go on and on forever.";
+							if (key === "labels") return ["system"];
+							if (key === "relations") return [{ fact: null, target: null }];
+							return null;
+						},
+					},
+				],
+			});
+
+			const result = await client.searchForContext({ keywords: ["email"], limit: 5 });
+
+			// Should only contain first sentence
+			expect(result).toContain("The emails system handles routing.");
+			expect(result).not.toContain("It has many rules.");
+		});
+
+		it("includes compact arrow relations when direct RELATES_TO edges exist", async () => {
 			mockRun.mockResolvedValueOnce({
 				records: [
 					{
@@ -358,8 +382,11 @@ describe("KnowledgeGraphClient", () => {
 
 			expect(result).toContain("Max Mueller");
 			expect(result).toContain("Max Mueller is a key client");
-			expect(result).toContain("Related:");
-			expect(result).toContain("Max Mueller sent invoice to Paul -> Invoice Q1");
+			// New compact format: [→ target]
+			expect(result).toContain("→ Invoice Q1");
+			expect(result).toMatch(/\[→ Invoice Q1\]/);
+			// Old verbose format should not appear
+			expect(result).not.toContain("Related:");
 		});
 
 		it("returns empty string when KG has no results", async () => {
@@ -441,7 +468,7 @@ describe("KnowledgeGraphClient", () => {
 			expect(result).toBe("- some-entity: entity with no label");
 		});
 
-		it("uses group_id filter in Cypher query", async () => {
+		it("uses group_id filter and direct RELATES_TO in Cypher query", async () => {
 			mockRun.mockResolvedValueOnce({ records: [] });
 
 			await client.searchForContext({ keywords: ["test"] });
@@ -449,7 +476,9 @@ describe("KnowledgeGraphClient", () => {
 			const [cypher] = mockRun.mock.calls[0];
 			expect(cypher).toContain("group_id = 'jarvis'");
 			expect(cypher).toContain("e.summary IS NOT NULL");
-			expect(cypher).toContain("RelatesToNode_");
+			// Must use direct RELATES_TO, not RelatesToNode_ intermediate nodes
+			expect(cypher).toContain("[r:RELATES_TO]");
+			expect(cypher).not.toContain("RelatesToNode_");
 		});
 	});
 });

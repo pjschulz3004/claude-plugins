@@ -8,6 +8,17 @@ import type {
 	ContextSearchOptions,
 } from "./types.js";
 
+/** Truncate a summary to the first sentence (up to first ". " or first "\n"), capped at maxLen chars. */
+function truncateSummary(summary: string, maxLen = 100): string {
+	const nlIdx = summary.indexOf("\n");
+	const periodIdx = summary.indexOf(". ");
+	let end = summary.length;
+	if (nlIdx !== -1 && nlIdx < end) end = nlIdx;
+	if (periodIdx !== -1 && periodIdx + 1 < end) end = periodIdx + 1;
+	const sentence = summary.slice(0, end).trim();
+	return sentence.length > maxLen ? sentence.slice(0, maxLen - 1) + "…" : sentence;
+}
+
 export class KnowledgeGraphClient {
 	private readonly driver: Driver;
 	private readonly staleThresholdDays: number;
@@ -136,21 +147,22 @@ export class KnowledgeGraphClient {
 				.get("nodeCount")
 				.toNumber();
 
-			// Graphiti stores edges as RelatesToNode_ intermediate nodes, not as native relationships
+			// Graphiti uses direct RELATES_TO relationships between Entity nodes (not RelatesToNode_ intermediates)
 			const edgeResult = await session.run(
-				"MATCH (n:RelatesToNode_) RETURN count(n) as edgeCount",
+				"MATCH (:Entity)-[r:RELATES_TO]->(:Entity) WHERE r.group_id = $gid RETURN count(r) AS cnt",
+				{ gid: "jarvis" },
 			);
 			const edgeCount = edgeResult.records[0]
-				.get("edgeCount")
+				.get("cnt")
 				.toNumber();
 
-			// RelatesToNode_ nodes have created_at (Graphiti DateTime), compare as ISO string
+			// Stale edges: created_at stored as Graphiti DateTime, compare as ISO string
 			const staleResult = await session.run(
-				"MATCH (n:RelatesToNode_) WHERE toString(n.created_at) < $cutoff RETURN count(n) as staleCount",
-				{ cutoff },
+				"MATCH (:Entity)-[r:RELATES_TO]->(:Entity) WHERE r.group_id = $gid AND toString(r.created_at) < $cutoff RETURN count(r) AS cnt",
+				{ gid: "jarvis", cutoff },
 			);
 			const staleEdgeCount = staleResult.records[0]
-				.get("staleCount")
+				.get("cnt")
 				.toNumber();
 
 			return { nodeCount, edgeCount, staleEdgeCount };
@@ -187,17 +199,17 @@ export class KnowledgeGraphClient {
 				if (lines.length >= limit) break;
 
 				// Query Graphiti Entity nodes by name, filtered to jarvis group_id.
-				// OPTIONAL MATCH traverses RelatesToNode_ edges for richer context;
-				// gracefully handles the case where no edges exist yet.
+				// Uses direct RELATES_TO relationships between Entity nodes (not RelatesToNode_
+				// intermediates, which do not exist in the production Graphiti schema).
 				const cypher = `
 					MATCH (e:Entity)
 					WHERE toLower(e.name) CONTAINS toLower($query)
 					  AND e.group_id = 'jarvis'
 					  AND e.summary IS NOT NULL
-					OPTIONAL MATCH (e)-[:RELATES_TO]->(edge:RelatesToNode_)-[:RELATES_TO]->(other:Entity)
-					WHERE edge.group_id = 'jarvis'
+					OPTIONAL MATCH (e)-[r:RELATES_TO]-(other:Entity)
+					WHERE r.group_id = 'jarvis'
 					RETURN e.name AS name, e.summary AS summary, e.labels AS labels,
-					       collect({fact: edge.fact, target: other.name}) AS relations
+					       collect({fact: r.fact, target: other.name}) AS relations
 					LIMIT $perKeywordLimit
 				`;
 
@@ -210,7 +222,7 @@ export class KnowledgeGraphClient {
 					if (lines.length >= limit) break;
 
 					const name = record.get("name") as string;
-					const summary = record.get("summary") as string;
+					const fullSummary = record.get("summary") as string;
 					const labelsList = record.get("labels") as string[] | null;
 					const label = labelsList && labelsList.length > 0 ? labelsList[0] : null;
 
@@ -227,11 +239,15 @@ export class KnowledgeGraphClient {
 						(r) => r.fact !== null && r.target !== null,
 					);
 
+					// Truncate summary to first sentence, capped at 100 chars, for token budget
+					const summary = truncateSummary(fullSummary);
+
 					let line: string;
 					const labelPart = label ? ` (${label})` : "";
 					if (validRelations.length > 0) {
-						const relParts = validRelations.map((r) => `${r.fact} -> ${r.target}`);
-						line = `- ${name}${labelPart}: ${summary}. Related: ${relParts.join(", ")}`;
+						// Compact arrow format: [→ target1, → target2]
+						const targets = validRelations.map((r) => `→ ${r.target}`).join(", ");
+						line = `- ${name}${labelPart}: ${summary} [${targets}]`;
 					} else {
 						line = `- ${name}${labelPart}: ${summary}`;
 					}
