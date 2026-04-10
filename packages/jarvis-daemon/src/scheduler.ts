@@ -8,6 +8,7 @@ import type { BreakerManager } from "./state/breakers.js";
 import { sendNotification, type NotifyChannel } from "./notify.js";
 import { dispatchHealing } from "./healing.js";
 import type { PromptVersioner } from "./prompt-versioner.js";
+import type { KGContextInjector } from "./kg-context.js";
 import { createLogger } from "./logger.js";
 
 const log = createLogger("scheduler");
@@ -25,6 +26,10 @@ interface HeartbeatTask {
 	/** If true, send result.result directly instead of wrapping in a task-status message. */
 	notify_raw?: boolean;
 	prompt: string;
+	/** KG domain keywords for cross-domain context injection. */
+	kg_domains?: string[];
+	/** How many days back to search KG. Default: 7. */
+	kg_days_back?: number;
 }
 
 interface HeartbeatConfig {
@@ -38,6 +43,8 @@ export interface SchedulerConfig {
 	breakers: BreakerManager;
 	notifyChannels?: NotifyChannel[];
 	promptVersioner?: PromptVersioner;
+	/** KG context injector — if provided, tasks with kg_domains get KG context. */
+	kgInjector?: KGContextInjector;
 }
 
 export class Scheduler {
@@ -202,6 +209,17 @@ export class Scheduler {
 				promptVersion = selection.version;
 			} catch {
 				// Fall back to task.prompt on any error
+			}
+		}
+
+		// Inject KG cross-domain context before dispatch (INTEL-01)
+		if (this.config.kgInjector && task.kg_domains && task.kg_domains.length > 0) {
+			const kgContext = await this.config.kgInjector.getContext(
+				task.kg_domains,
+				task.kg_days_back,
+			);
+			if (kgContext) {
+				promptToUse = kgContext + "\n" + promptToUse;
 			}
 		}
 
