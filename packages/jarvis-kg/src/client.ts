@@ -5,6 +5,7 @@ import type {
 	KGStats,
 	Episode,
 	SearchResult,
+	ContextSearchOptions,
 } from "./types.js";
 
 export class KnowledgeGraphClient {
@@ -184,6 +185,79 @@ export class KnowledgeGraphClient {
 				(_error as Error).message,
 			);
 			return 0;
+		} finally {
+			await session.close();
+		}
+	}
+
+
+	async searchForContext(options: ContextSearchOptions): Promise<string> {
+		const { keywords, daysBack = 7, limit = 5 } = options;
+		const session = this.driver.session();
+		const cutoff = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
+
+		try {
+			const seen = new Set<string>();
+			const lines: string[] = [];
+
+			for (const keyword of keywords) {
+				if (lines.length >= limit) break;
+
+				const cypher = `
+					MATCH (e:Entity)
+					WHERE toLower(e.name) CONTAINS toLower($query)
+					OPTIONAL MATCH (e)-[r:RELATES_TO]-(other:Entity)
+					WHERE r.timestamp >= $cutoff
+					RETURN e, collect({relation: r, target: other}) as relations
+					LIMIT $perKeywordLimit
+				`;
+
+				const result = await session.run(cypher, {
+					query: keyword,
+					cutoff,
+					perKeywordLimit: neo4j.int(limit - lines.length),
+				});
+
+				for (const record of result.records) {
+					if (lines.length >= limit) break;
+
+					const entity = record.get("e");
+					const name = entity.properties.name as string;
+
+					if (seen.has(name)) continue;
+					seen.add(name);
+
+					const type = entity.properties.type as string;
+					const relations = record.get("relations") as Array<{
+						relation: { properties: Record<string, unknown> } | null;
+						target: { properties: Record<string, unknown> } | null;
+					}>;
+
+					const relParts = relations
+						.filter((r) => r.relation && r.target)
+						.map((r) => {
+							const relType = (r.relation!.properties.type as string) ?? "";
+							const targetName = (r.target!.properties.name as string) ?? "";
+							const ts = (r.relation!.properties.timestamp as string) ?? "";
+							const date = ts.slice(0, 10);
+							return `${relType} ${targetName} (${date})`;
+						});
+
+					const line = relParts.length > 0
+						? `- ${name} [${type}]: ${relParts.join("; ")}`
+						: `- ${name} [${type}]`;
+
+					lines.push(line);
+				}
+			}
+
+			return lines.join("\n");
+		} catch (_error) {
+			console.warn(
+				"[jarvis-kg] searchForContext failed (Neo4j unavailable?):",
+				(_error as Error).message,
+			);
+			return "";
 		} finally {
 			await session.close();
 		}
