@@ -1,6 +1,7 @@
 export interface Entity {
 	name: string;
-	type: string; // "person", "invoice", "event", "category", "service"
+	type: string; // Mapped from Graphiti's labels[0]
+	summary?: string; // Graphiti entity summary
 	properties?: Record<string, string | number | boolean>;
 }
 

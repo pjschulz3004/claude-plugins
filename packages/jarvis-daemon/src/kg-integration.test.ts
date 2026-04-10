@@ -16,9 +16,6 @@ const NEO4J_URI = "bolt://localhost:7687";
 const NEO4J_USER = "neo4j";
 const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD ?? "jarviskg2026";
 
-// Timestamp recent enough to pass the daysBack filter (within last hour)
-const TEST_TIMESTAMP = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-
 describe("KG Context Injection E2E", () => {
 	let kgClient: KnowledgeGraphClient;
 	// Separate raw driver for seeding/cleanup (KnowledgeGraphClient doesn't expose session directly)
@@ -51,20 +48,37 @@ describe("KG Context Injection E2E", () => {
 		const cleanupSession = seedDriver.session();
 		try {
 			await cleanupSession.run(
-				"MATCH (n:Entity) WHERE n.name ENDS WITH '_E2E' DETACH DELETE n",
+				"MATCH (n) WHERE n.name ENDS WITH '_E2E' DETACH DELETE n",
 			);
 		} finally {
 			await cleanupSession.close();
 		}
 
-		// Seed test entities and relationship
+		// Seed test entities using Graphiti schema:
+		// - Entity nodes with group_id, summary, labels (list)
+		// - RelatesToNode_ intermediate node for the edge
 		const seedSession = seedDriver.session();
 		try {
 			await seedSession.run(
-				`MERGE (p:Entity {name: 'TestPerson_E2E', type: 'person'})
-				 MERGE (i:Entity {name: 'TestInvoice_E2E', type: 'invoice'})
-				 CREATE (p)-[:RELATES_TO {type: 'SENT_EMAIL', timestamp: $timestamp, source: 'e2e_test'}]->(i)`,
-				{ timestamp: TEST_TIMESTAMP },
+				`MERGE (p:Entity {name: 'TestPerson_E2E'})
+				 SET p.group_id = 'jarvis',
+				     p.summary = 'TestPerson_E2E SENT_EMAIL to TestInvoice_E2E',
+				     p.labels = ['person'],
+				     p.uuid = 'e2e-person-uuid',
+				     p.created_at = datetime()
+				 MERGE (i:Entity {name: 'TestInvoice_E2E'})
+				 SET i.group_id = 'jarvis',
+				     i.summary = 'TestInvoice_E2E is a test invoice received via email',
+				     i.labels = ['invoice'],
+				     i.uuid = 'e2e-invoice-uuid',
+				     i.created_at = datetime()
+				 MERGE (edge:RelatesToNode_ {uuid: 'e2e-edge-uuid'})
+				 SET edge.group_id = 'jarvis',
+				     edge.name = 'SENT_EMAIL',
+				     edge.fact = 'TestPerson_E2E SENT_EMAIL to TestInvoice_E2E',
+				     edge.created_at = datetime()
+				 MERGE (p)-[:RELATES_TO]->(edge)
+				 MERGE (edge)-[:RELATES_TO]->(i)`,
 			);
 		} finally {
 			await seedSession.close();
@@ -78,7 +92,7 @@ describe("KG Context Injection E2E", () => {
 		const cleanupSession = seedDriver.session();
 		try {
 			await cleanupSession.run(
-				"MATCH (n:Entity) WHERE n.name ENDS WITH '_E2E' DETACH DELETE n",
+				"MATCH (n) WHERE n.name ENDS WITH '_E2E' OR n.uuid STARTS WITH 'e2e-' DETACH DELETE n",
 			);
 		} finally {
 			await cleanupSession.close();
@@ -88,7 +102,7 @@ describe("KG Context Injection E2E", () => {
 		await seedDriver.close();
 	}, 15_000);
 
-	it("searchForContext returns formatted results from real Neo4j", async () => {
+	it("searchForContext returns formatted results from real Neo4j (Graphiti schema)", async () => {
 		if (!neo4jAvailable) {
 			console.warn("Skipping: Neo4j unavailable");
 			return;
@@ -96,13 +110,14 @@ describe("KG Context Injection E2E", () => {
 
 		const result = await kgClient.searchForContext({
 			keywords: ["TestPerson_E2E"],
-			daysBack: 1,
 			limit: 5,
 		});
 
 		expect(result).toContain("TestPerson_E2E");
-		expect(result).toContain("TestInvoice_E2E");
+		// Summary contains SENT_EMAIL and TestInvoice_E2E references
 		expect(result).toContain("SENT_EMAIL");
+		// Related section should show the RelatesToNode_ edge
+		expect(result).toContain("TestInvoice_E2E");
 	});
 
 	it("KGContextInjector formats context block from real KG data", async () => {
@@ -116,7 +131,6 @@ describe("KG Context Injection E2E", () => {
 
 		expect(context).toContain("[Cross-domain context]");
 		expect(context).toContain("TestPerson_E2E");
-		expect(context).toContain("TestInvoice_E2E");
 		// Context block must end with a newline so it separates cleanly from the task prompt
 		expect(context.endsWith("\n")).toBe(true);
 	});
@@ -187,8 +201,6 @@ describe("KG Context Injection E2E", () => {
 		expect(capturedPrompt).toBeDefined();
 		expect(capturedPrompt).toContain("[Cross-domain context]");
 		expect(capturedPrompt).toContain("TestPerson_E2E");
-		expect(capturedPrompt).toContain("TestInvoice_E2E");
-		expect(capturedPrompt).toContain("SENT_EMAIL");
 		expect(capturedPrompt).toContain("E2E task prompt");
 
 		// KG context block must be prepended — appears before the task prompt

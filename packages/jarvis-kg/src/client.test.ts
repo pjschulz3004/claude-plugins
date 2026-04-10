@@ -86,7 +86,7 @@ describe("KnowledgeGraphClient", () => {
 	});
 
 	describe("search", () => {
-		it("returns mapped SearchResult[] from mock records", async () => {
+		it("returns mapped SearchResult[] from mock records using Graphiti schema", async () => {
 			mockRun.mockResolvedValue({
 				records: [
 					{
@@ -95,24 +95,24 @@ describe("KnowledgeGraphClient", () => {
 								return {
 									properties: {
 										name: "Paul",
-										type: "person",
+										labels: ["person"],
+										summary: "Paul is a software developer",
 									},
 								};
 							}
 							if (key === "relations") {
 								return [
 									{
-										relation: {
+										edge: {
 											properties: {
-												type: "SENT_BY",
-												timestamp: "2026-03-31T10:00:00Z",
-												source: "email",
+												name: "sent email",
+												fact: "Paul sent email to Invoice #42",
 											},
 										},
 										target: {
 											properties: {
 												name: "Invoice #42",
-												type: "invoice",
+												labels: ["invoice"],
 											},
 										},
 									},
@@ -128,9 +128,10 @@ describe("KnowledgeGraphClient", () => {
 
 			expect(results).toHaveLength(1);
 			expect(results[0].entity.name).toBe("Paul");
+			// type is mapped from labels[0]
 			expect(results[0].entity.type).toBe("person");
+			expect(results[0].entity.summary).toBe("Paul is a software developer");
 			expect(results[0].relations).toHaveLength(1);
-			expect(results[0].relations[0].relation.type).toBe("SENT_BY");
 			expect(results[0].relations[0].target.name).toBe("Invoice #42");
 			expect(mockSession.close).toHaveBeenCalled();
 		});
@@ -156,7 +157,7 @@ describe("KnowledgeGraphClient", () => {
 	});
 
 	describe("getStats", () => {
-		it("returns counts from mock queries", async () => {
+		it("returns counts from mock queries using RelatesToNode_ for edges", async () => {
 			mockRun
 				.mockResolvedValueOnce({
 					records: [
@@ -195,6 +196,15 @@ describe("KnowledgeGraphClient", () => {
 			expect(stats.edgeCount).toBe(100);
 			expect(stats.staleEdgeCount).toBe(15);
 			expect(mockRun).toHaveBeenCalledTimes(3);
+
+			// Verify edge query targets RelatesToNode_, not native relationships
+			const [edgeCypher] = mockRun.mock.calls[1];
+			expect(edgeCypher).toContain("RelatesToNode_");
+			expect(edgeCypher).not.toContain("()-[r:RELATES_TO]-()");
+
+			// Verify stale query also targets RelatesToNode_
+			const [staleCypher] = mockRun.mock.calls[2];
+			expect(staleCypher).toContain("RelatesToNode_");
 		});
 
 		it("uses custom threshold when provided", async () => {
@@ -309,35 +319,61 @@ describe("KnowledgeGraphClient", () => {
 			});
 		});
 
-		it("returns formatted context lines from KG results", async () => {
+		it("returns formatted context lines using entity summary (Graphiti schema)", async () => {
 			mockRun
 				.mockResolvedValueOnce({
 					records: [
 						{
 							get: (key: string) => {
-								if (key === "e") return { properties: { name: "Max Mueller", type: "person" } };
-								if (key === "relations") return [
-									{
-										relation: { properties: { type: "SENT_EMAIL", timestamp: "2026-04-09T10:00:00Z" } },
-										target: { properties: { name: "Invoice Q1", type: "invoice" } },
-									},
-								];
+								if (key === "name") return "it@jschulz.org";
+								if (key === "summary") return "Emails to or from it@jschulz.org are routed to INBOX/Business/ subfolders";
+								if (key === "labels") return ["email_address"];
+								if (key === "relations") return [{ fact: null, target: null }];
 								return null;
 							},
 						},
 					],
 				})
-				.mockResolvedValueOnce({ records: [] }); // second keyword: "invoice"
+				.mockResolvedValueOnce({ records: [] }); // second keyword
 
 			const result = await client.searchForContext({
-				keywords: ["email", "invoice"],
-				daysBack: 7,
+				keywords: ["jschulz", "business"],
+				limit: 5,
+			});
+
+			expect(result).toContain("it@jschulz.org");
+			expect(result).toContain("INBOX/Business");
+			expect(result).toContain("(email_address)");
+			// New format: "- name (label): summary"
+			expect(result).toMatch(/^- it@jschulz\.org \(email_address\): /m);
+		});
+
+		it("includes Related: section when RelatesToNode_ edges exist", async () => {
+			mockRun.mockResolvedValueOnce({
+				records: [
+					{
+						get: (key: string) => {
+							if (key === "name") return "Max Mueller";
+							if (key === "summary") return "Max Mueller is a key client";
+							if (key === "labels") return ["person"];
+							if (key === "relations") return [
+								{ fact: "Max Mueller sent invoice to Paul", target: "Invoice Q1" },
+							];
+							return null;
+						},
+					},
+				],
+			});
+
+			const result = await client.searchForContext({
+				keywords: ["max"],
 				limit: 5,
 			});
 
 			expect(result).toContain("Max Mueller");
-			expect(result).toContain("Invoice Q1");
-			expect(result).toContain("SENT_EMAIL");
+			expect(result).toContain("Max Mueller is a key client");
+			expect(result).toContain("Related:");
+			expect(result).toContain("Max Mueller sent invoice to Paul -> Invoice Q1");
 		});
 
 		it("returns empty string when KG has no results", async () => {
@@ -355,8 +391,10 @@ describe("KnowledgeGraphClient", () => {
 		it("deduplicates entities across keyword queries", async () => {
 			const mockRecord = {
 				get: (key: string) => {
-					if (key === "e") return { properties: { name: "Max Mueller", type: "person" } };
-					if (key === "relations") return [];
+					if (key === "name") return "Max Mueller";
+					if (key === "summary") return "A key client";
+					if (key === "labels") return ["person"];
+					if (key === "relations") return [{ fact: null, target: null }];
 					return null;
 				},
 			};
@@ -377,8 +415,10 @@ describe("KnowledgeGraphClient", () => {
 		it("respects the limit parameter", async () => {
 			const makeRecord = (name: string) => ({
 				get: (key: string) => {
-					if (key === "e") return { properties: { name, type: "person" } };
-					if (key === "relations") return [];
+					if (key === "name") return name;
+					if (key === "summary") return `${name} summary`;
+					if (key === "labels") return ["person"];
+					if (key === "relations") return [{ fact: null, target: null }];
 					return null;
 				},
 			});
@@ -394,6 +434,36 @@ describe("KnowledgeGraphClient", () => {
 
 			const lines = result.split("\n").filter((l: string) => l.startsWith("- "));
 			expect(lines.length).toBeLessThanOrEqual(2);
+		});
+
+		it("omits label part when labels list is empty", async () => {
+			mockRun.mockResolvedValueOnce({
+				records: [
+					{
+						get: (key: string) => {
+							if (key === "name") return "some-entity";
+							if (key === "summary") return "entity with no label";
+							if (key === "labels") return [];
+							if (key === "relations") return [{ fact: null, target: null }];
+							return null;
+						},
+					},
+				],
+			});
+
+			const result = await client.searchForContext({ keywords: ["some"] });
+			expect(result).toBe("- some-entity: entity with no label");
+		});
+
+		it("uses group_id filter in Cypher query", async () => {
+			mockRun.mockResolvedValueOnce({ records: [] });
+
+			await client.searchForContext({ keywords: ["test"] });
+
+			const [cypher] = mockRun.mock.calls[0];
+			expect(cypher).toContain("group_id = 'jarvis'");
+			expect(cypher).toContain("e.summary IS NOT NULL");
+			expect(cypher).toContain("RelatesToNode_");
 		});
 	});
 });

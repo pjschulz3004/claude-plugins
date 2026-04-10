@@ -1,5 +1,5 @@
 import neo4j from "neo4j-driver";
-import type { Driver, Session } from "neo4j-driver";
+import type { Driver } from "neo4j-driver";
 import type {
 	KGClientConfig,
 	KGStats,
@@ -58,12 +58,13 @@ export class KnowledgeGraphClient {
 	async search(query: string, type?: string): Promise<SearchResult[]> {
 		const session = this.driver.session();
 		try {
+			// Graphiti schema: Entity nodes have labels[] and summary instead of a type property
 			const cypher = `
 				MATCH (e:Entity)
 				WHERE toLower(e.name) CONTAINS toLower($query)
-				  AND ($type IS NULL OR e.type = $type)
-				OPTIONAL MATCH (e)-[r:RELATES_TO]-(other:Entity)
-				RETURN e, collect({relation: r, target: other}) as relations
+				  AND ($type IS NULL OR $type IN e.labels)
+				OPTIONAL MATCH (e)-[:RELATES_TO]->(edge:RelatesToNode_)-[:RELATES_TO]->(other:Entity)
+				RETURN e, collect({edge: edge, target: other}) as relations
 				LIMIT 20
 			`;
 
@@ -75,27 +76,31 @@ export class KnowledgeGraphClient {
 			return result.records.map((record) => {
 				const entityNode = record.get("e");
 				const relationsData = record.get("relations") as Array<{
-					relation: { properties: Record<string, unknown> };
-					target: { properties: Record<string, unknown> };
+					edge: { properties: Record<string, unknown> } | null;
+					target: { properties: Record<string, unknown> } | null;
 				}>;
+
+				const labels = (entityNode.properties.labels as string[] | undefined) ?? [];
+				const entityType = labels[0] ?? "";
+				const summary = entityNode.properties.summary as string | undefined;
 
 				return {
 					entity: {
 						name: entityNode.properties.name as string,
-						type: entityNode.properties.type as string,
+						type: entityType,
+						...(summary !== undefined ? { summary } : {}),
 					},
 					relations: relationsData
-						.filter((r) => r.relation && r.target)
+						.filter((r) => r.edge && r.target)
 						.map((r) => ({
 							relation: {
-								type: (r.relation.properties.type as string) ?? "",
+								type: (r.edge!.properties.name as string) ?? "",
 							},
 							target: {
-								name: (r.target.properties.name as string) ?? "",
-								type: (r.target.properties.type as string) ?? "",
+								name: (r.target!.properties.name as string) ?? "",
+								type: ((r.target!.properties.labels as string[] | undefined)?.[0]) ?? "",
 							},
-							timestamp:
-								(r.relation.properties.timestamp as string) ?? "",
+							timestamp: "",
 						})),
 				};
 			});
@@ -125,15 +130,17 @@ export class KnowledgeGraphClient {
 				.get("nodeCount")
 				.toNumber();
 
+			// Graphiti stores edges as RelatesToNode_ intermediate nodes, not as native relationships
 			const edgeResult = await session.run(
-				"MATCH ()-[r:RELATES_TO]-() RETURN count(r) as edgeCount",
+				"MATCH (n:RelatesToNode_) RETURN count(n) as edgeCount",
 			);
 			const edgeCount = edgeResult.records[0]
 				.get("edgeCount")
 				.toNumber();
 
+			// RelatesToNode_ nodes have created_at (Graphiti DateTime), compare as ISO string
 			const staleResult = await session.run(
-				"MATCH ()-[r:RELATES_TO]-() WHERE r.timestamp < $cutoff RETURN count(r) as staleCount",
+				"MATCH (n:RelatesToNode_) WHERE toString(n.created_at) < $cutoff RETURN count(n) as staleCount",
 				{ cutoff },
 			);
 			const staleEdgeCount = staleResult.records[0]
@@ -190,66 +197,66 @@ export class KnowledgeGraphClient {
 		}
 	}
 
-
 	async searchForContext(options: ContextSearchOptions): Promise<string> {
-		const { keywords, daysBack = 7, limit = 5 } = options;
+		const { keywords, limit = 5 } = options;
 		const session = this.driver.session();
-		const cutoff = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
 
 		try {
 			const seen = new Set<string>();
 			const lines: string[] = [];
 
-			// The session is intentionally shared across all keyword queries so we maintain
-			// a single running count for the global limit check (lines.length >= limit).
-			// Other methods open/close a session per query; here we need cross-query state.
 			for (const keyword of keywords) {
 				if (lines.length >= limit) break;
 
-				// Entities found by keyword are included even if they have no recent relations.
-				// The OPTIONAL MATCH + WHERE filters relations by recency but preserves the entity row.
+				// Query Graphiti Entity nodes by name, filtered to jarvis group_id.
+				// OPTIONAL MATCH traverses RelatesToNode_ edges for richer context;
+				// gracefully handles the case where no edges exist yet.
 				const cypher = `
 					MATCH (e:Entity)
 					WHERE toLower(e.name) CONTAINS toLower($query)
-					OPTIONAL MATCH (e)-[r:RELATES_TO]-(other:Entity)
-					WHERE r.timestamp >= $cutoff
-					RETURN e, collect({relation: r, target: other}) as relations
+					  AND e.group_id = 'jarvis'
+					  AND e.summary IS NOT NULL
+					OPTIONAL MATCH (e)-[:RELATES_TO]->(edge:RelatesToNode_)-[:RELATES_TO]->(other:Entity)
+					WHERE edge.group_id = 'jarvis'
+					RETURN e.name AS name, e.summary AS summary, e.labels AS labels,
+					       collect({fact: edge.fact, target: other.name}) AS relations
 					LIMIT $perKeywordLimit
 				`;
 
 				const result = await session.run(cypher, {
 					query: keyword,
-					cutoff,
 					perKeywordLimit: neo4j.int(limit),
 				});
 
 				for (const record of result.records) {
 					if (lines.length >= limit) break;
 
-					const entity = record.get("e");
-					const name = entity.properties.name as string;
-					const type = entity.properties.type as string;
+					const name = record.get("name") as string;
+					const summary = record.get("summary") as string;
+					const labelsList = record.get("labels") as string[] | null;
+					const label = labelsList && labelsList.length > 0 ? labelsList[0] : null;
 
-					if (seen.has(`${name}::${type}`)) continue;
-					seen.add(`${name}::${type}`);
-					const relations = record.get("relations") as Array<{
-						relation: { properties: Record<string, unknown> } | null;
-						target: { properties: Record<string, unknown> } | null;
+					if (seen.has(name)) continue;
+					seen.add(name);
+
+					const relationsRaw = record.get("relations") as Array<{
+						fact: string | null;
+						target: string | null;
 					}>;
 
-					const relParts = relations
-						.filter((r) => r.relation && r.target)
-						.map((r) => {
-							const relType = (r.relation!.properties.type as string) ?? "";
-							const targetName = (r.target!.properties.name as string) ?? "";
-							const ts = (r.relation!.properties.timestamp as string) ?? "";
-							const date = ts.slice(0, 10);
-							return `${relType} ${targetName} (${date})`;
-						});
+					// Filter out null entries (OPTIONAL MATCH with no edges returns [{fact: null, target: null}])
+					const validRelations = relationsRaw.filter(
+						(r) => r.fact !== null && r.target !== null,
+					);
 
-					const line = relParts.length > 0
-						? `- ${name} [${type}]: ${relParts.join("; ")}`
-						: `- ${name} [${type}]`;
+					let line: string;
+					const labelPart = label ? ` (${label})` : "";
+					if (validRelations.length > 0) {
+						const relParts = validRelations.map((r) => `${r.fact} -> ${r.target}`);
+						line = `- ${name}${labelPart}: ${summary}. Related: ${relParts.join(", ")}`;
+					} else {
+						line = `- ${name}${labelPart}: ${summary}`;
+					}
 
 					lines.push(line);
 				}
