@@ -8,9 +8,16 @@ tasks:
     max_turns: 40
     timeout_ms: 180000
     retries: 1
+    kg_domains: ["email", "sender", "contact", "invoice"]
+    kg_days_back: 7
     prompt: |
-      # version: 3
+      # version: 4
       You are Jarvis. Use the jarvis-email MCP tools to triage Paul's inbox.
+
+      If cross-domain context is provided above, use it to inform priority decisions:
+      - An email from someone Paul has a meeting with soon: boost to IMPORTANT
+      - An email related to an active invoice or budget category: note the connection
+      - Otherwise, follow the standard classification rules below.
 
       STEP 1: Call list_unread. If there are more than 5 unread, process only the 5 oldest.
 
@@ -78,10 +85,16 @@ tasks:
     model: sonnet
     max_turns: 20
     timeout_ms: 150000
+    kg_domains: ["schedule", "budget", "email", "contact", "todo", "meeting"]
+    kg_days_back: 3
     prompt: |
-      # version: 2
+      # version: 3
       You are Jarvis. Paul is starting his day. Produce a morning briefing by gathering
       data from all available domains.
+
+      If cross-domain context is provided above, use it as additional intelligence.
+      The context shows recent knowledge graph facts — connections between people, events,
+      transactions, and tasks. Weave relevant connections into the briefing naturally.
 
       Read packages/jarvis/references/ynab-guide.md for financial context (Paul has ADHD, is in overdraft).
 
@@ -116,9 +129,14 @@ tasks:
     model: sonnet
     max_turns: 20
     timeout_ms: 120000
+    kg_domains: ["budget", "transaction", "schedule", "email"]
+    kg_days_back: 1
     prompt: |
-      # version: 3
+      # version: 4
       You are Jarvis. Paul's day is winding down. Produce a brief end-of-day summary.
+
+      If cross-domain context is provided above, use it to surface connections between
+      today's spending, tomorrow's schedule, and recent emails.
 
       Read packages/jarvis/references/ynab-guide.md for financial context (Paul has ADHD, is in overdraft).
 
