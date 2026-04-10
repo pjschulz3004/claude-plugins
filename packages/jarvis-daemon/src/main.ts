@@ -26,6 +26,9 @@ import { Cron } from "croner";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { Telegraf } from "telegraf";
+import { KnowledgeGraphClient } from "@jarvis/kg";
+import { KGContextInjector } from "./kg-context.js";
+
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -37,6 +40,7 @@ const correctionStore = new CorrectionStore(ledger.database);
 const interactionStore = new InteractionStore(ledger.database);
 let scheduler: Scheduler;
 let health: HealthServer;
+let kgClient: KnowledgeGraphClient | null = null;
 
 // Build tool backends from env vars (optional -- commands degrade gracefully)
 function buildEmailBackend(): ImapFlowBackend | undefined {
@@ -73,6 +77,17 @@ function buildBudgetBackend(): YnabBackend | undefined {
 	const budgetId = process.env.YNAB_BUDGET_ID;
 	if (!accessToken || !budgetId) return undefined;
 	return new YnabBackend({ accessToken, budgetId });
+}
+
+function buildKGClient(): KnowledgeGraphClient | null {
+	const uri = process.env.NEO4J_URI ?? "bolt://localhost:7687";
+	const user = process.env.NEO4J_USER ?? "neo4j";
+	const password = process.env.NEO4J_PASSWORD;
+	if (!password) {
+		log.warn("kg_skipped", { reason: "no NEO4J_PASSWORD" });
+		return null;
+	}
+	return new KnowledgeGraphClient({ uri, user, password });
 }
 
 let bot: Telegraf | undefined;
@@ -112,6 +127,13 @@ async function start() {
 		log.warn("telegram_skipped", { reason: "no TELEGRAM_BOT_TOKEN" });
 	}
 
+	// KG context injection (INTEL-01)
+	kgClient = buildKGClient();
+	const kgInjector = kgClient ? new KGContextInjector(kgClient) : undefined;
+	if (kgClient) {
+		log.info("kg_context_enabled");
+	}
+
 	// Create scheduler with notification channels (empty if no Telegram)
 	scheduler = new Scheduler({
 		yamlPath: join(__dirname, "..", "heartbeat.yaml"),
@@ -119,6 +141,7 @@ async function start() {
 		ledger,
 		breakers,
 		notifyChannels,
+		kgInjector,
 	});
 
 	health = new HealthServer({
@@ -218,6 +241,9 @@ async function shutdown(signal: string) {
 	await health.stop();
 	ledger.close();
 	log.info("shutdown_complete");
+	if (kgClient) {
+		await kgClient.close();
+	}
 	process.exit(0);
 }
 
