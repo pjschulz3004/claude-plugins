@@ -169,14 +169,16 @@ tasks:
     max_turns: 5
     timeout_ms: 120000
     prompt: |
-      # version: 1
+      # version: 2
       You are Jarvis running nightly memory consolidation.
 
-      Connect to the Neo4j knowledge graph at bolt://localhost:7687 (user: neo4j).
-      Password is in the NEO4J_PASSWORD environment variable.
+      IMPORTANT: Do NOT run any commands that modify or delete Neo4j data.
+      Memory consolidation writes are handled by the Python Graphiti client, not this task.
 
-      1. Get current stats: node count, edge count, stale edges (>30 days).
-      2. Expire stale edges that haven't been reinforced in the last 30 days.
-      3. Report: "Memory consolidation: {deleted} stale edges expired. Graph now has {nodes} entities, {edges} relationships."
+      This task is READ-ONLY. Report the current state of the knowledge graph:
+      1. Run: node -e "const neo4j = require('neo4j-driver'); const d = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', process.env.NEO4J_PASSWORD)); const s = d.session(); s.run('MATCH (e:Entity) WHERE e.group_id = "jarvis" RETURN count(e) AS entities').then(r => { const entities = r.records[0].get('entities').toNumber(); return s.run('MATCH (ep:Episodic) WHERE ep.group_id = "jarvis" RETURN count(ep) AS episodes').then(r2 => { const episodes = r2.records[0].get('episodes').toNumber(); return s.run('MATCH (n:RelatesToNode_) WHERE n.group_id = "jarvis" RETURN count(n) AS edges').then(r3 => { console.log(JSON.stringify({entities, episodes, edges: r3.records[0].get('edges').toNumber()})); }); }); }).then(() => s.close()).then(() => d.close()).catch(e => console.log('Neo4j unreachable: ' + e.message));"
+      2. Report: "Memory consolidation: {entities} entities, {episodes} episodes, {edges} edges in knowledge graph."
 
-      If Neo4j is unavailable, report: "Memory consolidation skipped -- Neo4j unreachable."
+      If Neo4j is unreachable, report: "Memory consolidation skipped — Neo4j unreachable."
+
+      Do NOT delete, expire, or modify any data. Read only.

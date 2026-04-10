@@ -1,11 +1,11 @@
 /**
- * KGBridge — Thin wrapper around KnowledgeGraphClient for growth-specific operations.
+ * KGBridge — PARTIALLY DEPRECATED
  *
- * Stores growth episodes (improvements committed during nightly sessions) and
- * correction episodes (human overrides of Jarvis decisions) as KG episodes.
- * Provides search for contextual memory in the growth prompt.
+ * The addEpisode-based methods (storeGrowthEpisode, storeCorrectionEpisode) create
+ * Entity/RELATES_TO data incompatible with Graphiti's schema. They will be replaced
+ * with Python Graphiti MCP tool calls in v2.0 Phase 18 (Memory Architecture).
  *
- * Gracefully degrades when KG is unavailable (null client or Neo4j down).
+ * searchContext remains functional for reading Graphiti data.
  */
 
 import type { KnowledgeGraphClient, Episode, SearchResult } from "@jarvis/kg";

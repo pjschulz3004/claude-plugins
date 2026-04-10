@@ -227,27 +227,13 @@ describe("KnowledgeGraphClient", () => {
 	});
 
 	describe("expireStale", () => {
-		it("returns deleted count and runs orphan cleanup", async () => {
-			mockRun
-				.mockResolvedValueOnce({
-					records: [
-						{
-							get: (key: string) => {
-								if (key === "deleted") return { toNumber: () => 7 };
-								return null;
-							},
-						},
-					],
-				})
-				.mockResolvedValueOnce({ records: [] }); // orphan cleanup
-
+		it("is a no-op and returns 0 (deprecated — previously destroyed Graphiti graph structure)", async () => {
+			// expireStale is now a safe no-op: it warns and returns 0 without touching Neo4j.
+			// Previously it deleted RELATES_TO relationships, destroying RelatesToNode_ edge structure.
 			const deleted = await client.expireStale(30);
 
-			expect(deleted).toBe(7);
-			expect(mockRun).toHaveBeenCalledTimes(2);
-			// Second call should be orphan cleanup
-			const [orphanCypher] = mockRun.mock.calls[1];
-			expect(orphanCypher).toContain("DELETE n");
+			expect(deleted).toBe(0);
+			expect(mockRun).not.toHaveBeenCalled();
 		});
 	});
 

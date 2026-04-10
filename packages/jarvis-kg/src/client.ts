@@ -20,7 +20,13 @@ export class KnowledgeGraphClient {
 		this.staleThresholdDays = config.staleThresholdDays ?? 30;
 	}
 
+	/**
+	 * @deprecated Use Python Graphiti client (via MCP tool) for episode ingestion.
+	 * This method creates Entity nodes with a schema incompatible with Graphiti.
+	 * Retained temporarily for backward compatibility with kg-bridge.ts growth engine.
+	 */
 	async addEpisode(episode: Episode): Promise<void> {
+		console.warn("[jarvis-kg] addEpisode is DEPRECATED — creates non-Graphiti schema. Use Python Graphiti MCP tool instead.");
 		const session = this.driver.session();
 		try {
 			const cypher = `
@@ -159,42 +165,14 @@ export class KnowledgeGraphClient {
 		}
 	}
 
+	/**
+	 * @deprecated Stale edge management should go through Python Graphiti client.
+	 * This method previously deleted RELATES_TO relationships, which destroys
+	 * Graphiti's RelatesToNode_ edge structure. Now a safe no-op.
+	 */
 	async expireStale(olderThanDays?: number): Promise<number> {
-		const session = this.driver.session();
-		const threshold = olderThanDays ?? this.staleThresholdDays;
-		const cutoff = new Date(
-			Date.now() - threshold * 24 * 60 * 60 * 1000,
-		).toISOString();
-
-		try {
-			const deleteResult = await session.run(
-				`MATCH ()-[r:RELATES_TO]-()
-				 WHERE r.timestamp < $cutoff
-				 DELETE r
-				 RETURN count(r) as deleted`,
-				{ cutoff },
-			);
-			const deleted = deleteResult.records[0]
-				.get("deleted")
-				.toNumber();
-
-			// Clean up orphaned nodes
-			await session.run(
-				`MATCH (n:Entity)
-				 WHERE NOT (n)--()
-				 DELETE n`,
-			);
-
-			return deleted;
-		} catch (_error) {
-			console.warn(
-				"[jarvis-kg] expireStale failed (Neo4j unavailable?):",
-				(_error as Error).message,
-			);
-			return 0;
-		} finally {
-			await session.close();
-		}
+		console.warn("[jarvis-kg] expireStale is DEPRECATED and now a no-op. Use Python Graphiti for memory consolidation.");
+		return 0;
 	}
 
 	async searchForContext(options: ContextSearchOptions): Promise<string> {
