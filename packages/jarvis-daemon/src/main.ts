@@ -28,11 +28,13 @@ import { dirname, join } from "node:path";
 import type { Telegraf } from "telegraf";
 import { KnowledgeGraphClient } from "@jarvis/kg";
 import { KGContextInjector } from "./kg-context.js";
+import { initSpendingAlertTable, checkSpendingAlerts } from "./spending-alert.js";
 
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const ledger = new TaskLedger(join(__dirname, "..", "jarvis.db"));
+initSpendingAlertTable(ledger.database);
 const breakers = new BreakerManager();
 const dispatcher = new Dispatcher();
 const history = new ChatHistory(ledger.database);
@@ -228,6 +230,22 @@ async function start() {
 		}
 	});
 	log.info("weekly_digest_scheduled", { schedule: "Sundays 20:00" });
+
+	// Spending alert: every 3 hours — fires a Telegram notification only when
+	// crossing a new threshold (75/85/95% of salary). Stateful: resets on new salary.
+	const spendingAlertJob = new Cron("0 */3 * * *", () => {
+		const budgetBackend = telegramConfig?.budget;
+		if (!budgetBackend || !notifyChannels.length) return;
+
+		checkSpendingAlerts({
+			budget: budgetBackend,
+			db: ledger.database,
+			notifyChannels,
+		}).catch((err) => {
+			log.error("spending_alert_error", { error: err instanceof Error ? err.message : String(err) });
+		});
+	});
+	log.info("spending_alert_scheduled", { interval: "3h", thresholds: "75/85/95%" });
 
 	log.info("daemon_ready", { healthPort: process.env.JARVIS_HEALTH_PORT || "3333" });
 }
