@@ -3,7 +3,7 @@ import { writeFileSync, mkdtempSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { KnowledgeGraphClient } from "@jarvis/kg";
-import { KGContextInjector } from "./kg-context.js";
+import { KGContextProvider } from "./context-providers.js";
 import { Scheduler } from "./scheduler.js";
 import Database from "better-sqlite3";
 
@@ -11,7 +11,6 @@ const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD ?? "jarviskg2026";
 
 describe("KG Context Injection - Live E2E", () => {
   let kgClient: KnowledgeGraphClient;
-  let kgInjector: KGContextInjector;
   let yamlPath: string;
 
   kgClient = new KnowledgeGraphClient({
@@ -19,16 +18,15 @@ describe("KG Context Injection - Live E2E", () => {
     user: "neo4j",
     password: NEO4J_PASSWORD,
   });
-  kgInjector = new KGContextInjector(kgClient);
 
   const yaml = [
     "tasks:",
     "  test_email_triage:",
-    '    schedule: \"0 0 1 1 *\"',
+    '    schedule: "0 0 1 1 *"',
     "    model: sonnet",
     "    max_turns: 5",
     "    timeout_ms: 30000",
-    '    kg_domains: [\"email\", \"sender\", \"contact\", \"invoice\"]',
+    '    kg_domains: ["email", "sender", "contact", "invoice"]',
     "    kg_days_back: 30",
     "    prompt: |",
     "      # version: 4",
@@ -63,7 +61,7 @@ describe("KG Context Injection - Live E2E", () => {
       dispatcher: mockDispatcher as any,
       ledger: { database: db, record: () => 1, getConsecutiveFailures: () => 0 } as any,
       breakers: { shouldAllow: () => true, recordSuccess: () => {}, recordFailure: () => {} } as any,
-      kgInjector,
+      contextProviders: [new KGContextProvider(kgClient)],
     });
 
     scheduler.start();

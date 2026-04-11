@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import neo4j from "neo4j-driver";
 import type { Driver } from "neo4j-driver";
 import { KnowledgeGraphClient } from "@jarvis/kg";
-import { KGContextInjector } from "./kg-context.js";
+import { KGContextProvider } from "./context-providers.js";
 import { Scheduler } from "./scheduler.js";
 import { TaskLedger } from "./state/ledger.js";
 import { BreakerManager } from "./state/breakers.js";
@@ -178,14 +178,12 @@ describe("KG Context Injection E2E", () => {
 
 		const ledger = new TaskLedger(":memory:");
 		const breakers = new BreakerManager();
-		const injector = new KGContextInjector(kgClient);
-
 		const scheduler = new Scheduler({
 			yamlPath,
 			dispatcher: mockDispatcher,
 			ledger,
 			breakers,
-			kgInjector: injector,
+			contextProviders: [new KGContextProvider(kgClient)],
 		});
 
 		try {

@@ -285,14 +285,18 @@ describe("Scheduler", () => {
 		expect(prompt).toContain("[Situation]");
 		expect(prompt).toContain("Triage email inbox");
 
-		// Last provider (situation) is closest to the task prompt
+		// Last provider (situation) ends up at the top of the prompt
 		const sitIdx = prompt.indexOf("[Situation]");
-		const promptIdx = prompt.indexOf("Triage email inbox");
-		expect(sitIdx).toBeLessThan(promptIdx);
-
-		// First provider (rules) is furthest from task prompt
+		const kgIdx = prompt.indexOf("[Cross-domain context]");
 		const rulesIdx = prompt.indexOf("[Rules]");
-		expect(rulesIdx).toBeLessThan(sitIdx);
+		const promptIdx = prompt.indexOf("Triage email inbox");
+
+		// All context before task prompt
+		expect(sitIdx).toBeLessThan(promptIdx);
+		// Last provider prepended last → at top
+		expect(sitIdx).toBeLessThan(kgIdx);
+		// First provider prepended first → closest to task prompt
+		expect(rulesIdx).toBeGreaterThan(kgIdx);
 	});
 
 	it("context providers: empty blocks are not injected", async () => {
