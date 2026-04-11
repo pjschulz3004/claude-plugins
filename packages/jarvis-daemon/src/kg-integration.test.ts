@@ -120,14 +120,14 @@ describe("KG Context Injection E2E", () => {
 		expect(result).toContain("TestInvoice_E2E");
 	});
 
-	it("KGContextInjector formats context block from real KG data", async () => {
+	it("KGContextProvider formats context block from real KG data", async () => {
 		if (!neo4jAvailable) {
 			console.warn("Skipping: Neo4j unavailable");
 			return;
 		}
 
-		const injector = new KGContextInjector(kgClient);
-		const context = await injector.getContext(["TestPerson_E2E"], 1);
+		const provider = new KGContextProvider(kgClient);
+		const context = await provider.getContext({ kg_domains: ["TestPerson_E2E"], kg_days_back: 1 }, "test");
 
 		expect(context).toContain("[Cross-domain context]");
 		expect(context).toContain("TestPerson_E2E");
