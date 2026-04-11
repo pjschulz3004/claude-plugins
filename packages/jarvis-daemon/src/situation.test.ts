@@ -89,6 +89,22 @@ describe("SituationCollector.collect", () => {
 		expect(result!.location).toBeUndefined();
 	});
 
+	it("defaults to home when no event has location and defaultLocation is set", async () => {
+		const now = new Date();
+		const later = new Date(now.getTime() + 60 * 60 * 1000);
+
+		const collector = new SituationCollector({
+			calendar: mockCalendar([
+				{ summary: "Focus time", start: now.toISOString(), end: later.toISOString(), allDay: false },
+			]),
+			defaultLocation: "Tejastrasse 2, Berlin",
+		});
+
+		const result = await collector.collect();
+		expect(result!.location).toBe("Tejastrasse 2, Berlin");
+		expect(result!.locationSource).toBe("home");
+	});
+
 	it("works with only email backend", async () => {
 		const collector = new SituationCollector({
 			email: mockEmail(3, 1),

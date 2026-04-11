@@ -142,6 +142,7 @@ async function start() {
 		calendar: telegramConfig?.calendar,
 		email: telegramConfig?.email,
 		budget: telegramConfig?.budget,
+		defaultLocation: "Tejastrasse 2, Berlin",
 	});
 	log.info("situation_collector_enabled", {
 		calendar: !!telegramConfig?.calendar,

@@ -45,6 +45,8 @@ export interface SituationBackends {
 			balance: number;
 		}>>;
 	};
+	/** Default location when no calendar event specifies one (e.g. home address). */
+	defaultLocation?: string;
 }
 
 export class SituationCollector {
@@ -163,6 +165,12 @@ export class SituationCollector {
 			} catch (err) {
 				log.warn("situation_budget_failed", { error: (err as Error).message });
 			}
+		}
+
+		// Default location when calendar is unavailable or has no location data
+		if (!location && this.backends.defaultLocation) {
+			location = this.backends.defaultLocation;
+			locationSource = "home";
 		}
 
 		if (!hasAnyData) return null;
