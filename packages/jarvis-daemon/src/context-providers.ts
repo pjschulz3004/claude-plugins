@@ -1,6 +1,7 @@
 import { readFileSync, statSync } from "node:fs";
 import { parse as parseYaml } from "yaml";
 import type { KnowledgeGraphClient } from "@jarvis/kg";
+import type Database from "better-sqlite3";
 import { SituationCollector, type SituationBackends } from "./situation.js";
 import { createLogger } from "./logger.js";
 
@@ -129,5 +130,73 @@ export class StaticRulesProvider implements ContextProvider {
 		if (!taskRules || taskRules.length === 0) return "";
 
 		return `[Rules]\n${taskRules.join("\n")}\n`;
+	}
+}
+
+// ─── Token Awareness Provider ───────────────────────────────────────
+
+interface TokenWindow {
+	inputTokens: number;
+	outputTokens: number;
+	costUsd: number;
+	taskCount: number;
+}
+
+/**
+ * Injects token usage awareness from the task ledger.
+ * Tells each agent how many tokens have been consumed in the last 5 hours,
+ * today, and this week — so the Dreamer/Executor can budget their reasoning.
+ *
+ * No external API polling — aggregates from the existing SQLite task ledger.
+ * Claude Max has no reliable programmatic quota API (as of 2026-04).
+ */
+export class TokenAwarenessProvider implements ContextProvider {
+	readonly name = "token-awareness";
+
+	constructor(private readonly db: Database.Database) {}
+
+	private queryWindow(sinceSql: string): TokenWindow {
+		const row = this.db.prepare(`
+			SELECT
+				COALESCE(SUM(input_tokens), 0) AS input_tokens,
+				COALESCE(SUM(output_tokens), 0) AS output_tokens,
+				COALESCE(SUM(cost_usd), 0) AS cost_usd,
+				COUNT(*) AS task_count
+			FROM task_runs
+			WHERE status = 'success' AND started_at >= ${sinceSql}
+		`).get() as { input_tokens: number; output_tokens: number; cost_usd: number; task_count: number };
+
+		return {
+			inputTokens: row.input_tokens,
+			outputTokens: row.output_tokens,
+			costUsd: row.cost_usd,
+			taskCount: row.task_count,
+		};
+	}
+
+	async getContext(): Promise<string> {
+		try {
+			const fiveHour = this.queryWindow("datetime('now', '-5 hours')");
+			const today = this.queryWindow("datetime('now', 'start of day')");
+			const week = this.queryWindow("datetime('now', '-7 days')");
+
+			// Skip injection if no activity at all
+			if (week.taskCount === 0) return "";
+
+			const fmt = (w: TokenWindow) =>
+				`${((w.inputTokens + w.outputTokens) / 1000).toFixed(0)}k tokens, $${w.costUsd.toFixed(2)}, ${w.taskCount} tasks`;
+
+			const lines = [
+				"[Token budget]",
+				`5h window: ${fmt(fiveHour)}`,
+				`Today: ${fmt(today)}`,
+				`Week: ${fmt(week)}`,
+			];
+
+			return lines.join("\n") + "\n";
+		} catch (err) {
+			log.warn("token_awareness_failed", { error: (err as Error).message });
+			return "";
+		}
 	}
 }

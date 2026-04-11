@@ -2,10 +2,12 @@ import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { writeFileSync, mkdtempSync, unlinkSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import Database from "better-sqlite3";
 import {
 	SituationProvider,
 	KGContextProvider,
 	StaticRulesProvider,
+	TokenAwarenessProvider,
 	type ContextProvider,
 	type HeartbeatTaskConfig,
 } from "./context-providers.js";
@@ -196,6 +198,101 @@ morning_briefing:
 	it("has name 'static-rules'", () => {
 		const provider = new StaticRulesProvider(rulesPath);
 		expect(provider.name).toBe("static-rules");
+	});
+});
+
+// ─── TokenAwarenessProvider ─────────────────────────────────────────
+
+describe("TokenAwarenessProvider", () => {
+	function createLedgerDb(): Database.Database {
+		const db = new Database(":memory:");
+		db.exec(`CREATE TABLE IF NOT EXISTS task_runs (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			task_name TEXT NOT NULL,
+			status TEXT NOT NULL,
+			started_at TEXT NOT NULL,
+			duration_ms INTEGER,
+			error TEXT,
+			cost_usd REAL,
+			input_tokens INTEGER,
+			output_tokens INTEGER,
+			decision_summary TEXT
+		)`);
+		return db;
+	}
+
+	function insertRun(db: Database.Database, opts: {
+		task: string; status?: string; ago_hours?: number;
+		input?: number; output?: number; cost?: number;
+	}) {
+		const started = new Date(Date.now() - (opts.ago_hours ?? 0) * 3600_000).toISOString();
+		db.prepare(`INSERT INTO task_runs (task_name, status, started_at, duration_ms, input_tokens, output_tokens, cost_usd)
+			VALUES (?, ?, ?, 1000, ?, ?, ?)`).run(
+			opts.task, opts.status ?? "success", started,
+			opts.input ?? 1000, opts.output ?? 500, opts.cost ?? 0.01,
+		);
+	}
+
+	it("returns [Token budget] block with usage windows", async () => {
+		const db = createLedgerDb();
+		insertRun(db, { task: "email_triage", ago_hours: 1, input: 5000, output: 2000, cost: 0.05 });
+		insertRun(db, { task: "briefing", ago_hours: 2, input: 10000, output: 5000, cost: 0.12 });
+
+		const provider = new TokenAwarenessProvider(db);
+		const result = await provider.getContext({}, "test");
+
+		expect(result).toContain("[Token budget]");
+		expect(result).toContain("5h window:");
+		expect(result).toContain("Today:");
+		expect(result).toContain("Week:");
+		expect(result).toContain("2 tasks");
+		db.close();
+	});
+
+	it("returns empty when no task runs exist", async () => {
+		const db = createLedgerDb();
+		const provider = new TokenAwarenessProvider(db);
+		const result = await provider.getContext({}, "test");
+
+		expect(result).toBe("");
+		db.close();
+	});
+
+	it("only counts successful runs", async () => {
+		const db = createLedgerDb();
+		insertRun(db, { task: "a", status: "success", ago_hours: 1, input: 1000, output: 500 });
+		insertRun(db, { task: "b", status: "failure", ago_hours: 1, input: 9999, output: 9999 });
+
+		const provider = new TokenAwarenessProvider(db);
+		const result = await provider.getContext({}, "test");
+
+		expect(result).toContain("1 tasks");
+		db.close();
+	});
+
+	it("separates 5h vs today vs week windows", async () => {
+		const db = createLedgerDb();
+		insertRun(db, { task: "recent", ago_hours: 1, input: 1000, output: 500, cost: 0.01 });
+		insertRun(db, { task: "old", ago_hours: 48, input: 20000, output: 10000, cost: 0.20 });
+
+		const provider = new TokenAwarenessProvider(db);
+		const result = await provider.getContext({}, "test");
+
+		// 5h window should only have the recent run
+		const fiveLine = result.split("\n").find((l: string) => l.startsWith("5h window:"))!;
+		expect(fiveLine).toContain("1 tasks");
+
+		// Week should have both
+		const weekLine = result.split("\n").find((l: string) => l.startsWith("Week:"))!;
+		expect(weekLine).toContain("2 tasks");
+		db.close();
+	});
+
+	it("has name 'token-awareness'", () => {
+		const db = createLedgerDb();
+		const provider = new TokenAwarenessProvider(db);
+		expect(provider.name).toBe("token-awareness");
+		db.close();
 	});
 });
 

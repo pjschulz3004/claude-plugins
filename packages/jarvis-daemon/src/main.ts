@@ -31,6 +31,7 @@ import {
 	KGContextProvider,
 	SituationProvider,
 	StaticRulesProvider,
+	TokenAwarenessProvider,
 	type ContextProvider,
 } from "./context-providers.js";
 import { initSpendingAlertTable, checkSpendingAlerts } from "./spending-alert.js";
@@ -137,9 +138,10 @@ async function start() {
 	// Context providers — modular prompt injection layer
 	kgClient = buildKGClient();
 	const contextProviders: ContextProvider[] = [
-		// Order matters: last provider's block is closest to the task prompt
+		// Order matters: last provider's block ends up at top of prompt
 		new StaticRulesProvider(join(__dirname, "..", "rules.yaml")),
 		new KGContextProvider(kgClient),
+		new TokenAwarenessProvider(ledger.database),
 		new SituationProvider({
 			calendar: telegramConfig?.calendar,
 			email: telegramConfig?.email,
