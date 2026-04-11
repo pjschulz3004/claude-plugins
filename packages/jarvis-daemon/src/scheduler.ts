@@ -9,6 +9,7 @@ import { sendNotification, type NotifyChannel } from "./notify.js";
 import { dispatchHealing } from "./healing.js";
 import type { PromptVersioner } from "./prompt-versioner.js";
 import type { KGContextInjector } from "./kg-context.js";
+import { SituationCollector } from "./situation.js";
 import { createLogger } from "./logger.js";
 
 const log = createLogger("scheduler");
@@ -45,6 +46,8 @@ export interface SchedulerConfig {
 	promptVersioner?: PromptVersioner;
 	/** KG context injector — if provided, tasks with kg_domains get KG context. */
 	kgInjector?: KGContextInjector;
+	/** Situation collector — if provided, every task gets a situation snapshot. */
+	situationCollector?: SituationCollector;
 }
 
 export class Scheduler {
@@ -220,6 +223,14 @@ export class Scheduler {
 			);
 			if (kgContext) {
 				promptToUse = kgContext + "\n" + promptToUse;
+			}
+		}
+
+		// Inject situational awareness (SITAW-04)
+		if (this.config.situationCollector) {
+			const situation = await this.config.situationCollector.collect();
+			if (situation) {
+				promptToUse = SituationCollector.format(situation) + "\n" + promptToUse;
 			}
 		}
 

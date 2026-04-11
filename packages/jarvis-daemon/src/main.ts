@@ -28,6 +28,7 @@ import { dirname, join } from "node:path";
 import type { Telegraf } from "telegraf";
 import { KnowledgeGraphClient } from "@jarvis/kg";
 import { KGContextInjector } from "./kg-context.js";
+import { SituationCollector } from "./situation.js";
 import { initSpendingAlertTable, checkSpendingAlerts } from "./spending-alert.js";
 
 
@@ -136,6 +137,18 @@ async function start() {
 		log.info("kg_context_enabled");
 	}
 
+	// Situational awareness (SITAW-01)
+	const situationCollector = new SituationCollector({
+		calendar: telegramConfig?.calendar,
+		email: telegramConfig?.email,
+		budget: telegramConfig?.budget,
+	});
+	log.info("situation_collector_enabled", {
+		calendar: !!telegramConfig?.calendar,
+		email: !!telegramConfig?.email,
+		budget: !!telegramConfig?.budget,
+	});
+
 	// Create scheduler with notification channels (empty if no Telegram)
 	scheduler = new Scheduler({
 		yamlPath: join(__dirname, "..", "heartbeat.yaml"),
@@ -144,6 +157,7 @@ async function start() {
 		breakers,
 		notifyChannels,
 		kgInjector,
+		situationCollector,
 	});
 
 	health = new HealthServer({
