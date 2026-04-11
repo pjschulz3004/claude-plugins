@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { parse as parseYaml } from "yaml";
 import type { KnowledgeGraphClient } from "@jarvis/kg";
 import { SituationCollector, type SituationBackends } from "./situation.js";
@@ -111,7 +111,7 @@ export class StaticRulesProvider implements ContextProvider {
 
 	private reload(): void {
 		try {
-			const { mtimeMs } = require("node:fs").statSync(this.yamlPath);
+			const { mtimeMs } = statSync(this.yamlPath);
 			if (mtimeMs <= this.mtime) return;
 
 			const raw = readFileSync(this.yamlPath, "utf-8");
