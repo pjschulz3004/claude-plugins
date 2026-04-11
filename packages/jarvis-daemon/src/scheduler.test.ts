@@ -380,4 +380,73 @@ describe("Scheduler", () => {
 		expect(dispatchedPrompt).not.toContain("[Cross-domain context]");
 	});
 
+
+	// ── Situation injection tests ─────────────────────────────────────────────
+
+	it("Situation injection: when collector returns data, prompt is prepended with [Situation] block", async () => {
+		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
+
+		const mockSituationCollector = {
+			collect: vi.fn().mockResolvedValue({
+				timestamp: new Date().toISOString(),
+				location: "Berlin",
+				currentActivity: "Working from home",
+				unreadCount: 3,
+				flaggedCount: 1,
+				pendingTodos: 2,
+				overdueTodos: 0,
+				budgetAlerts: [],
+				dayContext: "Friday, workday",
+			}),
+		};
+
+		const sitScheduler = new Scheduler({
+			yamlPath,
+			dispatcher: mockDispatcher,
+			ledger,
+			breakers,
+			situationCollector: mockSituationCollector as unknown as import("./situation.js").SituationCollector,
+		});
+		sitScheduler.start();
+		await sitScheduler.fireTask("email_triage");
+		sitScheduler.stop();
+
+		expect(mockSituationCollector.collect).toHaveBeenCalledOnce();
+
+		const dispatchedPrompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
+		expect(dispatchedPrompt).toContain("[Situation]");
+		expect(dispatchedPrompt).toContain("Berlin");
+		expect(dispatchedPrompt).toContain("Working from home");
+		expect(dispatchedPrompt).toContain("Triage email inbox");
+		// [Situation] block must be prepended (appears before the task prompt)
+		expect(dispatchedPrompt.indexOf("[Situation]")).toBeLessThan(
+			dispatchedPrompt.indexOf("Triage email inbox"),
+		);
+	});
+
+	it("Situation injection: when collector returns null, no [Situation] block is prepended", async () => {
+		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
+
+		const mockSituationCollector = {
+			collect: vi.fn().mockResolvedValue(null),
+		};
+
+		const sitScheduler = new Scheduler({
+			yamlPath,
+			dispatcher: mockDispatcher,
+			ledger,
+			breakers,
+			situationCollector: mockSituationCollector as unknown as import("./situation.js").SituationCollector,
+		});
+		sitScheduler.start();
+		await sitScheduler.fireTask("email_triage");
+		sitScheduler.stop();
+
+		expect(mockSituationCollector.collect).toHaveBeenCalledOnce();
+
+		const dispatchedPrompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
+		expect(dispatchedPrompt).toBe("Triage email inbox");
+		expect(dispatchedPrompt).not.toContain("[Situation]");
+	});
+
 });
