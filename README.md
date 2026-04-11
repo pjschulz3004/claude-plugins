@@ -2,17 +2,33 @@
 
 Personal plugin marketplace for Claude Code.
 
-## Plugins
+## Active Marketplace Plugins
 
 | Plugin | Description |
 |--------|-------------|
-| **forge** | Development pipeline orchestrator (IGNITE → SHAPE → TEMPER → DELIVER) |
-| **scribe** | Creative writing studio (planning → drafting → 5-stage editing → knowledge base) |
+| **autopilot** | Toggle auto-approve for all tool calls in a project directory |
 | **kg** | Knowledge Graph integration (Graphiti + Neo4j) with search, ingest, and status tools |
 | **library** | Research library pipeline (search → download → convert → ingest into KG) |
-| **improve** | Autonomous codebase improvement engine (security, quality, performance, testing cycles) |
+| **scribe** | Creative writing studio (planning → drafting → 5-stage editing → knowledge base) |
 | **union-writer** | Union (Worm fanfiction) output style: DFW-influenced prose, Taylor's voice, hard craft rules |
-| **autopilot** | Toggle auto-approve for all tool calls in a project directory |
+
+## GSD Extensions (not marketplace plugins)
+
+These live in `~/.claude/` and are installed directly, not through the marketplace:
+
+| Extension | Description |
+|-----------|-------------|
+| **forge** | Development pipeline with 5-layer decomposition discipline (`~/.claude/skills/forge/`) |
+| **improve-phase** | Time-gated improvement cycle as GSD phase (`~/.claude/skills/improve-phase/`) |
+
+The `forge/` and `improve/` directories in this repo are archived (kept for reference, not publishable or installable).
+
+## KG Infrastructure Requirements
+
+The Knowledge Graph plugin requires:
+- **Neo4j** running in Docker (default: `bolt://localhost:7687`)
+- **Python** with Graphiti installed for the embedding/ingestion pipeline
+- **~/.kg/** directory for local configuration and group registry
 
 ## Installation
 
@@ -21,13 +37,11 @@ Personal plugin marketplace for Claude Code.
 claude plugin marketplace add https://github.com/pjschulz3004/claude-plugins
 
 # Install a plugin
-claude plugin install forge@pjschulz-plugins
-claude plugin install scribe@pjschulz-plugins
+claude plugin install autopilot@pjschulz-plugins
 claude plugin install kg@pjschulz-plugins
 claude plugin install library@pjschulz-plugins
-claude plugin install improve@pjschulz-plugins
+claude plugin install scribe@pjschulz-plugins
 claude plugin install union-writer@pjschulz-plugins
-claude plugin install autopilot@pjschulz-plugins
 ```
 
 ---

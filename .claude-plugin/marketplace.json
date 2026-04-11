@@ -10,17 +10,6 @@
   },
   "plugins": [
     {
-      "name": "forge",
-      "source": "./forge",
-      "description": "Development pipeline orchestrator. Guides projects from empty folder to production through IGNITE (foundation), SHAPE (execution), TEMPER (hardening), DELIVER (shipping) phases.",
-      "version": "0.2.0",
-      "category": "development",
-      "author": {
-        "name": "Paul Schulz",
-        "email": "paul@jschulz.org"
-      }
-    },
-    {
       "name": "scribe",
       "source": "./scribe",
       "description": "Collaborative creative writing studio. Full refinement pipeline: planning, drafting, 5-stage editing, continuity checking, and SQLite-backed knowledge base.",
@@ -59,17 +48,6 @@
       "description": "Research library pipeline. Search LibGen, download books, convert EPUB/PDF to chapter-structured markdown, and ingest into the Knowledge Graph.",
       "version": "0.2.0",
       "category": "knowledge",
-      "author": {
-        "name": "Paul Schulz",
-        "email": "paul@jschulz.org"
-      }
-    },
-    {
-      "name": "improve",
-      "source": "./improve",
-      "description": "Autonomous codebase improvement engine. Rotates through security, quality, simplification, testing, performance, design, and UI cycles with timed sessions and feature creep mode.",
-      "version": "0.2.0",
-      "category": "development",
       "author": {
         "name": "Paul Schulz",
         "email": "paul@jschulz.org"

@@ -4,3 +4,4 @@ dist/
 .env
 .env.*
 packages/jarvis-daemon/.env
+.claude/
