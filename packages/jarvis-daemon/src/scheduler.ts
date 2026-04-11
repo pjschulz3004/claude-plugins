@@ -8,8 +8,7 @@ import type { BreakerManager } from "./state/breakers.js";
 import { sendNotification, type NotifyChannel } from "./notify.js";
 import { dispatchHealing } from "./healing.js";
 import type { PromptVersioner } from "./prompt-versioner.js";
-import type { KGContextInjector } from "./kg-context.js";
-import { SituationCollector } from "./situation.js";
+import type { ContextProvider, HeartbeatTaskConfig } from "./context-providers.js";
 import { createLogger } from "./logger.js";
 
 const log = createLogger("scheduler");
@@ -44,10 +43,8 @@ export interface SchedulerConfig {
 	breakers: BreakerManager;
 	notifyChannels?: NotifyChannel[];
 	promptVersioner?: PromptVersioner;
-	/** KG context injector — if provided, tasks with kg_domains get KG context. */
-	kgInjector?: KGContextInjector;
-	/** Situation collector — if provided, every task gets a situation snapshot. */
-	situationCollector?: SituationCollector;
+	/** Context providers — each produces a labeled block for prompt injection. */
+	contextProviders?: ContextProvider[];
 }
 
 export class Scheduler {
@@ -215,22 +212,21 @@ export class Scheduler {
 			}
 		}
 
-		// Inject KG cross-domain context before dispatch (INTEL-01)
-		if (this.config.kgInjector && task.kg_domains && task.kg_domains.length > 0) {
-			const kgContext = await this.config.kgInjector.getContext(
-				task.kg_domains,
-				task.kg_days_back,
-			);
-			if (kgContext) {
-				promptToUse = kgContext + "\n" + promptToUse;
-			}
-		}
-
-		// Inject situational awareness (SITAW-04)
-		if (this.config.situationCollector) {
-			const situation = await this.config.situationCollector.collect();
-			if (situation) {
-				promptToUse = SituationCollector.format(situation) + "\n" + promptToUse;
+		// Inject context from all registered providers (modular context layer)
+		if (this.config.contextProviders) {
+			for (const provider of this.config.contextProviders) {
+				try {
+					const block = await provider.getContext(task, taskName);
+					if (block) {
+						promptToUse = block + "\n" + promptToUse;
+					}
+				} catch (err) {
+					log.warn("context_provider_failed", {
+						provider: provider.name,
+						task: taskName,
+						error: (err as Error).message,
+					});
+				}
 			}
 		}
 

@@ -3,6 +3,7 @@ import { Scheduler } from "./scheduler.js";
 import { TaskLedger } from "./state/ledger.js";
 import { BreakerManager } from "./state/breakers.js";
 import type { Dispatcher, ClaudeResult } from "./dispatcher.js";
+import type { ContextProvider, HeartbeatTaskConfig } from "./context-providers.js";
 import { writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -50,6 +51,14 @@ function makeResult(overrides: Partial<ClaudeResult> = {}): ClaudeResult {
 			cache_read_input_tokens: 500,
 		},
 		...overrides,
+	};
+}
+
+/** Create a mock ContextProvider that returns a fixed block. */
+function mockProvider(name: string, block: string): ContextProvider {
+	return {
+		name,
+		getContext: vi.fn().mockResolvedValue(block),
 	};
 }
 
@@ -101,14 +110,11 @@ describe("Scheduler", () => {
 	});
 
 	it("when a task fires and breaker is open: records skipped, does not dispatch", async () => {
-		// Trip the imap breaker
 		breakers.recordFailure("imap");
 		breakers.recordFailure("imap");
 		breakers.recordFailure("imap");
 
 		scheduler.start();
-
-		// Fire the email_triage task manually
 		await scheduler.fireTask("email_triage");
 
 		expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
@@ -147,15 +153,11 @@ describe("Scheduler", () => {
 		expect(recent).toHaveLength(1);
 		expect(recent[0].status).toBe("success");
 		expect(recent[0].cost_usd).toBe(0.005);
-
-		// Breaker should be closed (success resets it)
 		expect(breakers.shouldAllow("imap")).toBe(true);
 	});
 
 	it("on dispatch failure: records failure in ledger, increments breaker", async () => {
-		vi.mocked(mockDispatcher.dispatch).mockRejectedValue(
-			new Error("timeout"),
-		);
+		vi.mocked(mockDispatcher.dispatch).mockRejectedValue(new Error("timeout"));
 
 		scheduler.start();
 		await scheduler.fireTask("email_triage");
@@ -200,7 +202,6 @@ describe("Scheduler", () => {
 	});
 
 	it("substitutes {{date}} and {{tomorrow}} in prompts before dispatch", async () => {
-		// Pin time to a known date so we can assert exact substitution
 		vi.setSystemTime(new Date("2026-04-15T10:00:00Z"));
 
 		const templateYaml = YAML_CONTENT.replace(
@@ -233,13 +234,11 @@ describe("Scheduler", () => {
 		scheduler.start();
 		await scheduler.fireTask("email_triage");
 
-		// Verify initial config was used
 		expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
 			"Triage email inbox",
 			expect.objectContaining({ maxTurns: 10, timeoutMs: 120000 }),
 		);
 
-		// Rewrite YAML with updated config (simulates a growth session editing heartbeat.yaml)
 		const updatedYaml = YAML_CONTENT
 			.replace("max_turns: 10", "max_turns: 30")
 			.replace("timeout_ms: 120000", "timeout_ms: 240000")
@@ -249,7 +248,6 @@ describe("Scheduler", () => {
 		vi.mocked(mockDispatcher.dispatch).mockClear();
 		await scheduler.fireTask("email_triage");
 
-		// Verify updated config is now used without restart
 		expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
 			"Triage email inbox v2",
 			expect.objectContaining({ maxTurns: 30, timeoutMs: 240000 }),
@@ -257,196 +255,142 @@ describe("Scheduler", () => {
 	});
 
 
-	// ── KG context injection tests ────────────────────────────────────────────
+	// ── Context provider tests ───────────────────────────────────────────────
 
-	it("KG injection: when task has kg_domains and injector returns context, prompt is prepended with [Cross-domain context] block", async () => {
-		const KG_YAML = [
-			"tasks:",
-			"  kg_task:",
-			'    schedule: "0 9 * * *"',
-			"    service: imap",
-			"    model: sonnet",
-			"    max_turns: 5",
-			"    timeout_ms: 60000",
-			"    kg_domains:",
-			"      - email",
-			"      - budget",
-			"    kg_days_back: 14",
-			'    prompt: "Check everything"',
-		].join("\n") + "\n";
+	it("context providers: blocks are prepended in order", async () => {
+		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
+
+		const providers = [
+			mockProvider("rules", "[Rules]\nDo X\n"),
+			mockProvider("kg", "[Cross-domain context]\nPaul lives in Berlin\n"),
+			mockProvider("situation", "[Situation]\nFriday, workday\n"),
+		];
+
+		const providerScheduler = new Scheduler({
+			yamlPath,
+			dispatcher: mockDispatcher,
+			ledger,
+			breakers,
+			contextProviders: providers,
+		});
+		providerScheduler.start();
+		await providerScheduler.fireTask("email_triage");
+		providerScheduler.stop();
+
+		const prompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
+
+		// All three blocks present
+		expect(prompt).toContain("[Rules]");
+		expect(prompt).toContain("[Cross-domain context]");
+		expect(prompt).toContain("[Situation]");
+		expect(prompt).toContain("Triage email inbox");
+
+		// Last provider (situation) is closest to the task prompt
+		const sitIdx = prompt.indexOf("[Situation]");
+		const promptIdx = prompt.indexOf("Triage email inbox");
+		expect(sitIdx).toBeLessThan(promptIdx);
+
+		// First provider (rules) is furthest from task prompt
+		const rulesIdx = prompt.indexOf("[Rules]");
+		expect(rulesIdx).toBeLessThan(sitIdx);
+	});
+
+	it("context providers: empty blocks are not injected", async () => {
+		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
+
+		const providers = [
+			mockProvider("empty", ""),
+			mockProvider("situation", "[Situation]\nFriday\n"),
+		];
+
+		const providerScheduler = new Scheduler({
+			yamlPath,
+			dispatcher: mockDispatcher,
+			ledger,
+			breakers,
+			contextProviders: providers,
+		});
+		providerScheduler.start();
+		await providerScheduler.fireTask("email_triage");
+		providerScheduler.stop();
+
+		const prompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
+		expect(prompt).toContain("[Situation]");
+		expect(prompt).toContain("Triage email inbox");
+		// No double newlines from empty block
+		expect(prompt).not.toContain("\n\n\n");
+	});
+
+	it("context providers: failed provider doesn't block others", async () => {
+		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
+
+		const failProvider: ContextProvider = {
+			name: "broken",
+			getContext: vi.fn().mockRejectedValue(new Error("boom")),
+		};
+		const goodProvider = mockProvider("situation", "[Situation]\nOK\n");
+
+		const providerScheduler = new Scheduler({
+			yamlPath,
+			dispatcher: mockDispatcher,
+			ledger,
+			breakers,
+			contextProviders: [failProvider, goodProvider],
+		});
+		providerScheduler.start();
+		await providerScheduler.fireTask("email_triage");
+		providerScheduler.stop();
+
+		const prompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
+		expect(prompt).toContain("[Situation]");
+		expect(prompt).toContain("Triage email inbox");
+	});
+
+	it("context providers: receive task config with kg_domains", async () => {
+		const KG_YAML = `tasks:
+  kg_task:
+    schedule: "0 9 * * *"
+    model: sonnet
+    max_turns: 5
+    timeout_ms: 60000
+    kg_domains:
+      - email
+      - budget
+    kg_days_back: 14
+    prompt: "Check everything"
+`;
 		writeFileSync(yamlPath, KG_YAML);
-
-		const kgContext = "[Cross-domain context]\nYou have 3 unread emails and a budget overrun.\n";
-		const mockKgInjector = {
-			getContext: vi.fn<[string[], number | undefined], Promise<string>>().mockResolvedValue(kgContext),
-		};
-
 		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
 
-		const kgScheduler = new Scheduler({
+		const capturingProvider: ContextProvider = {
+			name: "capture",
+			getContext: vi.fn().mockResolvedValue(""),
+		};
+
+		const providerScheduler = new Scheduler({
 			yamlPath,
 			dispatcher: mockDispatcher,
 			ledger,
 			breakers,
-			kgInjector: mockKgInjector as unknown as import("./kg-context.js").KGContextInjector,
+			contextProviders: [capturingProvider],
 		});
-		kgScheduler.start();
-		await kgScheduler.fireTask("kg_task");
-		kgScheduler.stop();
+		providerScheduler.start();
+		await providerScheduler.fireTask("kg_task");
+		providerScheduler.stop();
 
-		expect(mockKgInjector.getContext).toHaveBeenCalledWith(["email", "budget"], 14);
-
-		const dispatchedPrompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
-		expect(dispatchedPrompt).toContain("[Cross-domain context]");
-		expect(dispatchedPrompt).toContain("You have 3 unread emails and a budget overrun.");
-		expect(dispatchedPrompt).toContain("Check everything");
-		// Context must be prepended (appears before the task prompt)
-		expect(dispatchedPrompt.indexOf("[Cross-domain context]")).toBeLessThan(dispatchedPrompt.indexOf("Check everything"));
+		const call = vi.mocked(capturingProvider.getContext).mock.calls[0];
+		const taskConfig = call[0] as HeartbeatTaskConfig;
+		expect(taskConfig.kg_domains).toEqual(["email", "budget"]);
+		expect(taskConfig.kg_days_back).toBe(14);
 	});
 
-	it("KG injection: when task has no kg_domains, injector is NOT called and prompt is unchanged", async () => {
-		const NO_KG_YAML = [
-			"tasks:",
-			"  plain_task:",
-			'    schedule: "0 9 * * *"',
-			"    service: imap",
-			"    model: sonnet",
-			"    max_turns: 5",
-			"    timeout_ms: 60000",
-			'    prompt: "Plain prompt without KG"',
-		].join("\n") + "\n";
-		writeFileSync(yamlPath, NO_KG_YAML);
-
-		const mockKgInjector = {
-			getContext: vi.fn<[string[], number | undefined], Promise<string>>(),
-		};
-
+	it("no context providers: prompt dispatched unchanged", async () => {
 		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
 
-		const kgScheduler = new Scheduler({
-			yamlPath,
-			dispatcher: mockDispatcher,
-			ledger,
-			breakers,
-			kgInjector: mockKgInjector as unknown as import("./kg-context.js").KGContextInjector,
-		});
-		kgScheduler.start();
-		await kgScheduler.fireTask("plain_task");
-		kgScheduler.stop();
+		scheduler.start();
+		await scheduler.fireTask("email_triage");
 
-		expect(mockKgInjector.getContext).not.toHaveBeenCalled();
-
-		const dispatchedPrompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
-		expect(dispatchedPrompt).toBe("Plain prompt without KG");
-		expect(dispatchedPrompt).not.toContain("[Cross-domain context]");
+		const prompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
+		expect(prompt).toBe("Triage email inbox");
 	});
-
-	it("KG injection: when injector returns empty string, no context block is prepended", async () => {
-		const KG_EMPTY_YAML = [
-			"tasks:",
-			"  kg_empty_task:",
-			'    schedule: "0 9 * * *"',
-			"    service: imap",
-			"    model: sonnet",
-			"    max_turns: 5",
-			"    timeout_ms: 60000",
-			"    kg_domains:",
-			"      - calendar",
-			'    prompt: "Check calendar events"',
-		].join("\n") + "\n";
-		writeFileSync(yamlPath, KG_EMPTY_YAML);
-
-		const mockKgInjector = {
-			getContext: vi.fn<[string[], number | undefined], Promise<string>>().mockResolvedValue(""),
-		};
-
-		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
-
-		const kgScheduler = new Scheduler({
-			yamlPath,
-			dispatcher: mockDispatcher,
-			ledger,
-			breakers,
-			kgInjector: mockKgInjector as unknown as import("./kg-context.js").KGContextInjector,
-		});
-		kgScheduler.start();
-		await kgScheduler.fireTask("kg_empty_task");
-		kgScheduler.stop();
-
-		expect(mockKgInjector.getContext).toHaveBeenCalledWith(["calendar"], undefined);
-
-		const dispatchedPrompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
-		expect(dispatchedPrompt).toBe("Check calendar events");
-		expect(dispatchedPrompt).not.toContain("[Cross-domain context]");
-	});
-
-
-	// ── Situation injection tests ─────────────────────────────────────────────
-
-	it("Situation injection: when collector returns data, prompt is prepended with [Situation] block", async () => {
-		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
-
-		const mockSituationCollector = {
-			collect: vi.fn().mockResolvedValue({
-				timestamp: new Date().toISOString(),
-				location: "Berlin",
-				currentActivity: "Working from home",
-				unreadCount: 3,
-				flaggedCount: 1,
-				pendingTodos: 2,
-				overdueTodos: 0,
-				budgetAlerts: [],
-				dayContext: "Friday, workday",
-			}),
-		};
-
-		const sitScheduler = new Scheduler({
-			yamlPath,
-			dispatcher: mockDispatcher,
-			ledger,
-			breakers,
-			situationCollector: mockSituationCollector as unknown as import("./situation.js").SituationCollector,
-		});
-		sitScheduler.start();
-		await sitScheduler.fireTask("email_triage");
-		sitScheduler.stop();
-
-		expect(mockSituationCollector.collect).toHaveBeenCalledOnce();
-
-		const dispatchedPrompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
-		expect(dispatchedPrompt).toContain("[Situation]");
-		expect(dispatchedPrompt).toContain("Berlin");
-		expect(dispatchedPrompt).toContain("Working from home");
-		expect(dispatchedPrompt).toContain("Triage email inbox");
-		// [Situation] block must be prepended (appears before the task prompt)
-		expect(dispatchedPrompt.indexOf("[Situation]")).toBeLessThan(
-			dispatchedPrompt.indexOf("Triage email inbox"),
-		);
-	});
-
-	it("Situation injection: when collector returns null, no [Situation] block is prepended", async () => {
-		vi.mocked(mockDispatcher.dispatch).mockResolvedValue(makeResult());
-
-		const mockSituationCollector = {
-			collect: vi.fn().mockResolvedValue(null),
-		};
-
-		const sitScheduler = new Scheduler({
-			yamlPath,
-			dispatcher: mockDispatcher,
-			ledger,
-			breakers,
-			situationCollector: mockSituationCollector as unknown as import("./situation.js").SituationCollector,
-		});
-		sitScheduler.start();
-		await sitScheduler.fireTask("email_triage");
-		sitScheduler.stop();
-
-		expect(mockSituationCollector.collect).toHaveBeenCalledOnce();
-
-		const dispatchedPrompt = vi.mocked(mockDispatcher.dispatch).mock.calls[0][0];
-		expect(dispatchedPrompt).toBe("Triage email inbox");
-		expect(dispatchedPrompt).not.toContain("[Situation]");
-	});
-
 });

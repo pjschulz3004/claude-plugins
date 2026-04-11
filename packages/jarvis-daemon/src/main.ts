@@ -27,8 +27,12 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import type { Telegraf } from "telegraf";
 import { KnowledgeGraphClient } from "@jarvis/kg";
-import { KGContextInjector } from "./kg-context.js";
-import { SituationCollector } from "./situation.js";
+import {
+	KGContextProvider,
+	SituationProvider,
+	StaticRulesProvider,
+	type ContextProvider,
+} from "./context-providers.js";
 import { initSpendingAlertTable, checkSpendingAlerts } from "./spending-alert.js";
 
 
@@ -130,21 +134,22 @@ async function start() {
 		log.warn("telegram_skipped", { reason: "no TELEGRAM_BOT_TOKEN" });
 	}
 
-	// KG context injection (INTEL-01)
+	// Context providers — modular prompt injection layer
 	kgClient = buildKGClient();
-	const kgInjector = kgClient ? new KGContextInjector(kgClient) : undefined;
-	if (kgClient) {
-		log.info("kg_context_enabled");
-	}
-
-	// Situational awareness (SITAW-01)
-	const situationCollector = new SituationCollector({
-		calendar: telegramConfig?.calendar,
-		email: telegramConfig?.email,
-		budget: telegramConfig?.budget,
-		defaultLocation: "Tejastrasse 2, Berlin",
-	});
-	log.info("situation_collector_enabled", {
+	const contextProviders: ContextProvider[] = [
+		// Order matters: last provider's block is closest to the task prompt
+		new StaticRulesProvider(join(__dirname, "..", "rules.yaml")),
+		new KGContextProvider(kgClient),
+		new SituationProvider({
+			calendar: telegramConfig?.calendar,
+			email: telegramConfig?.email,
+			budget: telegramConfig?.budget,
+			defaultLocation: "Tejastrasse 2, Berlin",
+		}),
+	];
+	log.info("context_providers_enabled", {
+		providers: contextProviders.map((p) => p.name),
+		kg: !!kgClient,
 		calendar: !!telegramConfig?.calendar,
 		email: !!telegramConfig?.email,
 		budget: !!telegramConfig?.budget,
@@ -157,8 +162,7 @@ async function start() {
 		ledger,
 		breakers,
 		notifyChannels,
-		kgInjector,
-		situationCollector,
+		contextProviders,
 	});
 
 	health = new HealthServer({

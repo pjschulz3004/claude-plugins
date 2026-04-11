@@ -1,0 +1,32 @@
+# Static rules for heartbeat tasks.
+# These are deterministic config, NOT learned knowledge.
+# They live here (not in the KG) so they can't be invalidated by observations.
+# Hot-reloaded on each task dispatch — changes take effect immediately.
+
+email_triage:
+  - "Emails to/from it@jschulz.org are business, route to INBOX/Business/ subfolders"
+  - "All other emails are personal, route to INBOX/Personal/ subfolders"
+  - "Newsletters and feeds go to INBOX/Personal/Newsletters"
+  - "Invoices and receipts go to INBOX/Business/Invoices"
+  - "Noise and spam should be trashed immediately"
+  - "noreply@trustpilot.com -> TRASH"
+  - "messages-noreply@linkedin.com -> TRASH"
+  - "noreply@cloudflare.com -> notification, auto-delete 3d"
+  - "noreply@dhl.de -> notification, auto-delete 7d"
+  - "noreply@teamviewer.com -> notification, auto-delete 3d"
+  - "notifications@github.com -> notification"
+
+morning_briefing:
+  - "Paul has ADHD. Lead with the single most urgent item."
+  - "Be specific: names, times, amounts. Never 'a meeting', 'some emails'."
+  - "No emoji, no exclamation marks, no filler phrases."
+  - "10-20 lines total. Dry wit welcome if natural."
+
+evening_summary:
+  - "Lead with today's spending: categories, amounts, overspend."
+  - "All of tomorrow's events with times."
+  - "Be specific. Plain text only."
+
+email_cleanup:
+  - "AutoDelete3d: trash emails with $AutoDelete3d keyword older than 3 days"
+  - "AutoDelete7d: trash emails with $AutoDelete7d keyword older than 7 days"
