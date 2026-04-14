@@ -50,18 +50,21 @@ const ClientsResponseSchema = z.object({
     clients: z.array(ClientSchema),
 });
 // ---------------------------------------------------------------------------
-// Zod schema for GET /api/health response
-// NOTE: ThreeHats relay returns { "healthy": true } not { "status": "ok" }
+// Zod schema for GET /health response
+// NOTE: Custom relay returns { status, timestamp, uptime, instance, memory }
+// where timestamp is a number|string and memory values are pre-formatted strings.
+// (BUG-2 fix: original schema assumed string/number but values varied.)
 // ---------------------------------------------------------------------------
 const HealthResponseSchema = z.object({
-    healthy: z.boolean(),
-    timestamp: z.string().optional(),
+    status: z.string().optional(),
+    healthy: z.boolean().optional(),
+    timestamp: z.union([z.string(), z.number()]).optional(),
     uptime: z.number().optional(),
     instance: z.string().optional(),
     memory: z.object({
-        rss: z.number(),
-        heapTotal: z.number(),
-        heapUsed: z.number(),
+        rss: z.union([z.string(), z.number()]),
+        heapTotal: z.union([z.string(), z.number()]),
+        heapUsed: z.union([z.string(), z.number()]),
     }).optional(),
 });
 // ---------------------------------------------------------------------------
@@ -196,6 +199,65 @@ export async function withRetry(fn, retries = 1, delayMs = 1000) {
             return withRetry(fn, retries - 1, delayMs);
         }
         throw err;
+    }
+}
+/**
+ * GET /get?uuid=X — fetch a single entity by UUID.
+ * The relay returns {data, uuid} on success or {error} if not found (status 400).
+ */
+export async function relayGetEntity(uuid) {
+    const raw = (await foundryFetch(`/get?uuid=${encodeURIComponent(uuid)}`, {
+        method: "GET",
+    }));
+    if (raw.error) {
+        throw new Error(`GET /get: ${raw.error}`);
+    }
+    return raw.data ?? raw;
+}
+/**
+ * POST /create — create a new entity.
+ * The relay returns {uuid, entity} on success.
+ */
+export async function relayCreateEntity(entityType, data, folder) {
+    const body = { entityType, data };
+    if (folder !== undefined)
+        body.folder = folder;
+    const raw = (await foundryFetch("/create", {
+        method: "POST",
+        body,
+    }));
+    if (raw.error) {
+        throw new Error(`POST /create: ${raw.error}`);
+    }
+    return {
+        uuid: String(raw.uuid ?? ""),
+        entity: (raw.entity ?? {}),
+    };
+}
+/**
+ * PUT /update?uuid=X — update an existing entity.
+ * Pass a partial `data` object. Nested fields use dot notation per Foundry
+ * document updates (e.g., "system.alias").
+ */
+export async function relayUpdateEntity(uuid, data) {
+    const raw = (await foundryFetch(`/update?uuid=${encodeURIComponent(uuid)}`, {
+        method: "PUT",
+        body: { data },
+    }));
+    if (raw.error) {
+        throw new Error(`PUT /update: ${raw.error}`);
+    }
+    return raw.data ?? raw.entity ?? raw;
+}
+/**
+ * DELETE /delete?uuid=X — delete an entity by UUID.
+ */
+export async function relayDeleteEntity(uuid) {
+    const raw = (await foundryFetch(`/delete?uuid=${encodeURIComponent(uuid)}`, {
+        method: "DELETE",
+    }));
+    if (raw.error) {
+        throw new Error(`DELETE /delete: ${raw.error}`);
     }
 }
 // ---------------------------------------------------------------------------

@@ -1,26 +1,19 @@
 import { z } from "zod";
-import { foundryFetch, makeError, withRetry } from "../client.js";
-function filterJournal(raw) {
-    return {
-        id: String(raw._id ?? ""),
-        name: String(raw.name ?? ""),
-        pageCount: Array.isArray(raw.pages) ? raw.pages.length : 0,
-    };
-}
+import { executeJs, makeError, withRetry, relayCreateEntity, relayUpdateEntity, relayDeleteEntity, } from "../client.js";
 // ---------------------------------------------------------------------------
 // list_journals — Tool input schema and handler
 // ---------------------------------------------------------------------------
 export const listJournalsInputSchema = {};
 export async function listJournalsHandler(_args = {}) {
     try {
-        const raw = await withRetry(() => foundryFetch("/get", {
-            method: "POST",
-            body: { type: "JournalEntry" },
-        }));
-        const journals = (Array.isArray(raw) ? raw : []);
-        const filtered = journals.map(filterJournal);
+        const result = await withRetry(() => executeJs(`return JSON.stringify(game.journal.contents.map(j => ({
+          id: j.id,
+          name: j.name,
+          pageCount: j.pages?.size ?? j.pages?.contents?.length ?? 0
+        })));`));
+        const journals = (Array.isArray(result) ? result : []);
         return {
-            content: [{ type: "text", text: JSON.stringify(filtered, null, 2) }],
+            content: [{ type: "text", text: JSON.stringify(journals, null, 2) }],
         };
     }
     catch (err) {
@@ -29,6 +22,13 @@ export async function listJournalsHandler(_args = {}) {
             return makeError(msg, "AUTH_FAILED");
         return makeError(msg, "RELAY_DOWN");
     }
+}
+/**
+ * Find a journal entry id by name via execute-js (game.journal.getName).
+ */
+async function findJournalIdByName(name) {
+    const result = await executeJs(`return JSON.stringify(game.journal.getName(${JSON.stringify(name)})?.id ?? null);`);
+    return typeof result === "string" && result.length > 0 ? result : null;
 }
 // ---------------------------------------------------------------------------
 // create_journal — upsert by name, HTML pages with @UUID support
@@ -54,33 +54,19 @@ export async function createJournalHandler(params) {
                 text: { content: params.content, format: 1 },
             },
         ];
-        // Upsert check
-        const raw = await withRetry(() => foundryFetch("/get", {
-            method: "POST",
-            body: { type: "JournalEntry", name: params.name },
-        }));
-        const journals = (Array.isArray(raw) ? raw : []);
-        const found = journals.find((j) => String(j.name) === params.name);
+        // Upsert check via execute-js (no list-by-type endpoint on the real relay)
+        const existingId = await withRetry(() => findJournalIdByName(params.name));
         let journalId;
-        if (found) {
-            // UPDATE existing journal
-            journalId = String(found._id);
-            await withRetry(() => foundryFetch("/update", {
-                method: "PUT",
-                body: { uuid: journalId, pages },
-            }));
+        if (existingId) {
+            // UPDATE: replace pages wholesale on existing journal
+            journalId = existingId;
+            await withRetry(() => relayUpdateEntity(`JournalEntry.${journalId}`, { pages }));
         }
         else {
-            // CREATE new journal
-            const created = await withRetry(() => foundryFetch("/create", {
-                method: "POST",
-                body: {
-                    type: "JournalEntry",
-                    name: params.name,
-                    pages,
-                },
-            }));
-            journalId = String(created._id);
+            // CREATE: POST /create with {entityType, data}
+            const created = await withRetry(() => relayCreateEntity("JournalEntry", { name: params.name, pages }));
+            journalId = created.uuid.replace(/^JournalEntry\./, "") ||
+                String(created.entity._id ?? "");
         }
         return {
             content: [
@@ -112,20 +98,11 @@ export async function deleteJournalHandler(params) {
         return makeError("Deletion requires confirm: true. This journal may have @UUID cross-references.", "VALIDATION_FAILED");
     }
     try {
-        const raw = await withRetry(() => foundryFetch("/get", {
-            method: "POST",
-            body: { type: "JournalEntry", name: params.name },
-        }));
-        const journals = (Array.isArray(raw) ? raw : []);
-        const found = journals.find((j) => String(j.name) === params.name);
-        if (!found) {
+        const journalId = await withRetry(() => findJournalIdByName(params.name));
+        if (!journalId) {
             return makeError(`Journal not found: "${params.name}". Run list_journals to check spelling.`, "NOT_FOUND");
         }
-        const journalId = String(found._id);
-        await withRetry(() => foundryFetch("/delete", {
-            method: "DELETE",
-            body: { uuid: journalId },
-        }));
+        await withRetry(() => relayDeleteEntity(`JournalEntry.${journalId}`));
         return {
             content: [
                 {

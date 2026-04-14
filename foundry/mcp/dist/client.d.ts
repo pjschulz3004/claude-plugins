@@ -109,42 +109,45 @@ declare const ClientsResponseSchema: z.ZodObject<{
 export type Client = z.infer<typeof ClientSchema>;
 export type ClientsResponse = z.infer<typeof ClientsResponseSchema>;
 declare const HealthResponseSchema: z.ZodObject<{
-    healthy: z.ZodBoolean;
-    timestamp: z.ZodOptional<z.ZodString>;
+    status: z.ZodOptional<z.ZodString>;
+    healthy: z.ZodOptional<z.ZodBoolean>;
+    timestamp: z.ZodOptional<z.ZodUnion<[z.ZodString, z.ZodNumber]>>;
     uptime: z.ZodOptional<z.ZodNumber>;
     instance: z.ZodOptional<z.ZodString>;
     memory: z.ZodOptional<z.ZodObject<{
-        rss: z.ZodNumber;
-        heapTotal: z.ZodNumber;
-        heapUsed: z.ZodNumber;
+        rss: z.ZodUnion<[z.ZodString, z.ZodNumber]>;
+        heapTotal: z.ZodUnion<[z.ZodString, z.ZodNumber]>;
+        heapUsed: z.ZodUnion<[z.ZodString, z.ZodNumber]>;
     }, "strip", z.ZodTypeAny, {
-        rss: number;
-        heapTotal: number;
-        heapUsed: number;
+        rss: string | number;
+        heapTotal: string | number;
+        heapUsed: string | number;
     }, {
-        rss: number;
-        heapTotal: number;
-        heapUsed: number;
+        rss: string | number;
+        heapTotal: string | number;
+        heapUsed: string | number;
     }>>;
 }, "strip", z.ZodTypeAny, {
-    healthy: boolean;
-    timestamp?: string | undefined;
+    status?: string | undefined;
+    healthy?: boolean | undefined;
+    timestamp?: string | number | undefined;
     uptime?: number | undefined;
     instance?: string | undefined;
     memory?: {
-        rss: number;
-        heapTotal: number;
-        heapUsed: number;
+        rss: string | number;
+        heapTotal: string | number;
+        heapUsed: string | number;
     } | undefined;
 }, {
-    healthy: boolean;
-    timestamp?: string | undefined;
+    status?: string | undefined;
+    healthy?: boolean | undefined;
+    timestamp?: string | number | undefined;
     uptime?: number | undefined;
     instance?: string | undefined;
     memory?: {
-        rss: number;
-        heapTotal: number;
-        heapUsed: number;
+        rss: string | number;
+        heapTotal: string | number;
+        heapUsed: string | number;
     } | undefined;
 }>;
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
@@ -186,6 +189,29 @@ export declare function makeError(message: string, code: ErrorCode): {
     }[];
 };
 export declare function withRetry<T>(fn: () => Promise<T>, retries?: number, delayMs?: number): Promise<T>;
+/**
+ * GET /get?uuid=X — fetch a single entity by UUID.
+ * The relay returns {data, uuid} on success or {error} if not found (status 400).
+ */
+export declare function relayGetEntity(uuid: string): Promise<unknown>;
+/**
+ * POST /create — create a new entity.
+ * The relay returns {uuid, entity} on success.
+ */
+export declare function relayCreateEntity(entityType: string, data: Record<string, unknown>, folder?: string): Promise<{
+    uuid: string;
+    entity: Record<string, unknown>;
+}>;
+/**
+ * PUT /update?uuid=X — update an existing entity.
+ * Pass a partial `data` object. Nested fields use dot notation per Foundry
+ * document updates (e.g., "system.alias").
+ */
+export declare function relayUpdateEntity(uuid: string, data: Record<string, unknown>): Promise<unknown>;
+/**
+ * DELETE /delete?uuid=X — delete an entity by UUID.
+ */
+export declare function relayDeleteEntity(uuid: string): Promise<void>;
 /**
  * Execute a JavaScript script in Foundry VTT via the execute-js endpoint.
  * Blocks scripts matching the deny-list of destructive patterns.

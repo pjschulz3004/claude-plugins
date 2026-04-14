@@ -1,17 +1,5 @@
 import { z } from "zod";
-import { foundryFetch, executeJs, makeError, withRetry } from "../client.js";
-function filterActor(raw) {
-    const system = (raw.system ?? {});
-    return {
-        id: String(raw._id ?? ""),
-        name: String(raw.name ?? ""),
-        type: String(raw.type ?? ""),
-        img: String(raw.img ?? ""),
-        alias: String(system.alias ?? ""),
-        mythos: String(system.mythos ?? ""),
-        logos: String(system.logos ?? ""),
-    };
-}
+import { executeJs, makeError, withRetry, relayCreateEntity, relayUpdateEntity, relayDeleteEntity, } from "../client.js";
 // ---------------------------------------------------------------------------
 // list_actors — Tool input schema and handler
 // ---------------------------------------------------------------------------
@@ -23,17 +11,21 @@ export const listActorsInputSchema = {
 };
 export async function listActorsHandler({ type, }) {
     try {
-        const raw = await withRetry(() => foundryFetch("/get", {
-            method: "POST",
-            body: { type: "Actor" },
-        }));
-        const actors = (Array.isArray(raw) ? raw : []);
-        let filtered = actors.map(filterActor);
+        const result = await withRetry(() => executeJs(`return JSON.stringify(game.actors.contents.map(a => ({
+          id: a.id,
+          name: a.name,
+          type: a.type,
+          img: a.img ?? "",
+          alias: a.system?.alias ?? "",
+          mythos: a.system?.mythos ?? "",
+          logos: a.system?.logos ?? ""
+        })));`));
+        let actors = (Array.isArray(result) ? result : []);
         if (type) {
-            filtered = filtered.filter((a) => a.type === type);
+            actors = actors.filter((a) => a.type === type);
         }
         return {
-            content: [{ type: "text", text: JSON.stringify(filtered, null, 2) }],
+            content: [{ type: "text", text: JSON.stringify(actors, null, 2) }],
         };
     }
     catch (err) {
@@ -88,56 +80,63 @@ export const createActorInputSchema = {
         .optional()
         .describe("CoM themes with tags and moves. Items embedded via execute-js."),
 };
+/**
+ * Find an actor id by name via execute-js (game.actors.getName).
+ * Returns the actor id or null if not found.
+ */
+async function findActorIdByName(name) {
+    const result = await executeJs(`return JSON.stringify(game.actors.getName(${JSON.stringify(name)})?.id ?? null);`);
+    return typeof result === "string" && result.length > 0 ? result : null;
+}
 export async function createActorHandler(params) {
     try {
-        // Step 1: Upsert check — POST /get to find existing actor by name
-        const existing = await withRetry(() => foundryFetch("/get", {
-            method: "POST",
-            body: { type: "Actor", name: params.name },
-        }));
-        const existingActors = (Array.isArray(existing) ? existing : []);
-        const found = existingActors.find((a) => String(a.name) === params.name);
+        // Step 1: Upsert check — find existing actor by name via execute-js
+        const existingId = await withRetry(() => findActorIdByName(params.name));
         let actorId;
-        if (found) {
+        if (existingId) {
             // UPDATE existing actor
-            actorId = String(found._id);
-            await withRetry(() => foundryFetch("/update", {
-                method: "PUT",
-                body: {
-                    uuid: actorId,
-                    name: params.name,
-                    ...(params.alias !== undefined && { "system.alias": params.alias }),
-                    ...(params.mythos !== undefined && { "system.mythos": params.mythos }),
-                    ...(params.logos !== undefined && { "system.logos": params.logos }),
-                    ...(params.short_description !== undefined && {
-                        "system.short_description": params.short_description,
-                    }),
-                    ...(params.img !== undefined && { img: params.img }),
-                },
-            }));
+            actorId = existingId;
+            const updates = { name: params.name };
+            if (params.alias !== undefined)
+                updates["system.alias"] = params.alias;
+            if (params.mythos !== undefined)
+                updates["system.mythos"] = params.mythos;
+            if (params.logos !== undefined)
+                updates["system.logos"] = params.logos;
+            if (params.short_description !== undefined) {
+                updates["system.short_description"] = params.short_description;
+            }
+            if (params.img !== undefined)
+                updates.img = params.img;
+            await withRetry(() => relayUpdateEntity(`Actor.${actorId}`, updates));
         }
         else {
-            // CREATE new actor via REST
-            const created = await withRetry(() => foundryFetch("/create", {
-                method: "POST",
-                body: {
-                    type: "Actor",
-                    name: params.name,
-                    "data.type": params.type ?? "threat",
-                    ...(params.alias !== undefined && { "data.system.alias": params.alias }),
-                    ...(params.mythos !== undefined && { "data.system.mythos": params.mythos }),
-                    ...(params.logos !== undefined && { "data.system.logos": params.logos }),
-                    ...(params.short_description !== undefined && {
-                        "data.system.short_description": params.short_description,
-                    }),
-                    ...(params.img !== undefined && { "data.img": params.img }),
-                },
-            }));
-            actorId = String(created._id);
+            // CREATE new actor — POST /create with {entityType, data}
+            const data = {
+                name: params.name,
+                type: params.type ?? "threat",
+            };
+            const system = {};
+            if (params.alias !== undefined)
+                system.alias = params.alias;
+            if (params.mythos !== undefined)
+                system.mythos = params.mythos;
+            if (params.logos !== undefined)
+                system.logos = params.logos;
+            if (params.short_description !== undefined) {
+                system.short_description = params.short_description;
+            }
+            if (Object.keys(system).length > 0)
+                data.system = system;
+            if (params.img !== undefined)
+                data.img = params.img;
+            const created = await withRetry(() => relayCreateEntity("Actor", data));
+            // Relay returns uuid as "Actor.xxx"; strip the prefix for actorId.
+            actorId = created.uuid.replace(/^Actor\./, "") ||
+                String(created.entity._id ?? "");
         }
         // Step 2: Embed CoM items via execute-js (D-15)
         // Order: theme → tags (power, weakness) → gm_moves
-        // Each item batch needs theme_id from the previous theme creation
         if (params.themes && params.themes.length > 0) {
             for (const theme of params.themes) {
                 // 2a. Create theme item
@@ -153,7 +152,7 @@ export async function createActorHandler(params) {
           }]);
           return JSON.stringify(result.map(i => ({ id: i.id, name: i.name })));
         `;
-                const themeResult = await executeJs(themeScript);
+                const themeResult = (await executeJs(themeScript));
                 const themeItemId = Array.isArray(themeResult) && themeResult[0]
                     ? themeResult[0].id
                     : "";
@@ -238,7 +237,7 @@ export async function createActorHandler(params) {
     }
 }
 // ---------------------------------------------------------------------------
-// update_actor — D-06 find by name then PUT /update
+// update_actor — find by name then PUT /update
 // ---------------------------------------------------------------------------
 export const updateActorInputSchema = {
     name: z.string().describe("Actor name to find (exact match)"),
@@ -248,20 +247,11 @@ export const updateActorInputSchema = {
 };
 export async function updateActorHandler(params) {
     try {
-        const raw = await withRetry(() => foundryFetch("/get", {
-            method: "POST",
-            body: { type: "Actor", name: params.name },
-        }));
-        const actors = (Array.isArray(raw) ? raw : []);
-        const found = actors.find((a) => String(a.name) === params.name);
-        if (!found) {
+        const actorId = await withRetry(() => findActorIdByName(params.name));
+        if (!actorId) {
             return makeError(`Actor not found: "${params.name}". Run list_actors to check spelling.`, "NOT_FOUND");
         }
-        const actorId = String(found._id);
-        await withRetry(() => foundryFetch("/update", {
-            method: "PUT",
-            body: { uuid: actorId, ...params.updates },
-        }));
+        await withRetry(() => relayUpdateEntity(`Actor.${actorId}`, params.updates));
         return {
             content: [
                 {
@@ -292,20 +282,11 @@ export async function deleteActorHandler(params) {
         return makeError("Deletion requires confirm: true. This actor may have @UUID cross-references in journals.", "VALIDATION_FAILED");
     }
     try {
-        const raw = await withRetry(() => foundryFetch("/get", {
-            method: "POST",
-            body: { type: "Actor", name: params.name },
-        }));
-        const actors = (Array.isArray(raw) ? raw : []);
-        const found = actors.find((a) => String(a.name) === params.name);
-        if (!found) {
+        const actorId = await withRetry(() => findActorIdByName(params.name));
+        if (!actorId) {
             return makeError(`Actor not found: "${params.name}". Run list_actors to check spelling.`, "NOT_FOUND");
         }
-        const actorId = String(found._id);
-        await withRetry(() => foundryFetch("/delete", {
-            method: "DELETE",
-            body: { uuid: actorId },
-        }));
+        await withRetry(() => relayDeleteEntity(`Actor.${actorId}`));
         return {
             content: [
                 {

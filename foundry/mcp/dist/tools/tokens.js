@@ -1,7 +1,11 @@
 import { z } from "zod";
-import { foundryFetch, makeError, withRetry } from "../client.js";
+import { executeJs, makeError, withRetry } from "../client.js";
 // ---------------------------------------------------------------------------
-// place_token — place an actor token on a scene at specified coordinates
+// place_token — place an actor token on a scene at specified coordinates.
+//
+// Implementation note: the real ThreeHats relay has no /canvas/tokens endpoint.
+// We create the token via execute-js using scene.createEmbeddedDocuments('Token',
+// [actor.prototypeToken.toObject()]) patched with our x/y/width/height.
 // ---------------------------------------------------------------------------
 export const placeTokenInputSchema = {
     scene_name: z.string().describe("Scene name to place token on"),
@@ -20,38 +24,33 @@ export const placeTokenInputSchema = {
         .describe("Token height in grid units"),
 };
 export async function placeTokenHandler(params) {
+    const width = params.width ?? 1;
+    const height = params.height ?? 1;
     try {
-        // 1. Find scene by name
-        const scenesRaw = await withRetry(() => foundryFetch("/scene?all=true", { method: "GET" }));
-        const scenes = (Array.isArray(scenesRaw) ? scenesRaw : []);
-        const scene = scenes.find((s) => String(s.name) === params.scene_name);
-        if (!scene) {
-            return makeError(`Scene not found: "${params.scene_name}". Run list_scenes to check spelling.`, "NOT_FOUND");
+        const script = `
+      const scene = game.scenes.getName(${JSON.stringify(params.scene_name)});
+      if (!scene) return JSON.stringify({ error: "scene_not_found" });
+      const actor = game.actors.getName(${JSON.stringify(params.actor_name)});
+      if (!actor) return JSON.stringify({ error: "actor_not_found" });
+      const td = actor.prototypeToken?.toObject?.() ?? {};
+      td.name = actor.name;
+      td.actorId = actor.id;
+      td.x = ${params.x};
+      td.y = ${params.y};
+      td.width = ${width};
+      td.height = ${height};
+      const created = await scene.createEmbeddedDocuments('Token', [td]);
+      return JSON.stringify({ ok: true, tokenId: created[0]?.id ?? null, sceneId: scene.id, actorId: actor.id });
+    `;
+        const result = (await withRetry(() => executeJs(script)));
+        if (typeof result === "object" && result !== null) {
+            if (result.error === "scene_not_found") {
+                return makeError(`Scene not found: "${params.scene_name}". Run list_scenes to check spelling.`, "NOT_FOUND");
+            }
+            if (result.error === "actor_not_found") {
+                return makeError(`Actor not found: "${params.actor_name}". Run list_actors to check spelling.`, "NOT_FOUND");
+            }
         }
-        // 2. Find actor by name
-        const actorsRaw = await withRetry(() => foundryFetch("/get", {
-            method: "POST",
-            body: { type: "Actor", name: params.actor_name },
-        }));
-        const actors = (Array.isArray(actorsRaw) ? actorsRaw : []);
-        const actor = actors.find((a) => String(a.name) === params.actor_name);
-        if (!actor) {
-            return makeError(`Actor not found: "${params.actor_name}". Run list_actors to check spelling.`, "NOT_FOUND");
-        }
-        const sceneId = String(scene._id);
-        const actorId = String(actor._id);
-        // 3. Place token via POST /canvas/tokens
-        await withRetry(() => foundryFetch("/canvas/tokens", {
-            method: "POST",
-            body: {
-                sceneId,
-                actorId,
-                x: params.x,
-                y: params.y,
-                width: params.width ?? 1,
-                height: params.height ?? 1,
-            },
-        }));
         return {
             content: [
                 {
