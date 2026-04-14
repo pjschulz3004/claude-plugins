@@ -1,0 +1,28 @@
+{
+  "name": "foundry",
+  "version": "0.1.0",
+  "description": "Foundry VTT co-MC integration for Wyrd Berlin",
+  "author": { "name": "Paul Schulz" },
+  "userConfig": {
+    "relay_url": {
+      "description": "ThreeHats relay base URL (e.g. https://abyssv2.tail9721ce.ts.net)",
+      "sensitive": false
+    },
+    "api_key": {
+      "description": "ThreeHats relay API key",
+      "sensitive": true
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "diff -q \"${CLAUDE_PLUGIN_ROOT}/mcp/package.json\" \"${CLAUDE_PLUGIN_DATA}/package.json\" >/dev/null 2>&1 || (mkdir -p \"${CLAUDE_PLUGIN_DATA}\" && cp \"${CLAUDE_PLUGIN_ROOT}/mcp/package.json\" \"${CLAUDE_PLUGIN_DATA}/\" && cd \"${CLAUDE_PLUGIN_DATA}\" && npm install --omit=dev --ignore-scripts 2>/dev/null) || rm -f \"${CLAUDE_PLUGIN_DATA}/package.json\""
+          }
+        ]
+      }
+    ]
+  }
+}

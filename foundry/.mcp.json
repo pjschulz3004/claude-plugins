@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "foundry": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/dist/server.js"],
+      "env": {
+        "NODE_PATH": "${CLAUDE_PLUGIN_DATA}/node_modules",
+        "FOUNDRY_RELAY_URL": "${user_config.relay_url}",
+        "FOUNDRY_API_KEY": "${user_config.api_key}"
+      }
+    }
+  }
+}
