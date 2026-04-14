@@ -5,10 +5,14 @@
   "author": { "name": "Paul Schulz" },
   "userConfig": {
     "relay_url": {
+      "title": "Relay URL",
+      "type": "string",
       "description": "ThreeHats relay base URL (e.g. https://abyssv2.tail9721ce.ts.net)",
       "sensitive": false
     },
     "api_key": {
+      "title": "Relay API Key",
+      "type": "string",
       "description": "ThreeHats relay API key",
       "sensitive": true
     }
